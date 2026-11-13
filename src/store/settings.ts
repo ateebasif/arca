@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
 import { applyTheme, THEMES, type Theme } from '@/src/lib/theme';
-import { isRecord, oneOf, str } from '@/src/lib/validate';
+import { bool, isRecord, oneOf, str } from '@/src/lib/validate';
 
 /**
  * User settings (PRD §8.13), stored in chrome.storage.local under "settings".
@@ -16,6 +16,8 @@ export interface Settings {
   /** Folder the popup's "Bookmark this tab" saves into. */
   saveFolderId: string;
   theme: Theme;
+  /** Opt-in: fetch and cache page previews (needs the site-access permission). */
+  linkPreviews: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   redirectUrl: '',
   saveFolderId: '1',
   theme: 'system',
+  linkPreviews: false,
 };
 
 export const SETTINGS_KEY = 'settings';
@@ -36,6 +39,7 @@ export function parseSettings(raw: unknown): Settings {
     redirectUrl: str(r.redirectUrl, d.redirectUrl),
     saveFolderId: str(r.saveFolderId, d.saveFolderId, 64),
     theme: oneOf(r.theme, THEMES, d.theme),
+    linkPreviews: bool(r.linkPreviews, d.linkPreviews),
   };
 }
 

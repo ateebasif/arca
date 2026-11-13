@@ -4,6 +4,7 @@ import { useOverlays } from '@/src/store/overlays';
 import { useSettings, type NewTabMode } from '@/src/store/settings';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { Button, Dialog, Field, inputClass } from './Dialog';
+import { PreviewSettings } from './PreviewSettings';
 
 const MODES: Array<{ value: NewTabMode; label: string; hint: string }> = [
   { value: 'dashboard', label: 'Dashboard', hint: 'Your bookmarks, every new tab.' },
@@ -91,6 +92,7 @@ export function SettingsDialog() {
           </Field>
         </div>
       )}
+      <PreviewSettings />
       <p className="text-ink-faint mt-3 text-[11px] leading-relaxed">
         Browsers don't let extensions turn their New Tab page off at runtime. To get your
         browser's own New Tab back, disable Arca in the extensions page.

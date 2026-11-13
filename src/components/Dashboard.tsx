@@ -9,6 +9,7 @@ import { FolderView } from './main/FolderView';
 import { Toolbar } from './main/Toolbar';
 import { ScrollParentContext } from './main/scrollParent';
 import { OverlayHost } from './overlays/OverlayHost';
+import { PreviewController } from './preview/PreviewController';
 import { SearchBox } from './search/SearchBox';
 import { SearchResults } from './search/SearchResults';
 import { Sidebar } from './sidebar/Sidebar';
@@ -74,6 +75,7 @@ export function Dashboard({ surface }: DashboardProps) {
         </section>
       </main>
       <OverlayHost />
+      <PreviewController />
     </div>
   );
 }
