@@ -33,4 +33,9 @@ export default tseslint.config(
     files: ['src/lib/**', 'entrypoints/background.ts', 'tests/**', '**/*.test.{ts,tsx}'],
     rules: { 'no-restricted-globals': 'off' },
   },
+  {
+    // Test code and fakes may assert shapes they just built.
+    files: ['tests/**', '**/*.test.{ts,tsx}'],
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
+  },
 );
