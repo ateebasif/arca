@@ -2,7 +2,6 @@
 
 ## In Progress
 
-- [ ] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · `chore/scaffold-wxt-react` · Phase 1
 
 ## Up Next
 
@@ -72,6 +71,7 @@
 
 ## Done
 
+- [x] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · `chore/scaffold-wxt-react` · 2026-11-13
 - [x] ARC-001 · Repo + git setup, guides, CLAUDE.md, backlog · `main` (initial commit) · 2026-11-13
 
 ## Known Issues / Bugs
