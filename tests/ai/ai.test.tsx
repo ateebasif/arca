@@ -269,6 +269,38 @@ describe('planGroups', () => {
     expect(calls.embeddedTexts - cleared).toBe(10);
   });
 
+  it('reports what it is reading and how many came from the cache', async () => {
+    const { calls } = fakeOllama();
+    const opts = {
+      base: 'http://localhost:11434',
+      embedModel: 'nomic-embed-text:latest',
+      chatModel: 'llama3.2:latest',
+      groups: 2,
+    };
+    await planGroups([...items(REACT), ...items(FOOD)], opts);
+    await new Promise((r) => setTimeout(r, 0));
+
+    const many = Array.from({ length: 70 }, (_, i) => `React tip ${i}`);
+    const events: Array<[string, number, number | undefined, string[] | undefined]> = [];
+    await planGroups([...items(REACT), ...items(FOOD), ...items(many)], {
+      ...opts,
+      onProgress: (stage, done, _total, info) =>
+        events.push([stage, done, info?.cached, info?.titles]),
+    });
+    const reading = events.filter(
+      ([stage, , , titles]) => stage === 'embedding' && titles,
+    );
+    // 70 new links in batches of 32; the 10 earlier ones come from the cache.
+    expect(reading.map(([, done]) => done)).toEqual([10, 42, 74]);
+    expect(reading[0]![2]).toBe(10);
+    expect(reading[0]![3]).toHaveLength(32);
+    expect(reading[0]![3]![0]).toBe('React tip 0');
+    expect(
+      events.some(([stage, , , titles]) => stage === 'naming' && titles?.length),
+    ).toBe(true);
+    expect(calls.embed).toBeGreaterThanOrEqual(4);
+  });
+
   it('falls back to the top site when naming fails, and dedupes names', async () => {
     fakeOllama({ name: 'Cooking' }); // both groups come back as "Cooking"
     const groups = await planGroups([...items(REACT), ...items(FOOD)], {

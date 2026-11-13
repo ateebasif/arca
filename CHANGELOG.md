@@ -55,6 +55,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- AI organize shows live progress: elapsed time, an estimate of what's left,
+  which links are being read (or which group is being named), how many came
+  from the cache, and a "Starting the model" state for the first batch.
 - **AI organize** (Tidy up → AI organize, opt-in): groups a folder's links by topic
   with models running in your local Ollama, suggests folder names, and lets you
   rename or untick groups before moving anything into "Organized by Arca". One

@@ -31,7 +31,19 @@ export interface ProposedGroup {
 }
 
 export type Stage = 'embedding' | 'grouping' | 'naming';
-export type OnProgress = (stage: Stage, done: number, total: number) => void;
+/** What's being worked on right now, for the progress display. */
+export interface ProgressInfo {
+  /** Titles of the links (embedding) or group samples (naming) in progress. */
+  titles?: string[];
+  /** Links already embedded on an earlier run (served from cache). */
+  cached?: number;
+}
+export type OnProgress = (
+  stage: Stage,
+  done: number,
+  total: number,
+  info?: ProgressInfo,
+) => void;
 
 export interface PlanOptions {
   base: string;
@@ -43,7 +55,8 @@ export interface PlanOptions {
   signal?: AbortSignal;
 }
 
-const EMBED_BATCH = 64;
+// Small enough that progress moves every few seconds even with larger models.
+const EMBED_BATCH = 32;
 
 /**
  * Text that gets embedded for a bookmark: title, site and its own folder
@@ -113,12 +126,16 @@ async function embedAll(
     texts.map((t) => readCached(opts.embedModel, t)),
   );
   const missing = vectors.flatMap((v, i) => (v ? [] : [i]));
-  let done = items.length - missing.length;
-  opts.onProgress?.('embedding', done, items.length);
+  const cached = items.length - missing.length;
+  let done = cached;
   for (let start = 0; start < missing.length; start += EMBED_BATCH) {
     throwIfAborted(opts.signal);
     const batch = missing.slice(start, start + EMBED_BATCH);
     const batchTexts = batch.map((i) => texts[i] ?? '');
+    opts.onProgress?.('embedding', done, items.length, {
+      cached,
+      titles: batch.map((i) => items[i]?.title ?? ''),
+    });
     const result = await embed(opts.base, opts.embedModel, batchTexts);
     batch.forEach((i, j) => {
       const vector = result[j];
@@ -127,8 +144,8 @@ async function embedAll(
       void writeCached(opts.embedModel, batchTexts[j] ?? '', vector);
     });
     done += batch.length;
-    opts.onProgress?.('embedding', done, items.length);
   }
+  opts.onProgress?.('embedding', done, items.length, { cached });
   return vectors.map((v) => normalize(v ?? []));
 }
 
@@ -187,8 +204,10 @@ export async function planGroups(
   const used = new Map<string, number>();
   for (const [g, indexes] of members.entries()) {
     throwIfAborted(opts.signal);
-    opts.onProgress?.('naming', g, members.length);
     const groupItems = indexes.flatMap((i) => (items[i] ? [items[i]] : []));
+    opts.onProgress?.('naming', g, members.length, {
+      titles: groupItems.slice(0, 3).map((it) => it.title),
+    });
     let name = await nameGroup(groupItems, opts);
     const seen = used.get(name.toLowerCase()) ?? 0;
     used.set(name.toLowerCase(), seen + 1);
