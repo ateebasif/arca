@@ -33,4 +33,6 @@ All notable changes to this project are documented here. The format follows
   double-click in the sidebar), and delete (non-empty folders ask first).
 - Item menu from the ⋯ button, right-click or Shift+F10.
 - Root folders are read-only everywhere in the UI.
+- New Tab modes: dashboard, minimal search page, or redirect to a URL, chosen
+  in a new Settings dialog.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.

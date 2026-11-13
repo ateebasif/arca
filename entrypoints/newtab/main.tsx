@@ -1,9 +1,24 @@
 import { Dashboard } from '@/src/components/Dashboard';
+import { MinimalNewTab } from '@/src/components/MinimalNewTab';
 import { mount } from '@/src/lib/mount';
+import { hydrateSettings, redirectTarget } from '@/src/store/settings';
 import { hydrateUi } from '@/src/store/ui';
 import { getBookmarkStore } from '@/src/store/useBookmarks';
 
-// Start loading bookmarks and saved UI prefs in parallel; render once prefs are in
-// so the first paint uses the remembered view.
+// Settings decide what this tab is, so read them first (a few ms). Bookmarks
+// and UI prefs load in parallel.
 void getBookmarkStore().start();
-void hydrateUi().finally(() => mount(<Dashboard surface="newtab" />));
+void Promise.all([hydrateSettings(), hydrateUi()]).then(([settings]) => {
+  const target = redirectTarget(settings);
+  if (target) {
+    location.replace(target);
+    return;
+  }
+  mount(
+    settings.newTabMode === 'minimal' ? (
+      <MinimalNewTab />
+    ) : (
+      <Dashboard surface="newtab" />
+    ),
+  );
+});

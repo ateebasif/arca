@@ -174,6 +174,40 @@ check('root folders cannot be renamed or deleted', async (page) => {
   assert.deepEqual(roots, ['Bookmarks bar', 'Other bookmarks']);
 });
 
+check('New Tab modes: minimal search page and redirect', async (page) => {
+  const setMode = (patch: object) =>
+    page.eval(
+      `chrome.storage.local.set({ settings: ${JSON.stringify({ saveFolderId: '1', redirectUrl: '', ...patch })} })`,
+    );
+  await setMode({ newTabMode: 'minimal' });
+  await page.reload();
+  await page.waitFor('document.activeElement?.getAttribute("role") === "combobox"');
+  await page.type('lin');
+  await page.waitFor('document.querySelector("[role=option]")');
+  await page.setViewport(1280, 800);
+  await page.screenshot(`${OUT}/newtab-minimal.png`);
+
+  // .invalid never resolves, so this makes no real network request.
+  const origin = await page.eval<string>('location.origin');
+  await setMode({
+    newTabMode: 'redirect',
+    redirectUrl: 'https://arca-redirect.invalid/',
+  });
+  await page.reload();
+  await sleep(500);
+  const history = await page.send<{ entries: Array<{ url: string }> }>(
+    'Page.getNavigationHistory',
+  );
+  // Reset from the dashboard page, which never redirects.
+  await page.navigate(`${origin}/dashboard.html`);
+  await setMode({ newTabMode: 'dashboard' });
+  const urls = history.entries.map((e) => e.url);
+  assert.ok(
+    urls.some((u) => u.startsWith('https://arca-redirect.invalid')),
+    `history: ${urls.join(', ')}`,
+  );
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);

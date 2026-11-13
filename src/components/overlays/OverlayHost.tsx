@@ -5,17 +5,20 @@ import { useBookmarks } from '@/src/store/useBookmarks';
 import { Button, Dialog } from './Dialog';
 import { EditDialog } from './EditDialog';
 import { ItemMenu } from './ItemMenu';
+import { SettingsDialog } from './SettingsDialog';
 
 /** Renders whichever dialog, menu and toasts are open. Mount once per page. */
 export function OverlayHost() {
   const editor = useOverlays((s) => s.editor);
   const menu = useOverlays((s) => s.menu);
   const confirmDeleteId = useOverlays((s) => s.confirmDeleteId);
+  const settingsOpen = useOverlays((s) => s.settingsOpen);
   return (
     <>
       {editor && <EditDialog key={JSON.stringify(editor)} editor={editor} />}
       {menu && <ItemMenu key={menu.id} menu={menu} />}
       {confirmDeleteId && <ConfirmDelete id={confirmDeleteId} />}
+      {settingsOpen && <SettingsDialog />}
       <Toaster />
     </>
   );

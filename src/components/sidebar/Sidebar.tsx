@@ -1,6 +1,7 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
-import { SidebarIcon } from '../icons';
+import { useOverlays } from '@/src/store/overlays';
+import { GearIcon, SidebarIcon } from '../icons';
 import { FolderTree } from './FolderTree';
 
 export function Sidebar() {
@@ -28,6 +29,15 @@ export function Sidebar() {
       <nav className="min-h-0 flex-1 overflow-y-auto">
         <FolderTree />
       </nav>
+      <div className="border-line flex shrink-0 items-center border-t px-2 py-2">
+        <button
+          type="button"
+          onClick={() => useOverlays.getState().openSettings()}
+          className="text-ink-muted hover:bg-hover hover:text-ink flex h-8 items-center gap-2 rounded-lg px-2 text-[13px]"
+        >
+          <GearIcon /> Settings
+        </button>
+      </div>
       <Resizer />
     </aside>
   );
