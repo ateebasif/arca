@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useHotkeys } from '@/src/lib/hotkeys';
-import { getChildren } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
-import { SidebarIcon } from './icons';
+import { DensityIcon, SidebarIcon } from './icons';
+import { Breadcrumbs } from './main/Breadcrumbs';
+import { FolderView } from './main/FolderView';
 import { Sidebar } from './sidebar/Sidebar';
 
 interface DashboardProps {
@@ -27,39 +28,70 @@ export function Dashboard({ surface }: DashboardProps) {
     }
   }, [state, currentFolderId, openFolder]);
 
-  const folder = state.nodes.get(currentFolderId);
-
   return (
     <div className="flex h-full" data-surface={surface}>
       {!collapsed && <Sidebar />}
       <main className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center gap-2 px-5">
           {collapsed && (
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              aria-label="Show sidebar (⌘\)"
-              title="Show sidebar (⌘\)"
-              className="text-ink-muted hover:bg-hover hover:text-ink grid size-7 place-items-center rounded-lg"
-            >
+            <IconButton label="Show sidebar (⌘\)" onClick={toggleSidebar}>
               <SidebarIcon />
-            </button>
+            </IconButton>
           )}
-          <h1 className="truncate text-[15px] font-semibold">
-            {folder?.title || (state.ready ? 'Untitled' : '')}
-          </h1>
+          <div className="min-w-0 flex-1">
+            <Breadcrumbs />
+          </div>
+          <Toolbar />
         </header>
         <section
           aria-label="Folder contents"
-          className="min-h-0 flex-1 overflow-y-auto px-5 pb-8"
+          className="min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
         >
-          <ul className="text-ink-muted text-sm">
-            {getChildren(state, currentFolderId).map((child) => (
-              <li key={child.id}>{child.title}</li>
-            ))}
-          </ul>
+          <FolderView />
         </section>
       </main>
     </div>
+  );
+}
+
+function Toolbar() {
+  const density = useUi((s) => s.density);
+  const setDensity = useUi((s) => s.setDensity);
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <IconButton
+        label={density === 'compact' ? 'Comfortable density' : 'Compact density'}
+        pressed={density === 'compact'}
+        onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
+      >
+        <DensityIcon />
+      </IconButton>
+    </div>
+  );
+}
+
+interface IconButtonProps {
+  label: string;
+  onClick(): void;
+  pressed?: boolean;
+  children: React.ReactNode;
+}
+
+export function IconButton({ label, onClick, pressed, children }: IconButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      className={`grid size-8 place-items-center rounded-lg transition-colors duration-150 ${
+        pressed
+          ? 'bg-accent-soft text-accent'
+          : 'text-ink-muted hover:bg-hover hover:text-ink'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
