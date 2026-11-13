@@ -42,4 +42,6 @@ All notable changes to this project are documented here. The format follows
   opens in ~30 ms with ~60 tiles in the DOM).
 - Theme colours meet WCAG AA contrast in light and dark. New Tab paints in
   ~30 ms and is interactive in ~35 ms with 5,000 bookmarks.
+- README: install steps for Chrome-family browsers and Ardia, plus what is
+  still unverified in Ardia.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.
