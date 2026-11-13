@@ -21,6 +21,15 @@ All notable changes to this project are documented here. The format follows
 - Folder card bookmark counts no longer wrap onto two lines next to the favicon
   preview.
 
+### Changed
+
+- Modern dark redesign: tiles get a cover in the site's brand colour (from its
+  favicon, contrast-checked), folders match the tile shape, a deeper dark
+  palette, and dark is the default theme.
+- Subtle motion: tiles rise in when a folder opens, cards lift and glow on hover,
+  menus and dialogs pop in. All of it respects "reduce motion".
+- Two-row header: breadcrumb, search and add on top; view controls below.
+
 ### Added
 
 - "All links" view: every bookmark inside the open folder and its subfolders

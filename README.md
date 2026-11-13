@@ -13,7 +13,10 @@ data stays on your machine.
 ## What it does (Phase 1)
 
 - **Dashboard on New Tab**: sidebar folder tree with counts, folder cards, bookmark
-  tiles (comfortable/compact) or a sortable list, breadcrumbs.
+  tiles with brand-coloured covers (comfortable/compact) or a sortable list,
+  breadcrumbs.
+- **All links view**: every link inside a folder and its subfolders in one grid,
+  each labelled with its folder.
 - **Search**: ⌘K or `/`, fuzzy over titles, URLs and folder names. ↑↓ to move, Enter to
   open, ⌘Enter for a new tab, ⌥Enter to show the bookmark in its folder.
 - **Editing**: add bookmarks and folders, edit, rename inline (F2), delete. Browser root

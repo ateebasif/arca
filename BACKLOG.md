@@ -2,7 +2,6 @@
 
 ## In Progress
 
-- [ ] ARC-051 · Modern dark redesign: favicon-coloured tile covers, deeper dark palette, entrance/hover animations · `style/modern-dark-tiles` · P1
 - [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · `docs/readme-load-unpacked` · Phase 1 · Ardia: loads unpacked, dashboard works with ~4k bookmarks; ⌘T opens Ardia's command bar (no New Tab override); popup still to check
 
 ## Up Next
@@ -56,6 +55,7 @@
 
 ## Done
 
+- [x] ARC-051 · Modern dark redesign: favicon-coloured tile covers, deeper dark palette, entrance/hover animations · `style/modern-dark-tiles` · 2026-11-13
 - [x] ARC-050 · "All links" view: every bookmark under a folder, flat, labelled with its folder · `feature/all-links-view` · 2026-11-13
 - [x] ARC-049 · Arca icon (strongbox with arched lid), tab favicons, in-app logo · `feature/arca-icon` · 2026-11-13
 - [x] ARC-041 · Link previews (title, description, image) on hover, opt-in, cached locally (pulled forward from Phase 4; metadata cards, not screenshots) · `feature/link-previews` · 2026-11-13
