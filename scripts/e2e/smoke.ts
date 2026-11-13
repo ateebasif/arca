@@ -621,6 +621,38 @@ check('tidy up: finds and removes duplicates, with undo', async (page) => {
   await page.eval(`chrome.bookmarks.removeTree('${rootId}')`);
 });
 
+check('drag & drop by keyboard: Space, arrows, Space into a folder', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.setViewport(1280, 800, true);
+  const ids = await page.eval<{ root: string; box: string; item: string }>(`(async () => {
+    const bm = chrome.bookmarks;
+    const root = await bm.create({ parentId: '2', title: 'Keyboard Lab' });
+    const box = await bm.create({ parentId: root.id, title: 'Box' });
+    const item = await bm.create({ parentId: root.id, title: 'Move me', url: 'https://moveme.example.com/' });
+    return { root: root.id, box: box.id, item: item.id };
+  })()`);
+  await page.eval(`document.querySelector('[data-folder-id="2"]').click()`);
+  await page.waitFor(`document.querySelector('[data-folder-card="${ids.root}"]')`);
+  await page.eval(`document.querySelector('[data-folder-card="${ids.root}"]').click()`);
+  await page.waitFor(`document.querySelector('[data-bookmark-id="${ids.item}"]')`);
+  await sleep(900);
+  await page.eval(`document.querySelector('[data-bookmark-id="${ids.item}"]').focus()`);
+  const url = await page.eval<string>('location.href');
+  await page.key(' ');
+  await sleep(150);
+  await page.key('ArrowUp');
+  await sleep(250);
+  await page.key('Enter'); // must not open the link mid-drag
+  await page.key(' ');
+  await sleep(400);
+  const parent = await page.eval<string>(
+    `chrome.bookmarks.get('${ids.item}').then(([n]) => n.parentId)`,
+  );
+  assert.equal(parent, ids.box, 'keyboard drop did not move into the folder');
+  assert.equal(await page.eval('location.href'), url, 'Enter opened something mid-drag');
+  await page.eval(`chrome.bookmarks.removeTree('${ids.root}')`);
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);

@@ -257,7 +257,13 @@ export class Page {
   }
 
   async key(key: string, modifiers = 0): Promise<void> {
-    const code = key.length === 1 && /[a-z]/i.test(key) ? `Key${key.toUpperCase()}` : key;
+    // Match what a real keyboard sends: code "Space" for " ", "KeyA" for "a".
+    const code =
+      key === ' '
+        ? 'Space'
+        : key.length === 1 && /[a-z]/i.test(key)
+          ? `Key${key.toUpperCase()}`
+          : key;
     const base = { key, code, modifiers, windowsVirtualKeyCode: keyCodeFor(key) };
     // Real Enter key presses carry "\r", which Chrome needs for implicit form submit.
     const printable = key === 'Enter' ? '\r' : key.length === 1 ? key : '';
@@ -281,6 +287,7 @@ function keyCodeFor(key: string): number {
     Delete: 46,
     F2: 113,
     Tab: 9,
+    ' ': 32,
     '/': 191,
     '\\': 220,
   };
