@@ -93,3 +93,50 @@ describe('popup', () => {
     await waitFor(() => expect(window.close).toHaveBeenCalled());
   });
 });
+
+describe('popup home sections', () => {
+  beforeEach(() => {
+    vi.spyOn(window, 'close').mockImplementation(() => {});
+    activeTab('https://example.com/');
+  });
+
+  it('shows most visited, recently added and folders; hides them while typing', async () => {
+    vi.spyOn(fakeBrowser.topSites, 'get').mockResolvedValue([
+      { url: 'https://news.dev/', title: 'News' },
+      { url: 'javascript:alert(1)', title: 'Evil' },
+    ] as never);
+    await renderWithBookmarks(<Popup />, SAMPLE_SEED);
+    const visited = await screen.findByRole('region', { name: 'Most visited' });
+    expect(within(visited).getAllByRole('button')).toHaveLength(1); // blocked URL filtered
+    const recent = screen.getByRole('region', { name: 'Recently added' });
+    expect(within(recent).getAllByRole('button').length).toBeGreaterThan(0);
+    expect(screen.getByRole('region', { name: 'Folders' })).toHaveTextContent('Dev');
+
+    await userEvent.type(
+      screen.getByRole('combobox', { name: 'Search bookmarks' }),
+      'git',
+    );
+    expect(screen.queryByRole('region', { name: 'Recently added' })).toBeNull();
+    await userEvent.clear(screen.getByRole('combobox', { name: 'Search bookmarks' }));
+    expect(screen.getByRole('region', { name: 'Recently added' })).toBeInTheDocument();
+  });
+
+  it('opens recent links with the open-in setting and folders in the dashboard', async () => {
+    const create = vi.spyOn(fakeBrowser.tabs, 'create').mockResolvedValue({} as never);
+    const update = vi.spyOn(fakeBrowser.tabs, 'update').mockResolvedValue({} as never);
+    const { fake } = await renderWithBookmarks(<Popup />, SAMPLE_SEED);
+    const recent = await screen.findByRole('region', { name: 'Recently added' });
+    await userEvent.click(within(recent).getAllByRole('button')[0]!);
+    expect(update).toHaveBeenCalled();
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Folders' })).getByRole('button', {
+        name: /Dev/,
+      }),
+    );
+    expect(create).toHaveBeenCalledWith({
+      url: expect.stringContaining(
+        `/dashboard.html#folder=${fake.findByTitle('Dev')!.id}`,
+      ),
+    });
+  });
+});
