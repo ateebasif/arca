@@ -8,11 +8,8 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-006 · Main area: folder cards + grid view (comfortable / compact) · Phase 1 · P0
 - [ ] ARC-007 · List view with sortable columns + remembered grid/list toggle · Phase 1 · P1
-- [ ] ARC-008 · Breadcrumbs for the current folder path · Phase 1 · P1
 - [ ] ARC-009 · Sort: manual, title A–Z, date added, domain · Phase 1 · P1
-- [ ] ARC-010 · Favicons via `_favicon` endpoint with lettered fallback tile · Phase 1 · P1
 - [ ] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · Phase 1 · P0
 - [ ] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · Phase 1 · P0
 - [ ] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · Phase 1 · P0
@@ -66,6 +63,9 @@
 
 ## Done
 
+- [x] ARC-010 · Favicons via `_favicon` endpoint with lettered fallback tile · `feature/bookmark-grid` · 2026-11-13
+- [x] ARC-008 · Breadcrumbs for the current folder path · `feature/bookmark-grid` · 2026-11-13
+- [x] ARC-006 · Main area: folder cards + grid view (comfortable / compact) · `feature/bookmark-grid` · 2026-11-13
 - [x] ARC-005 · Sidebar folder tree: collapsible, item counts, resizable, ⌘\ toggle · `feature/folder-tree-sidebar` · 2026-11-13
 - [x] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · `feature/bookmark-store-sync` · 2026-11-13
 - [x] ARC-045 · E2E smoke harness: real Chrome via DevTools pipe + `Extensions.loadUnpacked` · `test/e2e-harness` · 2026-11-13
@@ -85,3 +85,4 @@
 - Store copies the id→node Map on every event (~5k entries, < 1 ms). Fine for v1; revisit if profiles show it during bulk ops (ARC-023).
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
+- Favicon placeholder detection fingerprints Chrome's generic globe per size. If Ardia or a Chrome update changes that image, detection silently stops and globes show again (cosmetic only).

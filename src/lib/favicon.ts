@@ -39,3 +39,58 @@ function hashHue(text: string): number {
   }
   return hash % 360;
 }
+
+// -- default-icon detection ----------------------------------------------------
+//
+// For pages it has no icon for, Chrome's _favicon endpoint returns a generic
+// globe instead of failing. We fingerprint that globe once and treat any
+// favicon that matches it as missing, so the letter tile shows instead.
+
+const SIGNATURE_SIZE = 16;
+const defaultSignatures = new Map<string, Promise<string | null>>();
+
+function signatureOf(img: HTMLImageElement): string | null {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = SIGNATURE_SIZE;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, SIGNATURE_SIZE, SIGNATURE_SIZE);
+    const { data } = ctx.getImageData(0, 0, SIGNATURE_SIZE, SIGNATURE_SIZE);
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) hash = (hash * 31 + (data[i] ?? 0)) >>> 0;
+    return `${hash}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Signature of the placeholder at a given requested size (it differs per size). */
+function loadDefaultSignature(size: string): Promise<string | null> {
+  let pending = defaultSignatures.get(size);
+  if (!pending) {
+    pending = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(signatureOf(img));
+      img.onerror = () => resolve(null);
+      // A reserved, never-resolvable host, so this is always the placeholder.
+      const query = new URLSearchParams({
+        pageUrl: 'https://arca-default-icon.invalid/',
+        size,
+      });
+      img.src = (browser.runtime.getURL as (path: string) => string)(
+        `/_favicon/?${query.toString()}`,
+      );
+    });
+    defaultSignatures.set(size, pending);
+  }
+  return pending;
+}
+
+/** True if a loaded favicon <img> is the browser's generic placeholder. */
+export async function isDefaultFavicon(img: HTMLImageElement): Promise<boolean> {
+  const size = new URL(img.src).searchParams.get('size') ?? '32';
+  const reference = await loadDefaultSignature(size);
+  if (!reference || !img.complete || img.naturalWidth === 0) return false;
+  return signatureOf(img) === reference;
+}

@@ -20,4 +20,8 @@ All notable changes to this project are documented here. The format follows
   reloaded after browser imports or anything unexpected.
 - Sidebar folder tree with bookmark counts, keyboard navigation, resizing and
   ⌘\ to hide it. View preferences are remembered.
+- Grid view with folder cards (count + favicon preview) and bookmark tiles,
+  comfortable and compact density, breadcrumbs, and an empty-folder state.
+- Favicons from the browser cache with a coloured letter tile when the browser
+  only has its generic placeholder.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.

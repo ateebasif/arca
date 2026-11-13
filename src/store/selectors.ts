@@ -104,3 +104,14 @@ export function folderCounts(state: BookmarkSnapshot): ReadonlyMap<string, numbe
   countsCache.set(state, counts);
   return counts;
 }
+
+/** Up to `n` bookmarks directly inside a folder, for card previews. */
+export function folderPreview(state: BookmarkSnapshot, folder: BNode, n = 3): BNode[] {
+  const out: BNode[] = [];
+  for (const id of folder.childIds ?? []) {
+    const child = state.nodes.get(id);
+    if (child?.url) out.push(child);
+    if (out.length === n) break;
+  }
+  return out;
+}
