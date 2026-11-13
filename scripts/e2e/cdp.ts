@@ -9,7 +9,14 @@
  * Set CHROME_PATH to use a different Chromium binary.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { Readable, Writable } from 'node:stream';
@@ -196,6 +203,20 @@ export class Page {
     }
   }
 
+  /** Moves the mouse over the centre of an element (or to a far corner). */
+  async hover(selector: string | null): Promise<void> {
+    const point = selector
+      ? await this.eval<{ x: number; y: number } | null>(`(() => {
+          const el = document.querySelector(${JSON.stringify(selector)});
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        })()`)
+      : { x: 5, y: 5 };
+    if (!point) throw new Error(`No element for ${selector}`);
+    await this.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
+  }
+
   async key(key: string, modifiers = 0): Promise<void> {
     const code = key.length === 1 && /[a-z]/i.test(key) ? `Key${key.toUpperCase()}` : key;
     const base = { key, code, modifiers, windowsVirtualKeyCode: keyCodeFor(key) };
@@ -238,6 +259,12 @@ export interface Browser {
 export interface LaunchOptions {
   /** Paths of additional unpacked extensions (e.g. a hostile test extension). */
   extraExtensions?: string[];
+  /**
+   * Test-only: pre-grant the optional <all_urls> permission in the loaded copy,
+   * since headless Chrome can't click the permission prompt. The real build
+   * keeps it optional (checked by `bun run security`).
+   */
+  grantSiteAccess?: boolean;
 }
 
 export async function launch(options: LaunchOptions = {}): Promise<Browser> {
@@ -249,6 +276,12 @@ export async function launch(options: LaunchOptions = {}): Promise<Browser> {
   // macOS privacy rules can stop Chrome reading ~/Downloads etc., so load a copy.
   const extensionPath = join(workDir, 'extension');
   cpSync(buildPath, extensionPath, { recursive: true });
+  if (options.grantSiteAccess) {
+    const manifestPath = join(extensionPath, 'manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    manifest.host_permissions = ['<all_urls>'];
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+  }
 
   const proc: ChildProcess = spawn(
     process.env.CHROME_PATH ?? DEFAULT_CHROME,

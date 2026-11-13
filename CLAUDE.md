@@ -11,8 +11,8 @@ fast, visual, editable dashboard (Opera GX speed-dial style). Primary target: **
 (Chromium, macOS). Must also work in Chrome, Dia, Brave, Edge.
 
 - `chrome.bookmarks` is the source of truth. Every edit in Arca is a real bookmark edit.
-- Private: no analytics, no accounts, no remote code, no network calls except the opt-in
-  dead-link checker.
+- Private: no analytics, no accounts, no remote code, no network calls except opt-in
+  features (link previews, dead-link checker).
 - Fast: New Tab first paint < 100 ms, interactive < 200 ms at 5,000 bookmarks, search
   < 50 ms, production JS < 400 KB.
 
@@ -93,7 +93,10 @@ docs/git/      branch, commit and PR guides (source of truth for git rules)
 - Don't add content scripts, web-accessible resources, host permissions or external
   message listeners. If messaging between Arca's own pages is ever needed, check
   `sender.id === browser.runtime.id`.
-- Network access only behind an optional permission the user grants in Settings.
+- Network access only behind an optional permission the user grants in Settings
+  (link previews today; dead-link checker later). Fetch with `credentials: 'omit'`,
+  `referrerPolicy: 'no-referrer'`, timeouts and size caps; parse HTML only with
+  `DOMParser`; never store or render remote HTML.
 - Keep `bun run security` and the e2e security checks green.
 
 ## Git rules (full detail in `docs/git/`, which wins on any conflict)

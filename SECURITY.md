@@ -17,7 +17,29 @@ nothing else can run code through it, and it never runs code from anywhere else.
 | Corrupted or tampered settings in storage                                                                         | Every stored field is type-checked on load; invalid values fall back to defaults.                                                                                                   | unit tests                                          |
 | Plugins, `<base>` hijacking, form posts                                                                           | `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`.                                                                                                                       | `bun run security`                                  |
 | Silent network access                                                                                             | No host permissions by default. `<all_urls>` is optional and only requested when you turn on a feature that needs it. Every e2e run fails on any request that leaves the extension. | `bun run security`, e2e network audit               |
+| Link previews leaking cookies or running site code                                                                | Opt-in; no credentials or referrer; inert HTML parsing; images re-encoded; see below.                                                                                               | unit tests, e2e local test site                     |
 | Script injection into websites                                                                                    | Arca has no content scripts and never calls `scripting.executeScript`.                                                                                                              | `bun run security`, ESLint                          |
+
+### Link previews (opt-in)
+
+Off by default. Turning them on shows the browser's permission prompt; turning them off
+removes the permission again. When on:
+
+- Only `http(s)` pages are fetched, only on hover/focus, never in bulk or in the background.
+- Requests send **no cookies, no credentials and no referrer**, with an 8 s timeout. At most
+  768 KB of HTML and 3 MB of image data are read.
+- HTML is parsed with `DOMParser`, which builds an inert document: scripts, event handlers
+  and subresources never run or load. `<base href>` is ignored.
+- Only the title, description, site name and image URL are kept. Text is stripped of
+  control, zero-width and bidi-override characters and length-capped, then rendered as
+  plain text by React.
+- Images: raster formats only (no SVG). They are decoded and re-encoded to a small WebP
+  thumbnail, so only plain pixels are stored and shown, as `data:` URLs (no request
+  to the site when the card is displayed).
+- The cache (IndexedDB, private to Arca) is re-validated on read. Tampered entries are
+  dropped.
+- Each page is fetched at most once a week (failures once a day). You can clear the
+  cache in Settings.
 
 ### How links open
 

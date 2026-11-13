@@ -21,7 +21,8 @@ also work in any Chromium browser (Chrome, Dia, Brave, Edge).
 
 ## 3. Non-goals (v1)
 
-- Page preview thumbnails (Phase 4).
+- Page preview thumbnails (Phase 4). Lightweight opt-in link previews (title, description,
+  image; cached) were pulled forward at the user's request; see SECURITY.md.
 - Cross-device sync beyond what the browser already syncs for bookmarks.
 - Mobile support. AI features.
 
@@ -63,7 +64,7 @@ extension (or a build flag that omits the override).
 ## 7. Permissions
 
 - Required: `bookmarks`, `storage`, `tabs`, `topSites`, `favicon`, `contextMenus`.
-- Optional, requested at runtime only for the dead-link checker:
+- Optional, requested at runtime only for the dead-link checker and opt-in link previews:
   `optional_host_permissions: ["<all_urls>"]`.
 - Favicons via the MV3 `_favicon` endpoint:
   `chrome.runtime.getURL("/_favicon/?pageUrl=<encoded url>&size=32")`, with a lettered
