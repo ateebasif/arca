@@ -177,3 +177,19 @@ describe('interactive preview card', () => {
     expect(screen.queryByTestId('link-preview')).toBeNull();
   });
 });
+
+describe('review finding 7: preview after using its buttons', () => {
+  it('shows again on the same tile after Open in the card', async () => {
+    granted = true;
+    vi.spyOn(fakeBrowser.tabs, 'update').mockResolvedValue({} as never);
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    await enablePreviews();
+    await hover(tile('GitHub'));
+    const card = await screen.findByTestId('link-preview');
+    await userEvent.click(within(card).getByRole('button', { name: 'Open' }));
+    expect(screen.queryByTestId('link-preview')).toBeNull();
+    fireEvent.pointerOver(tile('GitHub'));
+    await act(() => new Promise((r) => setTimeout(r, HOVER_DELAY_MS + 50)));
+    expect(await screen.findByTestId('link-preview')).toBeInTheDocument();
+  });
+});

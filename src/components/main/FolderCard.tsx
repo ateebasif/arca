@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { isDragActive } from '@/src/features/dnd/ids';
 import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import type { BNode } from '@/src/store/bookmarkStore';
@@ -117,6 +118,10 @@ export const FolderCard = memo(function FolderCard({
           onContextMenu={handlers.onContextMenu}
           onKeyDown={(e) => {
             dragKeyDown?.(e);
+            if (isDragActive()) {
+              if (e.key === 'Enter') e.preventDefault();
+              return;
+            }
             if (!e.defaultPrevented) handlers.onKeyDown(e);
           }}
         >

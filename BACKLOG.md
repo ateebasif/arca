@@ -51,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-057 · Fix 8 issues from independent code review (undo ids/URLs, Tidy keeper/stale ids, keyboard DnD, preview reset, popup Esc) · `fix/review-findings` · 2026-11-14
 - [x] ARC-056 · Interactive preview card: hover into it, scroll excerpt/headings, folder/date/link, Open/New tab/Mini window · `feature/interactive-previews` · 2026-11-14
 - [x] ARC-055 · Popup home: most visited, recently added, folder shortcuts, Tidy up link · `feature/popup-home` · 2026-11-14
 - [x] ARC-036 · Tidy up: duplicates (keep one, undo), empty folders, permanent sort, group by site · `feature/tidy-up` · 2026-11-13
@@ -92,7 +93,7 @@
 
 - Ardia (0.2.46, Chromium 157) disables DevTools automation, so it can't run `bun run e2e`; Ardia checks are manual. Verified 2026-11-13: unpacked loading works; ⌘T opens Ardia's command bar instead of the New Tab override (PRD §16.2), so the sidebar/popup are the entry points there.
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
-- JS is 320 KB raw / 99 KB gzip at end of Phase 1 (budget 400 KB raw); React is ~220 KB of that. Lazy-load Phase 3 views (§10).
+- JS budget (PRD §10, 400 KB): New Tab loads 383 KB; the extension ships 422 KB in total after Phase 2/3 features (dialogs, Tidy, previews are lazy chunks). Options to get the total under 400 KB: swap React for Preact (-~150 KB, needs approval) or drop features.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. UI code should use the store's `isWithin`/`getPath` instead.
 - Store copies the id→node Map on every event (~5k entries, < 1 ms). Fine for v1; revisit if profiles show it during bulk ops (ARC-023).

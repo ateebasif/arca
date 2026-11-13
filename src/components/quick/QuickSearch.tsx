@@ -74,6 +74,7 @@ export function QuickSearch({
     } else if (e.key === 'Escape' && query) {
       e.preventDefault();
       setQuery('');
+      onSearchingChange?.(false);
     }
   };
 

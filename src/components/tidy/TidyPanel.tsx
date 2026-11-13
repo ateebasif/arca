@@ -158,7 +158,12 @@ function Duplicates({ within, busy, run }: ToolProps & { within?: string }) {
   const [keep, setKeep] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const keepFor = (g: DuplicateGroup) => keep[g.key] ?? g.items[0]?.id;
+  // A remembered choice only counts if that copy is still in the group (it can
+  // drop out when "Look in" changes or it's deleted elsewhere).
+  const keepFor = (g: DuplicateGroup) => {
+    const chosen = keep[g.key];
+    return chosen && g.items.some((n) => n.id === chosen) ? chosen : g.items[0]?.id;
+  };
   const extra = groups.reduce((n, g) => n + g.items.length - 1, 0);
 
   if (groups.length === 0) return <Empty>No duplicates found. Nice and tidy.</Empty>;

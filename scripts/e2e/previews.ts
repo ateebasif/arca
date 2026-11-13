@@ -79,6 +79,8 @@ export async function runPreviewChecks(out: string): Promise<void> {
     })()`);
     await page.reload();
     await page.waitFor('document.querySelector("[data-bookmark-id]")');
+    // Preview code loads lazily; wait until it's listening for hovers.
+    await page.waitFor('document.documentElement.dataset.previews === "on"');
     const selectorFor = (title: string) =>
       page.eval<string>(
         `'[data-bookmark-id="' + [...document.querySelectorAll('[data-bookmark-id]')].find((a) => a.textContent.includes(${JSON.stringify(title)})).dataset.bookmarkId + '"]'`,
@@ -136,7 +138,7 @@ export async function runPreviewChecks(out: string): Promise<void> {
       `document.querySelector('[data-testid=link-preview]')?.textContent.includes('Arca test article')`,
     );
     await page.reload();
-    await page.waitFor('document.querySelector("[data-bookmark-id]")');
+    await page.waitFor('document.documentElement.dataset.previews === "on"');
     await page.hover(await selectorFor('Article'));
     await page.waitFor(
       `document.querySelector('[data-testid=link-preview]')?.textContent.includes('Arca test article')`,

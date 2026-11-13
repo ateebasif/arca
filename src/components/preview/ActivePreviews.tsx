@@ -23,6 +23,7 @@ export default function ActivePreviews() {
   const cardRef = useRef<HTMLDivElement>(null);
   const showTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const hideRef = useRef<() => void>(() => setTarget(null));
   const active = access === true;
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export default function ActivePreviews() {
       clearTimeout(showTimer.current);
       hideSoon();
     };
+    hideRef.current = hideNow;
     const onScroll = (e: Event) => !inCard(e.target) && hideNow();
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && hideNow();
     const onDown = (e: PointerEvent) => !inCard(e.target) && hideNow();
@@ -91,7 +93,9 @@ export default function ActivePreviews() {
     document.addEventListener('scroll', onScroll, true);
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onDown);
+    document.documentElement.dataset.previews = 'on';
     return () => {
+      delete document.documentElement.dataset.previews;
       clearTimeout(showTimer.current);
       clearTimeout(hideTimer.current);
       document.removeEventListener('pointerover', schedule);
@@ -110,7 +114,7 @@ export default function ActivePreviews() {
       key={target.url}
       ref={cardRef}
       target={target}
-      onDone={() => setTarget(null)}
+      onDone={() => hideRef.current()}
     />
   );
 }

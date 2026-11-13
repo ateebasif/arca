@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { isDragActive } from '@/src/features/dnd/ids';
 import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { bookmarkLinkProps } from '@/src/features/open';
@@ -116,6 +117,11 @@ export const FolderRow = memo(function FolderRow({
       onKeyDown={(e) => {
         dragKeyDown?.(e);
         if (e.defaultPrevented) return;
+        // Mid-drag, keys belong to the drag: also stop Enter following the link.
+        if (isDragActive()) {
+          if (e.key === 'Enter') e.preventDefault();
+          return;
+        }
         if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(folder.id);
         else handlers.onKeyDown(e);
       }}
@@ -183,6 +189,11 @@ export const BookmarkRow = memo(function BookmarkRow({
       onKeyDown={(e) => {
         dragKeyDown?.(e);
         if (e.defaultPrevented) return;
+        // Mid-drag, keys belong to the drag: also stop Enter following the link.
+        if (isDragActive()) {
+          if (e.key === 'Enter') e.preventDefault();
+          return;
+        }
         if (
           e.key === 'Enter' &&
           !renaming &&

@@ -1,6 +1,7 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
+import { isDragActive } from '../dnd/ids';
 import { requestDelete } from './actions';
 
 /** Opens the item menu next to an element (for keyboard and the ⋯ button). */
@@ -21,7 +22,7 @@ export function itemHandlers(node: BNode) {
       useOverlays.getState().openMenu({ id: node.id, x: e.clientX, y: e.clientY });
     },
     onKeyDown(e: KeyboardEvent<HTMLElement>) {
-      if (e.target !== e.currentTarget) return;
+      if (e.target !== e.currentTarget || isDragActive()) return;
       const overlays = useOverlays.getState();
       if (e.key === 'F2' && !node.isRoot) {
         e.preventDefault();

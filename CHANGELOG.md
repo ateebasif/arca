@@ -18,6 +18,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Undo could stop half-way when restoring a folder containing a bookmarklet
+  (javascript:) link, and older undo steps broke after a deleted item was
+  restored with a new id. Undo now restores browser URLs as they were and
+  tracks re-created ids.
+- Undoing "Add folder" no longer deletes links you put in it afterwards.
+- Tidy up could remove every copy of a page if the chosen copy left the
+  "Look in" scope; it now always keeps one. Sort/group skip links that changed
+  in the meantime and stay undoable if interrupted.
+- Keyboard drag & drop can now drop into folders; Enter, F2 and Delete no longer
+  act (or follow the link) mid-drag. Screen-reader announcements use names.
+- A link preview now reappears on the same tile after using its buttons; Escape
+  in the popup search brings its sections back.
+
 - Search showed the same page many times when it was saved in several folders
   (e.g. imported Trash copies). Copies now fold into one result marked
   "in N folders", and long folder paths are shortened in the middle.
