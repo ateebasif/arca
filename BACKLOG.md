@@ -14,8 +14,6 @@
 
 ### Phase 2 – Management
 
-- [ ] ARC-020 · Drag & drop reorder within a folder · Phase 2 · P0
-- [ ] ARC-021 · Drag & drop into folder cards / tree nodes, descendant guard, 600 ms auto-expand · Phase 2 · P0
 - [ ] ARC-022 · Multi-select: ⌘-click, ⇧-click, hover checkbox · Phase 2 · P1
 - [ ] ARC-023 · Bulk actions: move, delete, open all (warn > 10) · Phase 2 · P1
 - [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
@@ -54,6 +52,8 @@
 
 ## Done
 
+- [x] ARC-021 · Drag & drop into folder cards / tree nodes, descendant guard, 600 ms auto-expand · `feature/drag-drop` · 2026-11-13
+- [x] ARC-020 · Drag & drop reorder within a folder · `feature/drag-drop` · 2026-11-13
 - [x] ARC-024 · Undo stack: 20 actions, 8 s toast, ⌘Z, subtree recreate on delete · `feature/undo` · 2026-11-13
 - [x] ARC-054 · "Open links in" setting: same tab / new tab / background / mini window · `feature/open-links-setting` · 2026-11-13
 - [x] ARC-053 · Back/forward folder history: buttons, [ ], ⌥↑, mouse side buttons, ? shortcuts sheet · `feature/folder-history-nav` · 2026-11-13
@@ -101,3 +101,5 @@
 - Sidebar tree and search results are not virtualized (tree shows only expanded folders; search caps at 50). Revisit if someone has thousands of folders.
 - `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
 - e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.
+- Drag & drop: dragging folders _from_ the sidebar tree isn't supported yet (drag their cards instead). Reordering is disabled when a sort other than Manual is active, since the shown order isn't the browser order.
+- Links are no longer natively draggable (to other apps / the tab strip) because the browser's link drag cancels dnd-kit's pointer drag.

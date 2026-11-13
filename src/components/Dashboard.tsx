@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DndProvider } from '@/src/features/dnd/DndProvider';
 import { undoLast } from '@/src/features/undo/undo';
 import { isTyping, useHotkeys } from '@/src/lib/hotkeys';
 import { useBookmarks } from '@/src/store/useBookmarks';
@@ -77,44 +78,46 @@ export function Dashboard({ surface }: DashboardProps) {
   }, [state, currentFolderId]);
 
   return (
-    <div className="flex h-full" data-surface={surface}>
-      {!collapsed && <Sidebar />}
-      <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex shrink-0 flex-col px-5">
-          <div className="flex h-14 items-center gap-3">
-            {collapsed && (
-              <IconButton label="Show sidebar (⌘\)" onClick={toggleSidebar}>
-                <SidebarIcon />
-              </IconButton>
+    <DndProvider>
+      <div className="flex h-full" data-surface={surface}>
+        {!collapsed && <Sidebar />}
+        <main className="flex min-w-0 flex-1 flex-col">
+          <header className="flex shrink-0 flex-col px-5">
+            <div className="flex h-14 items-center gap-3">
+              {collapsed && (
+                <IconButton label="Show sidebar (⌘\)" onClick={toggleSidebar}>
+                  <SidebarIcon />
+                </IconButton>
+              )}
+              <NavButtons />
+              <div className="min-w-0 flex-1">
+                <Breadcrumbs />
+              </div>
+              <div className="flex w-[min(34rem,48%)] shrink-0">
+                <SearchBox />
+              </div>
+              <AddMenu />
+            </div>
+            {!searching && (
+              <div className="flex h-10 items-center justify-between gap-3">
+                <ScopeSwitch />
+                <Toolbar />
+              </div>
             )}
-            <NavButtons />
-            <div className="min-w-0 flex-1">
-              <Breadcrumbs />
-            </div>
-            <div className="flex w-[min(34rem,48%)] shrink-0">
-              <SearchBox />
-            </div>
-            <AddMenu />
-          </div>
-          {!searching && (
-            <div className="flex h-10 items-center justify-between gap-3">
-              <ScopeSwitch />
-              <Toolbar />
-            </div>
-          )}
-        </header>
-        <section
-          ref={setScrollParent}
-          aria-label="Folder contents"
-          className="relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
-        >
-          <ScrollParentContext.Provider value={scrollParent}>
-            {searching ? <SearchResults /> : <FolderView />}
-          </ScrollParentContext.Provider>
-        </section>
-      </main>
-      <OverlayHost />
-      <PreviewController />
-    </div>
+          </header>
+          <section
+            ref={setScrollParent}
+            aria-label="Folder contents"
+            className="relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
+          >
+            <ScrollParentContext.Provider value={scrollParent}>
+              {searching ? <SearchResults /> : <FolderView />}
+            </ScrollParentContext.Provider>
+          </section>
+        </main>
+        <OverlayHost />
+        <PreviewController />
+      </div>
+    </DndProvider>
   );
 }

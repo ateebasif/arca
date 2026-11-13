@@ -203,6 +203,45 @@ export class Page {
     }
   }
 
+  /** Centre of the first element matching `selector` (scrolled into view). */
+  async centerOf(selector: string): Promise<{ x: number; y: number }> {
+    const point = await this.eval<{ x: number; y: number } | null>(`(() => {
+      const el = document.querySelector(${JSON.stringify(selector)});
+      if (!el) return null;
+      el.scrollIntoView({ block: 'center' });
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    })()`);
+    if (!point) throw new Error(`No element for ${selector}`);
+    return point;
+  }
+
+  /** A real pointer drag: press, move in steps, pause, release. */
+  async drag(from: string, to: string, modifiers = 0): Promise<void> {
+    const a = await this.centerOf(from);
+    const b = await this.centerOf(to);
+    const mouse = (type: string, x: number, y: number, extra: object = {}) =>
+      this.send('Input.dispatchMouseEvent', { type, x, y, modifiers, ...extra });
+    await mouse('mouseMoved', a.x, a.y);
+    await mouse('mousePressed', a.x, a.y, { button: 'left', buttons: 1, clickCount: 1 });
+    const steps = 12;
+    for (let i = 1; i <= steps; i++) {
+      await mouse(
+        'mouseMoved',
+        a.x + ((b.x - a.x) * i) / steps,
+        a.y + ((b.y - a.y) * i) / steps,
+        {
+          button: 'left',
+          buttons: 1,
+        },
+      );
+      await sleep(16);
+    }
+    await sleep(150);
+    await mouse('mouseReleased', b.x, b.y, { button: 'left', buttons: 0, clickCount: 1 });
+    await sleep(250);
+  }
+
   /** Moves the mouse over the centre of an element (or to a far corner). */
   async hover(selector: string | null): Promise<void> {
     const point = selector

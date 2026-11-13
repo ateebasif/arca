@@ -1,6 +1,7 @@
 import { getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { useFolderDrop } from '@/src/features/dnd/hooks';
 import { ChevronRight } from '../icons';
 
 /** Path to the open folder. Every crumb but the last opens that folder. */
@@ -49,18 +50,46 @@ export function Breadcrumbs() {
                   {node.title || 'Untitled'}
                 </h1>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => openFolder(node.id)}
-                  className="text-ink-muted hover:bg-hover hover:text-ink max-w-40 truncate rounded-md px-1.5 py-0.5"
-                >
-                  {node.title || 'Untitled'}
-                </button>
+                <Crumb
+                  id={node.id}
+                  title={node.title || 'Untitled'}
+                  onOpen={openFolder}
+                />
               )}
             </li>
           );
         })}
       </ol>
     </nav>
+  );
+}
+
+/** A breadcrumb that opens its folder and accepts drops. */
+function Crumb({
+  id,
+  title,
+  onOpen,
+}: {
+  id: string;
+  title: string;
+  onOpen(id: string): void;
+}) {
+  const drop = useFolderDrop(id, 'crumb');
+  return (
+    <button
+      ref={drop.setDropRef}
+      type="button"
+      data-drop-folder={id}
+      onClick={() => onOpen(id)}
+      className={`text-ink-muted hover:bg-hover hover:text-ink max-w-40 truncate rounded-md px-1.5 py-0.5 ${
+        drop.isOver
+          ? drop.blocked
+            ? 'ring-danger ring-2'
+            : 'ring-accent bg-accent-soft ring-2'
+          : ''
+      }`}
+    >
+      {title}
+    </button>
   );
 }

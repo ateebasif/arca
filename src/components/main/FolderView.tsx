@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  rectSortingStrategy,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { itemId } from '@/src/features/dnd/ids';
 import { sortNodes } from '@/src/features/sort';
 import {
   folderCounts,
@@ -96,82 +102,94 @@ function FolderContents() {
         <BookmarkRow bookmark={node} folderPath={folderPath} />
       );
     return (
-      <div role="table" aria-label="Folder contents" className="flex flex-col">
-        <ListHeader />
-        <div role="rowgroup" className="flex flex-col gap-px">
-          {rows.length > VIRTUALIZE_OVER ? (
-            <VirtualRows
-              items={rows}
-              rowHeight={41}
-              minColumnWidth={0}
-              gap={1}
-              getKey={(n) => n.id}
-              render={renderRow}
-              scrollToIndex={
-                revealId ? rows.findIndex((n) => n.id === revealId) : undefined
-              }
-            />
-          ) : (
-            rows.map((node) => <div key={node.id}>{renderRow(node)}</div>)
-          )}
+      <SortableContext
+        items={rows.map((n) => itemId(n.id))}
+        strategy={verticalListSortingStrategy}
+        disabled={{ draggable: false, droppable: sort !== 'manual' }}
+      >
+        <div role="table" aria-label="Folder contents" className="flex flex-col">
+          <ListHeader />
+          <div role="rowgroup" className="flex flex-col gap-px">
+            {rows.length > VIRTUALIZE_OVER ? (
+              <VirtualRows
+                items={rows}
+                rowHeight={41}
+                minColumnWidth={0}
+                gap={1}
+                getKey={(n) => n.id}
+                render={renderRow}
+                scrollToIndex={
+                  revealId ? rows.findIndex((n) => n.id === revealId) : undefined
+                }
+              />
+            ) : (
+              rows.map((node) => <div key={node.id}>{renderRow(node)}</div>)
+            )}
+          </div>
         </div>
-      </div>
+      </SortableContext>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {folders.length > 0 && (
-        <section aria-label="Folders">
-          <ul className={gridClass('comfortable')}>
-            {folders.map((folder, i) => (
-              <li key={folder.id} data-tile="" style={stagger(i)}>
-                <FolderCard
-                  folder={folder}
-                  count={counts.get(folder.id) ?? 0}
-                  subfolders={
-                    (folder.childIds ?? []).filter((c) => state.nodes.get(c)?.childIds)
-                      .length
-                  }
-                  preview={folderPreview(state, folder)}
-                  onOpen={openFolder}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {bookmarks.length > 0 && (
-        <section aria-label="Bookmarks">
-          {bookmarks.length > VIRTUALIZE_OVER ? (
-            <VirtualRows
-              items={bookmarks}
-              rowHeight={density === 'compact' ? 44 : TILE_ROW_HEIGHT}
-              minColumnWidth={density === 'compact' ? 220 : TILE_MIN_WIDTH}
-              gap={density === 'compact' ? 4 : 12}
-              getKey={(b) => b.id}
-              render={(b) => <BookmarkTile bookmark={b} density={density} />}
-              scrollToIndex={
-                revealId ? bookmarks.findIndex((b) => b.id === revealId) : undefined
-              }
-            />
-          ) : (
-            <ul className={gridClass(density)}>
-              {bookmarks.map((bookmark, i) => (
-                <li
-                  key={bookmark.id}
-                  data-tile=""
-                  className="@container min-w-0"
-                  style={stagger(i + folders.length)}
-                >
-                  <BookmarkTile bookmark={bookmark} density={density} />
+    <SortableContext
+      items={[...folders, ...bookmarks].map((n) => itemId(n.id))}
+      strategy={rectSortingStrategy}
+      disabled={{ draggable: false, droppable: sort !== 'manual' }}
+    >
+      <div className="flex flex-col gap-6">
+        {folders.length > 0 && (
+          <section aria-label="Folders">
+            <ul className={gridClass('comfortable')}>
+              {folders.map((folder, i) => (
+                <li key={folder.id} data-tile="" style={stagger(i)}>
+                  <FolderCard
+                    folder={folder}
+                    count={counts.get(folder.id) ?? 0}
+                    subfolders={
+                      (folder.childIds ?? []).filter((c) => state.nodes.get(c)?.childIds)
+                        .length
+                    }
+                    preview={folderPreview(state, folder)}
+                    onOpen={openFolder}
+                  />
                 </li>
               ))}
             </ul>
-          )}
-        </section>
-      )}
-    </div>
+          </section>
+        )}
+        {bookmarks.length > 0 && (
+          <section aria-label="Bookmarks">
+            {bookmarks.length > VIRTUALIZE_OVER ? (
+              <VirtualRows
+                items={bookmarks}
+                rowHeight={density === 'compact' ? 44 : TILE_ROW_HEIGHT}
+                minColumnWidth={density === 'compact' ? 220 : TILE_MIN_WIDTH}
+                gap={density === 'compact' ? 4 : 12}
+                getKey={(b) => b.id}
+                render={(b) => <BookmarkTile bookmark={b} density={density} />}
+                scrollToIndex={
+                  revealId ? bookmarks.findIndex((b) => b.id === revealId) : undefined
+                }
+              />
+            ) : (
+              <ul className={gridClass(density)}>
+                {bookmarks.map((bookmark, i) => (
+                  <li
+                    key={bookmark.id}
+                    data-tile=""
+                    className="@container min-w-0"
+                    style={stagger(i + folders.length)}
+                  >
+                    <BookmarkTile bookmark={bookmark} density={density} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+      </div>
+    </SortableContext>
   );
 }
 
@@ -219,31 +237,35 @@ function AllLinksView() {
   const labelFor = (id: string) => labels.get(id) || here;
   const scrollTo = revealId ? items.findIndex((b) => b.id === revealId) : undefined;
 
+  const ids = items.map((n) => itemId(n.id));
+  const noReorder = { draggable: false, droppable: true };
   if (view === 'list') {
     return (
-      <div>
-        {summary}
-        <div role="table" aria-label="All links" className="flex flex-col">
-          <ListHeader />
-          <div role="rowgroup" className="flex flex-col gap-px">
-            {items.length > VIRTUALIZE_OVER ? (
-              <VirtualRows
-                items={items}
-                rowHeight={41}
-                minColumnWidth={0}
-                gap={1}
-                getKey={(n) => n.id}
-                render={(n) => <BookmarkRow bookmark={n} folderPath={labelFor(n.id)} />}
-                scrollToIndex={scrollTo}
-              />
-            ) : (
-              items.map((n) => (
-                <BookmarkRow key={n.id} bookmark={n} folderPath={labelFor(n.id)} />
-              ))
-            )}
+      <SortableContext items={ids} disabled={noReorder}>
+        <div>
+          {summary}
+          <div role="table" aria-label="All links" className="flex flex-col">
+            <ListHeader />
+            <div role="rowgroup" className="flex flex-col gap-px">
+              {items.length > VIRTUALIZE_OVER ? (
+                <VirtualRows
+                  items={items}
+                  rowHeight={41}
+                  minColumnWidth={0}
+                  gap={1}
+                  getKey={(n) => n.id}
+                  render={(n) => <BookmarkRow bookmark={n} folderPath={labelFor(n.id)} />}
+                  scrollToIndex={scrollTo}
+                />
+              ) : (
+                items.map((n) => (
+                  <BookmarkRow key={n.id} bookmark={n} folderPath={labelFor(n.id)} />
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </SortableContext>
     );
   }
 
@@ -251,28 +273,35 @@ function AllLinksView() {
     <BookmarkTile bookmark={b} density={density} folderLabel={labelFor(b.id)} />
   );
   return (
-    <section aria-label="All links">
-      {summary}
-      {items.length > VIRTUALIZE_OVER ? (
-        <VirtualRows
-          items={items}
-          rowHeight={density === 'compact' ? 44 : TILE_ROW_HEIGHT}
-          minColumnWidth={density === 'compact' ? 220 : TILE_MIN_WIDTH}
-          gap={density === 'compact' ? 4 : 12}
-          getKey={(b) => b.id}
-          render={render}
-          scrollToIndex={scrollTo}
-        />
-      ) : (
-        <ul className={gridClass(density)}>
-          {items.map((b, i) => (
-            <li key={b.id} data-tile="" className="@container min-w-0" style={stagger(i)}>
-              {render(b)}
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <SortableContext items={ids} disabled={noReorder}>
+      <section aria-label="All links">
+        {summary}
+        {items.length > VIRTUALIZE_OVER ? (
+          <VirtualRows
+            items={items}
+            rowHeight={density === 'compact' ? 44 : TILE_ROW_HEIGHT}
+            minColumnWidth={density === 'compact' ? 220 : TILE_MIN_WIDTH}
+            gap={density === 'compact' ? 4 : 12}
+            getKey={(b) => b.id}
+            render={render}
+            scrollToIndex={scrollTo}
+          />
+        ) : (
+          <ul className={gridClass(density)}>
+            {items.map((b, i) => (
+              <li
+                key={b.id}
+                data-tile=""
+                className="@container min-w-0"
+                style={stagger(i)}
+              >
+                {render(b)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </SortableContext>
   );
 }
 
