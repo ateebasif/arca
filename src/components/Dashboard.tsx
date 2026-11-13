@@ -29,6 +29,13 @@ export function Dashboard({ surface }: DashboardProps) {
 
   useHotkeys({ 'mod+\\': () => toggleSidebar() });
 
+  // Performance mark for the e2e paint budget (PRD §10: interactive < 200 ms).
+  useEffect(() => {
+    if (state.ready && performance.getEntriesByName('arca:interactive').length === 0) {
+      performance.mark('arca:interactive');
+    }
+  }, [state.ready]);
+
   // If the open folder disappears (deleted elsewhere), fall back to the first root.
   useEffect(() => {
     if (state.ready && !state.nodes.has(currentFolderId) && state.rootIds[0]) {

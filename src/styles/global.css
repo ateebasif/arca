@@ -19,11 +19,15 @@
   --color-hover: rgb(20 20 40 / 0.05);
   --color-line: rgb(20 20 40 / 0.08);
   --color-ink: #1d1d22;
-  --color-ink-muted: #6b6b76;
-  --color-ink-faint: #9a9aa5;
-  --color-accent: #6656f0;
-  --color-accent-soft: rgb(102 86 240 / 0.12);
-  --color-danger: #d93a3a;
+  /* Text colours meet WCAG AA (4.5:1) on every surface in both themes. */
+  --color-ink-muted: #5c5c67;
+  --color-ink-faint: #6a6a75;
+  --color-accent: #5a4ae0;
+  --color-accent-soft: rgb(90 74 224 / 0.12);
+  --color-danger: #c22b2b;
+  /* Fills behind white text; the same in both themes. */
+  --color-accent-strong: #5a4ae0;
+  --color-danger-strong: #c22b2b;
 
   --shadow-tile: 0 1px 2px rgb(20 20 40 / 0.06), 0 2px 8px rgb(20 20 40 / 0.04);
   --shadow-pop: 0 8px 30px rgb(20 20 40 / 0.14), 0 1px 3px rgb(20 20 40 / 0.08);
@@ -39,10 +43,11 @@
       --color-hover: rgb(255 255 255 / 0.06);
       --color-line: rgb(255 255 255 / 0.08);
       --color-ink: #f1f1f5;
-      --color-ink-muted: #a3a3ae;
-      --color-ink-faint: #74747f;
-      --color-accent: #8f83ff;
-      --color-accent-soft: rgb(143 131 255 / 0.16);
+      --color-ink-muted: #b4b4be;
+      --color-ink-faint: #9b9ba6;
+      --color-accent: #9d93ff;
+      --color-accent-soft: rgb(157 147 255 / 0.16);
+      --color-danger: #ff7070;
       --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.3);
       --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
       color-scheme: dark;
@@ -57,10 +62,11 @@
     --color-hover: rgb(255 255 255 / 0.06);
     --color-line: rgb(255 255 255 / 0.08);
     --color-ink: #f1f1f5;
-    --color-ink-muted: #a3a3ae;
-    --color-ink-faint: #74747f;
-    --color-accent: #8f83ff;
-    --color-accent-soft: rgb(143 131 255 / 0.16);
+    --color-ink-muted: #b4b4be;
+    --color-ink-faint: #9b9ba6;
+    --color-accent: #9d93ff;
+    --color-accent-soft: rgb(157 147 255 / 0.16);
+    --color-danger: #ff7070;
     --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
     color-scheme: dark;
