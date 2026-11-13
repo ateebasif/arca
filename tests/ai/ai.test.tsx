@@ -1,12 +1,15 @@
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dashboard } from '@/src/components/Dashboard';
-import { setEmbeddingStoreForTests } from '@/src/features/ai/embedCache';
+import { clearEmbeddings, setEmbeddingStoreForTests } from '@/src/features/ai/embedCache';
 import { chooseK, groupMembers, kmeans, normalize } from '@/src/features/ai/kmeans';
 import {
   applyGroups,
   cleanFolderName,
+  embeddingText,
+  estimateSeconds,
   planGroups,
+  taskPrefix,
   type OrganizeItem,
 } from '@/src/features/ai/organize';
 import * as undo from '@/src/features/undo/undo';
@@ -234,6 +237,12 @@ describe('planGroups', () => {
       opts,
     );
     expect(calls.embeddedTexts - before).toBe(1);
+
+    // Clearing the cache (Settings → Local AI) re-embeds everything.
+    await clearEmbeddings();
+    const cleared = calls.embeddedTexts;
+    await planGroups([...items(REACT), ...items(FOOD)], opts);
+    expect(calls.embeddedTexts - cleared).toBe(10);
   });
 
   it('falls back to the top site when naming fails, and dedupes names', async () => {
@@ -259,6 +268,42 @@ describe('planGroups', () => {
         signal: controller.signal,
       }),
     ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+describe('embedding text', () => {
+  it('adds the nomic task prefix only for nomic models', () => {
+    expect(taskPrefix('nomic-embed-text:latest')).toBe('clustering: ');
+    expect(taskPrefix('qwen3-embedding:4b')).toBe('');
+  });
+
+  it('uses title, site and own folder; drops a folder most links share', async () => {
+    const [item] = items(['React hooks guide'], 'Bar / Dev / Frontend');
+    expect(embeddingText(item!)).toBe('React hooks guide · site0.dev · in Frontend');
+    expect(embeddingText(item!, false)).toBe('React hooks guide · site0.dev');
+
+    const { fn } = fakeOllama();
+    const mixed = [
+      ...items(REACT, 'Imported'),
+      ...items(FOOD, 'Imported'),
+      ...items(['Odd one'], 'Kitchen'),
+    ];
+    await planGroups(mixed, {
+      base: 'http://localhost:11434',
+      embedModel: 'nomic-embed-text:latest',
+      chatModel: 'llama3.2:latest',
+      groups: 2,
+    });
+    const embedCall = fn.mock.calls.find(([u]) => String(u).endsWith('/api/embed'));
+    const sent = JSON.parse(String(embedCall![1]!.body)).input as string[];
+    expect(sent.every((t) => t.startsWith('clustering: '))).toBe(true);
+    expect(sent.some((t) => t.includes('in Imported'))).toBe(false);
+    expect(sent.some((t) => t.includes('in Kitchen'))).toBe(true);
+  });
+
+  it('estimates first-run time per model', () => {
+    expect(estimateSeconds('qwen3-embedding:4b', 1000)).toBe(90);
+    expect(estimateSeconds('nomic-embed-text', 1000)).toBe(9);
   });
 });
 

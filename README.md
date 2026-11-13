@@ -24,6 +24,9 @@ data stays on your machine.
   folder or a breadcrumb to move. Keyboard: Space, arrows, Space.
 - **Tidy up**: remove duplicates (keeps the best copy), remove empty folders,
   sort a folder for real, group links into per-site folders. Local and undoable.
+- **AI organize** (opt-in, local only): groups links by topic with your own
+  [Ollama](https://ollama.com) models and suggests folder names; you review
+  before anything moves, and one Undo reverses it. See _Local AI_ below.
 - **Open links in**: same tab, new tab, background tab or a mini window.
 - **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
   excerpt, headings and quick-open buttons. Fetched once without cookies,
@@ -34,7 +37,26 @@ data stays on your machine.
   "Reduce motion").
 
 Private by design: no analytics, no accounts, no remote code, and no network requests
-unless you turn on link previews. See [SECURITY.md](SECURITY.md).
+unless you turn on link previews or local AI (which only talks to Ollama on this computer). See [SECURITY.md](SECURITY.md).
+
+## Local AI (optional)
+
+Arca can use [Ollama](https://ollama.com) on this computer to organize bookmarks. No
+Docker, no vector database, no cloud: Ollama embeds each link's title, site and folder,
+Arca clusters the vectors itself and caches them in the browser, and a small chat model
+names each group.
+
+1. Pull models (any embedder and chat model work; these are the recommended ones):
+   `ollama pull qwen3-embedding:4b` (best grouping; about 90 ms per link on the first
+   run) or `nomic-embed-text` (about 10 ms per link, rougher groups), and
+   `ollama pull llama3.2` for names.
+2. Let Arca talk to Ollama (Ollama blocks browser extensions by default). Use your
+   extension ID from the extensions page; Settings → Local AI shows the exact command:
+   `launchctl setenv OLLAMA_ORIGINS "chrome-extension://<arca-id>"`, then quit and
+   reopen Ollama.
+3. Settings → Local AI → turn on (the browser asks to allow `localhost:11434`), pick
+   models.
+4. Open a folder → Tidy up → AI organize → Suggest folders → review → Apply.
 
 ## Keyboard shortcuts
 

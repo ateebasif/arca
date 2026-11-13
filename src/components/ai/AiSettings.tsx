@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { clearEmbeddings } from '@/src/features/ai/embedCache';
 import { hasOrigin, requestOrigin } from '@/src/lib/permissions';
 import {
   isEmbeddingModel,
@@ -167,9 +168,23 @@ export function AiSettings() {
               />
             </div>
           )}
+          <ClearCache />
         </div>
       )}
     </div>
+  );
+}
+
+function ClearCache() {
+  const [cleared, setCleared] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => void clearEmbeddings().then(() => setCleared(true))}
+      className="text-ink-muted hover:text-ink text-xs underline-offset-2 hover:underline"
+    >
+      {cleared ? 'Cached AI data cleared' : 'Clear cached AI data'}
+    </button>
   );
 }
 

@@ -41,6 +41,22 @@ removes the permission again. When on:
 - Each page is fetched at most once a week (failures once a day). You can clear the
   cache in Settings.
 
+### Local AI (opt-in)
+
+Off by default. Turning it on asks for permission to reach the Ollama address only
+(`http://localhost:11434/*` by default).
+
+- The Ollama URL must be a loopback host (`localhost`, `127.0.0.1`, `[::1]`) with no
+  credentials; anything else is rejected before a request is made, including values
+  tampered into storage.
+- Requests send no cookies or referrer and have timeouts. Responses are shape-checked.
+- Only bookmark titles, sites and folder names are sent, and only to that local server.
+- The model never chooses which bookmarks move; local k-means clustering does. Its
+  folder-name replies are treated as untrusted: control, zero-width, bidi and path
+  characters are stripped, length is capped, and the bookmark text is marked as data in
+  the prompt. Every suggestion is shown for review, and one Undo reverses the move.
+- Embeddings are cached in IndexedDB (private to Arca) and can be cleared in Settings.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.

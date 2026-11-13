@@ -2,7 +2,6 @@
 
 ## In Progress
 
-- [ ] ARC-058 · AI organize with local Ollama: embed (nomic-embed-text), cluster locally, name folders (llama3.2), preview + undo · `feature/ai-organize` · P1
 - [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · `docs/readme-load-unpacked` · Phase 1 · Ardia: loads unpacked, dashboard works with ~4k bookmarks; ⌘T opens Ardia's command bar (no New Tab override); popup still to check
 
 ## Up Next
@@ -50,11 +49,14 @@
 
 ## Ideas (unscoped)
 
+- AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Consider minSize 2 for small sets.
+
 - Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
 
+- [x] ARC-058 · AI organize with local Ollama: embed (qwen3-embedding / nomic-embed-text), k-means locally, name folders (llama3.2), review + one undo · `feature/ai-organize` · 2026-11-14
 - [x] ARC-057 · Fix 8 issues from independent code review (undo ids/URLs, Tidy keeper/stale ids, keyboard DnD, preview reset, popup Esc) · `fix/review-findings` · 2026-11-14
 - [x] ARC-056 · Interactive preview card: hover into it, scroll excerpt/headings, folder/date/link, Open/New tab/Mini window · `feature/interactive-previews` · 2026-11-14
 - [x] ARC-055 · Popup home: most visited, recently added, folder shortcuts, Tidy up link · `feature/popup-home` · 2026-11-14
