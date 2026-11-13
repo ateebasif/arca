@@ -232,6 +232,58 @@ check('popup: quick search and dashboard page', async (page) => {
   assert.equal(await page.eval('document.title'), 'Arca');
 });
 
+check('1,000-bookmark folder is virtualized, scrolls and reveals', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.eval(`(async () => {
+    const folder = await chrome.bookmarks.create({ parentId: '2', title: 'arca-e2e-big' });
+    await Promise.all(Array.from({ length: 1000 }, (_, i) =>
+      chrome.bookmarks.create({ parentId: folder.id, title: 'Big ' + String(i).padStart(4, '0'), url: 'https://big' + i + '.example.com/' })));
+  })()`);
+  await page.setViewport(1280, 800);
+  await page.reload();
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  const t0 = await page.eval<number>('performance.now()');
+  await page.eval(`(async () => {
+    const [f] = await chrome.bookmarks.search({ title: 'arca-e2e-big' });
+    window.__bigId = f.id;
+  })()`);
+  // Open the folder via the tree (expand Other bookmarks first).
+  await page.eval(`document.querySelector('[data-folder-id="2"]').click()`);
+  await page.waitFor('document.querySelector("[data-folder-card]")');
+  await page.eval(
+    `document.querySelector('[data-folder-card="' + window.__bigId + '"]').click()`,
+  );
+  await page.waitFor('document.querySelector("[data-virtualized] [data-bookmark-id]")');
+  const t1 = await page.eval<number>('performance.now()');
+  const rendered = await page.eval<number>(
+    'document.querySelectorAll("[data-bookmark-id]").length',
+  );
+  console.log(
+    `    open 1,000-item folder: ${(t1 - t0).toFixed(0)} ms, ${rendered} tiles in DOM`,
+  );
+  assert.ok(rendered < 200, `rendered ${rendered} tiles`);
+  await page.screenshot(`${OUT}/big-folder.png`);
+
+  await page.eval(
+    `document.querySelector('[aria-label="Folder contents"]').scrollTop = 1e9`,
+  );
+  await page.waitFor(
+    `[...document.querySelectorAll('[data-bookmark-id]')].some((a) => a.textContent.includes('Big 0999'))`,
+  );
+
+  // Reveal an item far down from search.
+  await page.eval(
+    `document.querySelector('[aria-label="Folder contents"]').scrollTop = 0`,
+  );
+  await page.key('k', MOD.meta);
+  await page.type('big 0777');
+  await page.waitFor('document.querySelector("[role=option]")');
+  await page.key('Enter', MOD.alt);
+  await page.waitFor(`document.activeElement?.textContent?.includes('Big 0777')`);
+
+  await page.eval(`chrome.bookmarks.removeTree(window.__bigId)`);
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);

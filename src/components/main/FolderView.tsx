@@ -6,6 +6,8 @@ import { useUi } from '@/src/store/ui';
 import { BookmarkRow, FolderRow, ListHeader } from './BookmarkList';
 import { BookmarkTile } from './BookmarkTile';
 import { FolderCard } from './FolderCard';
+import { VIRTUALIZE_OVER } from './scrollParent';
+import { VirtualRows } from './Virtual';
 
 /** Contents of the open folder: folders first, then bookmarks, in grid or list. */
 export function FolderView() {
@@ -33,6 +35,7 @@ export function FolderView() {
     };
   }, [state, currentFolderId, sort, direction]);
   const counts = folderCounts(state);
+  const revealId = useUi((s) => s.revealId);
   useRevealEffect();
 
   if (!state.ready) return null;
@@ -50,21 +53,32 @@ export function FolderView() {
     const folderPath = getPath(state, currentFolderId)
       .map((n) => n.title)
       .join(' / ');
+    const rows = [...folders, ...bookmarks];
+    const renderRow = (node: (typeof rows)[number]) =>
+      node.childIds ? (
+        <FolderRow folder={node} count={counts.get(node.id) ?? 0} onOpen={openFolder} />
+      ) : (
+        <BookmarkRow bookmark={node} folderPath={folderPath} />
+      );
     return (
       <div role="table" aria-label="Folder contents" className="flex flex-col">
         <ListHeader />
         <div role="rowgroup" className="flex flex-col gap-px">
-          {folders.map((folder) => (
-            <FolderRow
-              key={folder.id}
-              folder={folder}
-              count={counts.get(folder.id) ?? 0}
-              onOpen={openFolder}
+          {rows.length > VIRTUALIZE_OVER ? (
+            <VirtualRows
+              items={rows}
+              rowHeight={41}
+              minColumnWidth={0}
+              gap={1}
+              getKey={(n) => n.id}
+              render={renderRow}
+              scrollToIndex={
+                revealId ? rows.findIndex((n) => n.id === revealId) : undefined
+              }
             />
-          ))}
-          {bookmarks.map((bookmark) => (
-            <BookmarkRow key={bookmark.id} bookmark={bookmark} folderPath={folderPath} />
-          ))}
+          ) : (
+            rows.map((node) => <div key={node.id}>{renderRow(node)}</div>)
+          )}
         </div>
       </div>
     );
@@ -90,26 +104,43 @@ export function FolderView() {
       )}
       {bookmarks.length > 0 && (
         <section aria-label="Bookmarks">
-          <ul
-            className={
-              density === 'compact'
-                ? 'grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-1'
-                : 'grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3'
-            }
-          >
-            {bookmarks.map((bookmark) => (
-              <li key={bookmark.id} className="@container min-w-0">
-                <BookmarkTile bookmark={bookmark} density={density} />
-              </li>
-            ))}
-          </ul>
+          {bookmarks.length > VIRTUALIZE_OVER ? (
+            <VirtualRows
+              items={bookmarks}
+              rowHeight={density === 'compact' ? 44 : 144}
+              minColumnWidth={density === 'compact' ? 220 : 132}
+              gap={density === 'compact' ? 4 : 12}
+              getKey={(b) => b.id}
+              render={(b) => <BookmarkTile bookmark={b} density={density} />}
+              scrollToIndex={
+                revealId ? bookmarks.findIndex((b) => b.id === revealId) : undefined
+              }
+            />
+          ) : (
+            <ul
+              className={
+                density === 'compact'
+                  ? 'grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-1'
+                  : 'grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3'
+              }
+            >
+              {bookmarks.map((bookmark) => (
+                <li key={bookmark.id} className="@container min-w-0">
+                  <BookmarkTile bookmark={bookmark} density={density} />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
     </div>
   );
 }
 
-/** After "show in folder", scroll to the item, focus it and flash a ring. */
+/**
+ * After "show in folder", scroll to the item, focus it and flash a ring.
+ * Virtualized lists render the row a frame or two later, so retry briefly.
+ */
 function useRevealEffect() {
   const revealId = useUi((s) => s.revealId);
   const clearReveal = useUi((s) => s.clearReveal);
@@ -120,15 +151,27 @@ function useRevealEffect() {
       `[data-folder-card="${CSS.escape(revealId)}"]`,
       `[data-folder-row="${CSS.escape(revealId)}"]`,
     ].join(',');
-    const el = document.querySelector<HTMLElement>(selector);
-    if (!el) return;
-    el.scrollIntoView({ block: 'center' });
-    el.focus({ preventScroll: true });
-    el.classList.add('ring-2', 'ring-accent');
-    const timer = setTimeout(() => {
-      el.classList.remove('ring-2', 'ring-accent');
-      clearReveal();
-    }, 1600);
-    return () => clearTimeout(timer);
+    let frame = 0;
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tryReveal = () => {
+      const el = document.querySelector<HTMLElement>(selector);
+      if (!el) {
+        if (++attempts < 20) frame = requestAnimationFrame(tryReveal);
+        return;
+      }
+      el.scrollIntoView({ block: 'center' });
+      el.focus({ preventScroll: true });
+      el.classList.add('ring-2', 'ring-accent');
+      timer = setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-accent');
+        clearReveal();
+      }, 1600);
+    };
+    tryReveal();
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+    };
   }, [revealId, clearReveal]);
 }

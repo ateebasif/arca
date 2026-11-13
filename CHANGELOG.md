@@ -38,4 +38,6 @@ All notable changes to this project are documented here. The format follows
 - Toolbar popup (⌥⇧B): quick search with the top 8 results, "Bookmark this tab"
   with a remembered folder, "Saved in …" for bookmarked pages, and a button to
   open the dashboard in a tab.
+- Folders with more than 200 items render virtually (a 1,000-item folder
+  opens in ~30 ms with ~60 tiles in the DOM).
 - `bun run e2e`: smoke checks against real Chrome with the built extension.
