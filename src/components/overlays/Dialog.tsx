@@ -14,6 +14,8 @@ interface DialogProps {
   /** Buttons row. */
   footer: ReactNode;
   role?: 'dialog' | 'alertdialog';
+  /** Wide variant for panels (Tidy up). */
+  wide?: boolean;
 }
 
 /**
@@ -26,6 +28,7 @@ export function Dialog({
   children,
   footer,
   role = 'dialog',
+  wide = false,
 }: DialogProps) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -74,12 +77,16 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={titleId}
         onKeyDown={onKeyDown}
-        className="animate-pop border-line bg-surface-strong w-full max-w-md rounded-(--radius-panel) border p-5 shadow-(--shadow-pop) backdrop-blur-xl"
+        className={`animate-pop border-line bg-surface-strong w-full ${wide ? 'flex max-h-[86vh] max-w-3xl flex-col' : 'max-w-md'} rounded-(--radius-panel) border p-5 shadow-(--shadow-pop) backdrop-blur-xl`}
       >
         <h2 id={titleId} className="mb-4 text-[15px] font-semibold">
           {title}
         </h2>
-        {children}
+        {wide ? (
+          <div className="-mr-2 min-h-0 flex-1 overflow-y-auto pr-2">{children}</div>
+        ) : (
+          children
+        )}
         <div className="mt-5 flex justify-end gap-2">{footer}</div>
       </div>
     </div>

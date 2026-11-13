@@ -1,7 +1,7 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
 import { useOverlays } from '@/src/store/overlays';
-import { GearIcon, KeyboardIcon, SidebarIcon } from '../icons';
+import { GearIcon, KeyboardIcon, SidebarIcon, SparkleIcon } from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
 
@@ -33,6 +33,16 @@ export function Sidebar() {
       <nav className="min-h-0 flex-1 overflow-y-auto">
         <FolderTree />
       </nav>
+      <div className="px-2 pb-2">
+        <button
+          type="button"
+          onClick={() => useOverlays.getState().setTidyOpen(true)}
+          className="border-line text-ink-muted hover:bg-hover hover:text-ink flex h-9 w-full items-center gap-2 rounded-lg border px-2.5 text-[13px] transition-colors duration-150"
+        >
+          <SparkleIcon className="text-accent" /> Tidy up
+          <span className="text-ink-faint ml-auto text-[11px]">duplicates · sort</span>
+        </button>
+      </div>
       <div className="border-line flex shrink-0 items-center justify-between gap-2 border-t px-2 py-2">
         <button
           type="button"

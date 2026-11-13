@@ -162,3 +162,10 @@ export const KeyboardIcon = (p: IconProps) => (
     <path d="M4.5 6.75h.01M7 6.75h.01M9.5 6.75h.01M12 6.75h.01M5 9.5h6" />
   </Icon>
 );
+
+export const SparkleIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 2.25 9.3 6.7l4.45 1.3-4.45 1.3L8 13.75 6.7 9.3 2.25 8l4.45-1.3Z" />
+    <path d="M13 1.75v2.5M11.75 3h2.5" />
+  </Icon>
+);

@@ -30,7 +30,6 @@
 - [ ] ARC-033 · Tag manager: rename, merge, delete, colors · Phase 3 · P1
 - [ ] ARC-034 · Bulk add/remove tag · Phase 3 · P2
 - [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
-- [ ] ARC-036 · URL normalization + duplicates finder (keep / delete / merge) · Phase 3 · P1
 - [ ] ARC-037 · Dead-link finder: optional permission, worker, cache, cancel · Phase 3 · P1
 - [ ] ARC-038 · Export: Netscape HTML + Arca JSON (with tags/notes) · Phase 3 · P1
 - [ ] ARC-039 · Import: Netscape HTML / Arca JSON into folder, preview, dup warnings · Phase 3 · P1
@@ -52,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-036 · Tidy up: duplicates (keep one, undo), empty folders, permanent sort, group by site · `feature/tidy-up` · 2026-11-13
 - [x] ARC-021 · Drag & drop into folder cards / tree nodes, descendant guard, 600 ms auto-expand · `feature/drag-drop` · 2026-11-13
 - [x] ARC-020 · Drag & drop reorder within a folder · `feature/drag-drop` · 2026-11-13
 - [x] ARC-024 · Undo stack: 20 actions, 8 s toast, ⌘Z, subtree recreate on delete · `feature/undo` · 2026-11-13

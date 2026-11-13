@@ -37,6 +37,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Tidy up (sidebar): find and remove duplicate bookmarks (keeps the best copy,
+  never one in Trash unless it's the only one; you can pick), remove empty
+  folders, sort a folder permanently, and group links into per-site folders.
+  Runs locally; every action is one Undo.
 - Drag & drop: reorder tiles and rows (manual sort), drop onto a folder card's
   cover, a sidebar folder (collapsed ones open after 0.6 s) or a breadcrumb to
   move. Folders can't go into themselves; root folders don't move. Keyboard:
