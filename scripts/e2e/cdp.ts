@@ -81,6 +81,8 @@ export const MOD = { alt: 1, ctrl: 2, meta: 4, shift: 8 } as const;
 
 export class Page {
   readonly consoleErrors: string[] = [];
+  /** Every URL this page requested (for the no-network audit). */
+  readonly requests: string[] = [];
 
   constructor(
     private conn: Connection,
@@ -90,6 +92,10 @@ export class Page {
       if (sid !== sessionId) return;
       const details = params.exceptionDetails as { exception?: { description?: string } };
       this.consoleErrors.push(details.exception?.description ?? 'exception');
+    });
+    conn.on('Network.requestWillBeSent', (params, sid) => {
+      if (sid !== sessionId) return;
+      this.requests.push((params.request as { url: string }).url);
     });
     conn.on('Runtime.consoleAPICalled', (params, sid) => {
       if (sid !== sessionId || params.type !== 'error') return;
@@ -271,6 +277,7 @@ export async function launch(): Promise<Browser> {
       const page = new Page(conn, sessionId);
       await page.send('Runtime.enable');
       await page.send('Page.enable');
+      await page.send('Network.enable');
       await page.navigate(url);
       return page;
     },
