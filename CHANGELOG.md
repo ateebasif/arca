@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Arca icon: a strongbox with an arched lid, used for the toolbar, the
+  extensions page, tab favicons and the sidebar logo.
 - Repository setup: git guides, CLAUDE.md, backlog, PR template.
 - WXT + React + TypeScript scaffold with New Tab, dashboard and popup pages and a
   background worker.

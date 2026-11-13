@@ -50,12 +50,12 @@
 
 ## Ideas (unscoped)
 
-- Real Arca icon (toolbar and extension page still show the template puzzle piece).
 - Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
 
+- [x] ARC-049 · Arca icon (strongbox with arched lid), tab favicons, in-app logo · `feature/arca-icon` · 2026-11-13
 - [x] ARC-041 · Link previews (title, description, image) on hover, opt-in, cached locally (pulled forward from Phase 4; metadata cards, not screenshots) · `feature/link-previews` · 2026-11-13
 - [x] ARC-048 · Theme setting: system / light / dark (split out of ARC-027) · `feature/theme-setting` · 2026-11-13
 - [x] ARC-047 · Security hardening: CSP, block external messaging, URL scheme allowlist, storage validation, security checks · `fix/security-hardening` · 2026-11-13
