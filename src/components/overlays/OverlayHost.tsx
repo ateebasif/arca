@@ -1,16 +1,11 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { EditDialog, SettingsDialog, ShortcutsDialog, TidyPanel } from './lazyOverlays';
 import { deleteNode } from '@/src/features/editing/actions';
 import { useOverlays } from '@/src/store/overlays';
 import { folderCounts } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { Button, Dialog } from './Dialog';
-import { EditDialog } from './EditDialog';
 import { ItemMenu } from './ItemMenu';
-import { SettingsDialog } from './SettingsDialog';
-import { ShortcutsDialog } from './ShortcutsDialog';
-
-// Heavy, rarely used: loaded on first open (PRD §10).
-const TidyPanel = lazy(() => import('../tidy/TidyPanel'));
 
 /** Renders whichever dialog, menu and toasts are open. Mount once per page. */
 export function OverlayHost() {
@@ -22,11 +17,13 @@ export function OverlayHost() {
   const tidyOpen = useOverlays((s) => s.tidyOpen);
   return (
     <>
-      {editor && <EditDialog key={JSON.stringify(editor)} editor={editor} />}
+      <Suspense fallback={null}>
+        {editor && <EditDialog key={JSON.stringify(editor)} editor={editor} />}
+        {settingsOpen && <SettingsDialog />}
+        {shortcutsOpen && <ShortcutsDialog />}
+      </Suspense>
       {menu && <ItemMenu key={menu.id} menu={menu} />}
       {confirmDeleteId && <ConfirmDelete id={confirmDeleteId} />}
-      {settingsOpen && <SettingsDialog />}
-      {shortcutsOpen && <ShortcutsDialog />}
       {tidyOpen && (
         <Suspense fallback={null}>
           <TidyPanel />

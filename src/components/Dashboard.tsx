@@ -13,6 +13,7 @@ import { FolderView } from './main/FolderView';
 import { AddMenu } from './main/AddMenu';
 import { ScopeSwitch, Toolbar } from './main/Toolbar';
 import { ScrollParentContext } from './main/scrollParent';
+import { preloadOverlays } from './overlays/lazyOverlays';
 import { OverlayHost } from './overlays/OverlayHost';
 import { PreviewController } from './preview/PreviewController';
 import { SearchBox } from './search/SearchBox';
@@ -61,6 +62,8 @@ export function Dashboard({ surface }: DashboardProps) {
     if (hash.has('tidy')) useOverlays.getState().setTidyOpen(true);
     if (location.hash) history.replaceState(null, '', location.pathname);
   }, [state.ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => preloadOverlays(), []);
 
   // Mouse side buttons (3 = back, 4 = forward) move through folder history.
   useEffect(() => {
