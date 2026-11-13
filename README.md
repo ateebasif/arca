@@ -53,18 +53,17 @@ After rebuilding, click the reload icon on Arca's card in `chrome://extensions`.
 
 ### Ardia
 
-Ardia is Chromium-based (Chromium 157 as of Ardia 0.2.46), so the same steps should apply:
-open `chrome://extensions`, enable **Developer mode**, and **Load unpacked**.
+Verified by hand in Ardia 0.2.46 (Chromium 157) on 2026-11-13:
 
-> **Not yet verified in Ardia.** Ardia disables DevTools automation, so Arca's automated
-> checks run in Chrome only. Please check by hand:
->
-> 1. Does `chrome://extensions` offer Developer mode and Load unpacked?
-> 2. Does a new tab show Arca, or Ardia's own New Tab / command bar?
-> 3. Does the toolbar popup (or ⌥⇧B) open?
->
-> If Ardia keeps its own New Tab, use the popup and the dashboard tab (popup → **Open
-> dashboard**) as the main entry points. Results go in [BACKLOG.md](BACKLOG.md) (ARC-018).
+1. Open `ardia://extensions`, turn on **Developer mode**, click **Load unpacked** and pick
+   `.output/chrome-mv3`. Arca loads and reads your bookmarks (tested with ~4,000).
+2. Ardia shows one **Warning**: `'externally_connectable' specifies neither 'matches' nor
+'ids'; nothing will be able to connect`. That is intended: it's the setting that stops
+   other extensions and websites from talking to Arca (see SECURITY.md).
+3. **⌘T opens Ardia's command bar, not a New Tab page**, so the New Tab override doesn't
+   show there. Open Arca instead by typing "Arca" in the command bar (**Arca — Open
+   Extension**), then keep that tab in Ardia's sidebar so the dashboard is one click away.
+   The popup (⌥⇧B) is the quick-search entry point.
 
 ### Getting your browser's New Tab back
 

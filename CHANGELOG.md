@@ -16,6 +16,11 @@ All notable changes to this project are documented here. The format follows
 - `bun run security` checks the built extension; e2e simulates a hostile extension,
   a hostile website and a planted bookmarklet. See SECURITY.md.
 
+### Fixed
+
+- Folder card bookmark counts no longer wrap onto two lines next to the favicon
+  preview.
+
 ### Added
 
 - Repository setup: git guides, CLAUDE.md, backlog, PR template.
