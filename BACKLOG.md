@@ -6,6 +6,9 @@
 
 ## Up Next
 
+- [ ] ARC-059 · AI search: meaning search in ⌘K using cached embeddings (embed query, cosine match, merged with keyword results); optional "Ask" chat via llama3.2 that only cites real bookmarks; include cached preview descriptions when available · needs ARC-058 · P2
+- [ ] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, output in Other Bookmarks, Bookmarks Bar opt-in, higher folder cap (~40–60) · part of / follow-up to ARC-058 · P1
+
 ## Backlog
 
 ### Phase 1 – Core
@@ -46,11 +49,14 @@
 
 ## Ideas (unscoped)
 
+- AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Consider minSize 2 for small sets.
+
 - Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
 
+- [x] ARC-058 · AI organize with local Ollama: embed (qwen3-embedding / nomic-embed-text), k-means locally, name folders (llama3.2), review + one undo · `feature/ai-organize` · 2026-11-14
 - [x] ARC-057 · Fix 8 issues from independent code review (undo ids/URLs, Tidy keeper/stale ids, keyboard DnD, preview reset, popup Esc) · `fix/review-findings` · 2026-11-14
 - [x] ARC-056 · Interactive preview card: hover into it, scroll excerpt/headings, folder/date/link, Open/New tab/Mini window · `feature/interactive-previews` · 2026-11-14
 - [x] ARC-055 · Popup home: most visited, recently added, folder shortcuts, Tidy up link · `feature/popup-home` · 2026-11-14

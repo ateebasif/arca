@@ -10,6 +10,7 @@ import { mkdirSync } from 'node:fs';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { launch, MOD, sleep, type Page } from './cdp';
+import { runAiChecks } from './ai';
 import { runPreviewChecks } from './previews';
 
 const OUT = '.e2e';
@@ -757,5 +758,15 @@ try {
     `  ✗ link previews\n    ${error instanceof Error ? error.message : error}`,
   );
 }
-console.log(failed ? `\n${failed} failed` : `\nall ${checks.length + 1} passed`);
+let aiResult = 'skipped';
+try {
+  aiResult = await runAiChecks(OUT);
+  if (aiResult === 'skipped')
+    console.log('  - AI organize skipped (Ollama or models not installed)');
+} catch (error) {
+  failed++;
+  console.error(`  ✗ AI organize\n    ${error instanceof Error ? error.message : error}`);
+}
+const total = checks.length + 1 + (aiResult === 'passed' ? 1 : 0);
+console.log(failed ? `\n${failed} failed` : `\nall ${total} passed`);
 process.exit(failed ? 1 : 0);

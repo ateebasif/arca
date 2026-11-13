@@ -50,6 +50,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **AI organize** (Tidy up → AI organize, opt-in): groups a folder's links by topic
+  with models running in your local Ollama, suggests folder names, and lets you
+  rename or untick groups before moving anything into "Organized by Arca". One
+  Undo reverses it. Embeddings are cached, so only new links are processed next
+  time. Settings → Local AI picks the models (default `qwen3-embedding:4b` for
+  grouping, `llama3.2` for names) and shows the `OLLAMA_ORIGINS` command if Ollama
+  blocks the extension.
 - Link preview cards are interactive: move the pointer into the card to scroll a
   readable excerpt and the page's headings, see the site, folder, date added and
   full link, and open it in a tab or mini window.
