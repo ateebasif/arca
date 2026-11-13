@@ -1,4 +1,5 @@
 import { displayHost } from '@/src/lib/url';
+import { normalizeUrl } from '../tidy/normalize';
 import type { BNode, BookmarkSnapshot } from '@/src/store/bookmarkStore';
 
 /**
@@ -23,11 +24,15 @@ export interface SearchEntry {
   pathLc: string;
   /** Ids of all ancestor folders, for "within folder" filtering. */
   ancestorIds: readonly string[];
+  /** Normalized URL used to fold duplicate bookmarks together ('' for folders). */
+  key: string;
 }
 
 export interface SearchResult {
   entry: SearchEntry;
   score: number;
+  /** Other bookmarks with the same (normalized) URL, folded into this result. */
+  copies: SearchEntry[];
 }
 
 export interface SearchOptions {
@@ -61,6 +66,7 @@ export function buildIndex(state: BookmarkSnapshot): SearchEntry[] {
         // Root folder names ("Bookmarks bar") are on every path, so don't match them.
         pathLc: path.slice(1).join(' / ').toLowerCase(),
         ancestorIds: ancestors,
+        key: url ? normalizeUrl(url) : '',
       });
     }
     if (isFolder) {
@@ -142,10 +148,24 @@ export function search(
     // Folders slightly above equally-matching bookmarks; shorter titles first.
     if (entry.kind === 'folder') score += 5;
     score -= Math.min(entry.title.length, 80) / 100;
-    results.push({ entry, score });
+    results.push({ entry, score, copies: [] });
   }
   results.sort((a, b) => b.score - a.score);
-  return results.slice(0, limit);
+  // Fold bookmarks that point at the same page into the best-scoring one.
+  const byKey = new Map<string, SearchResult>();
+  const folded: SearchResult[] = [];
+  for (const result of results) {
+    const key = result.entry.key;
+    const first = key ? byKey.get(key) : undefined;
+    if (first) {
+      first.copies.push(result.entry);
+      continue;
+    }
+    if (key) byKey.set(key, result);
+    folded.push(result);
+    if (folded.length === limit) break;
+  }
+  return folded;
 }
 
 /**
