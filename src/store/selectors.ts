@@ -115,3 +115,25 @@ export function folderPreview(state: BookmarkSnapshot, folder: BNode, n = 3): BN
   }
   return out;
 }
+
+export interface FolderOption {
+  id: string;
+  label: string;
+}
+
+/** Every folder as an indented option, excluding `excludeId` and its subtree. */
+export function folderOptions(
+  state: BookmarkSnapshot,
+  excludeId?: string,
+): FolderOption[] {
+  const out: FolderOption[] = [];
+  const visit = (id: string, depth: number) => {
+    const node = state.nodes.get(id);
+    if (!node?.childIds) return;
+    if (excludeId && isWithin(state, id, excludeId)) return;
+    out.push({ id, label: `${' '.repeat(depth)}${node.title || 'Untitled'}` });
+    node.childIds.forEach((c) => visit(c, depth + 1));
+  };
+  state.rootIds.forEach((id) => visit(id, 0));
+  return out;
+}

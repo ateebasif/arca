@@ -72,6 +72,13 @@
     height: 100%;
   }
 
+  /* The popup sizes to its content. */
+  html.popup,
+  html.popup body,
+  html.popup #root {
+    height: auto;
+  }
+
   body {
     margin: 0;
     font-family: var(--font-sans);

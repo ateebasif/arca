@@ -36,3 +36,9 @@ export async function openUrls(urls: readonly string[]): Promise<void> {
     await callApi('tabs.create', () => browser.tabs.create({ url, active: false }));
   }
 }
+
+/** Opens one of Arca's own pages (e.g. "dashboard.html") in a new, focused tab. */
+export async function openExtensionPage(path: string): Promise<void> {
+  const getURL = browser.runtime.getURL as (p: string) => string;
+  await callApi('tabs.create', () => browser.tabs.create({ url: getURL(`/${path}`) }));
+}
