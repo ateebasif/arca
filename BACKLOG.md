@@ -4,8 +4,6 @@
 
 ## Up Next
 
-- [ ] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · Phase 1 · P0
-
 ## Backlog
 
 ### Phase 1 – Core
@@ -69,6 +67,7 @@
 
 ## Done
 
+- [x] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · `feature/bookmark-store-sync` · 2026-11-13
 - [x] ARC-045 · E2E smoke harness: real Chrome via DevTools pipe + `Extensions.loadUnpacked` · `test/e2e-harness` · 2026-11-13
 - [x] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · `feature/bookmarks-api-wrapper` + `feature/chrome-api-wrappers` · 2026-11-13
 - [x] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · `chore/scaffold-wxt-react` · 2026-11-13
@@ -82,6 +81,7 @@
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
 - React + ReactDOM is ~220 KB of the 400 KB JS budget. Keep an eye on bundle size as features land.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
-- `getAncestorIds` and the move guard call `bookmarks.get` once per level. Fine for the wrapper; the store (ARC-004) should answer ancestry from its in-memory map.
+- `getAncestorIds` and the move guard call `bookmarks.get` once per level. UI code should use the store's `isWithin`/`getPath` instead.
+- Store copies the id→node Map on every event (~5k entries, < 1 ms). Fine for v1; revisit if profiles show it during bulk ops (ARC-023).
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
