@@ -7,6 +7,8 @@ import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { FolderView } from './main/FolderView';
 import { Toolbar } from './main/Toolbar';
+import { SearchBox } from './search/SearchBox';
+import { SearchResults } from './search/SearchResults';
 import { Sidebar } from './sidebar/Sidebar';
 
 interface DashboardProps {
@@ -20,6 +22,7 @@ export function Dashboard({ surface }: DashboardProps) {
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const currentFolderId = useUi((s) => s.currentFolderId);
   const openFolder = useUi((s) => s.openFolder);
+  const searching = useUi((s) => s.query.trim().length > 0);
 
   useHotkeys({ 'mod+\\': () => toggleSidebar() });
 
@@ -43,13 +46,18 @@ export function Dashboard({ surface }: DashboardProps) {
           <div className="min-w-0 flex-1">
             <Breadcrumbs />
           </div>
-          <Toolbar />
+          <div className="flex w-[min(30rem,42%)] shrink-0 justify-center">
+            <SearchBox />
+          </div>
+          <div className="flex flex-1 justify-end">
+            <Toolbar />
+          </div>
         </header>
         <section
           aria-label="Folder contents"
           className="min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
         >
-          <FolderView />
+          {searching ? <SearchResults /> : <FolderView />}
         </section>
       </main>
     </div>

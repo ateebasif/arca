@@ -38,7 +38,20 @@ interface UiState extends UiPrefs {
   /** Folder shown in the main area. */
   currentFolderId: string;
   hydrated: boolean;
+  /** Search box text; non-empty means results replace the folder view. */
+  query: string;
+  /** Limit search to the open folder. */
+  searchInFolder: boolean;
+  /** Highlighted search result. */
+  activeResult: number;
+  /** Item to scroll to and focus after "reveal in folder". */
+  revealId: string | null;
   openFolder(id: string): void;
+  setQuery(query: string): void;
+  setSearchInFolder(on: boolean): void;
+  setActiveResult(index: number): void;
+  reveal(id: string, folderId: string): void;
+  clearReveal(): void;
   setView(view: ViewMode): void;
   setDensity(density: Density): void;
   setSort(sort: SortMode, direction?: SortDirection): void;
@@ -54,7 +67,17 @@ export const useUi = create<UiState>()((set) => ({
   ...DEFAULT_PREFS,
   currentFolderId: DEFAULT_PREFS.lastFolderId,
   hydrated: false,
+  query: '',
+  searchInFolder: false,
+  activeResult: 0,
+  revealId: null,
   openFolder: (id) => set({ currentFolderId: id, lastFolderId: id }),
+  setQuery: (query) => set({ query, activeResult: 0 }),
+  setSearchInFolder: (searchInFolder) => set({ searchInFolder, activeResult: 0 }),
+  setActiveResult: (activeResult) => set({ activeResult }),
+  reveal: (id, folderId) =>
+    set({ revealId: id, query: '', currentFolderId: folderId, lastFolderId: folderId }),
+  clearReveal: () => set({ revealId: null }),
   setView: (view) => set({ view }),
   setDensity: (density) => set({ density }),
   setSort: (sort, sortDirection = 'asc') => set({ sort, sortDirection }),
@@ -113,5 +136,9 @@ export function resetUiForTests(): void {
     ...DEFAULT_PREFS,
     currentFolderId: DEFAULT_PREFS.lastFolderId,
     hydrated: false,
+    query: '',
+    searchInFolder: false,
+    activeResult: 0,
+    revealId: null,
   });
 }

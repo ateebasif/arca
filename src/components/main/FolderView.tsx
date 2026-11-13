@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { sortNodes } from '@/src/features/sort';
 import { folderCounts, folderPreview, getChildren, getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
@@ -33,6 +33,7 @@ export function FolderView() {
     };
   }, [state, currentFolderId, sort, direction]);
   const counts = folderCounts(state);
+  useRevealEffect();
 
   if (!state.ready) return null;
 
@@ -106,4 +107,28 @@ export function FolderView() {
       )}
     </div>
   );
+}
+
+/** After "show in folder", scroll to the item, focus it and flash a ring. */
+function useRevealEffect() {
+  const revealId = useUi((s) => s.revealId);
+  const clearReveal = useUi((s) => s.clearReveal);
+  useEffect(() => {
+    if (!revealId) return;
+    const selector = [
+      `[data-bookmark-id="${CSS.escape(revealId)}"]`,
+      `[data-folder-card="${CSS.escape(revealId)}"]`,
+      `[data-folder-row="${CSS.escape(revealId)}"]`,
+    ].join(',');
+    const el = document.querySelector<HTMLElement>(selector);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.focus({ preventScroll: true });
+    el.classList.add('ring-2', 'ring-accent');
+    const timer = setTimeout(() => {
+      el.classList.remove('ring-2', 'ring-accent');
+      clearReveal();
+    }, 1600);
+    return () => clearTimeout(timer);
+  }, [revealId, clearReveal]);
 }
