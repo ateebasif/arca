@@ -40,6 +40,13 @@ check('grid shows folder cards and tiles; folders open on click', async (page) =
   await page.waitFor(
     'document.querySelectorAll("[data-testid=letter-tile]").length >= 2',
   );
+  // Folder card text must stay on one line even with a favicon preview.
+  const wrapped = await page.eval<
+    string[]
+  >(`[...document.querySelectorAll('[data-folder-card] .text-xs')]
+    .filter((el) => el.getClientRects().length > 1 || el.scrollHeight > el.clientHeight + 1)
+    .map((el) => el.textContent)`);
+  assert.deepEqual(wrapped, [], `wrapped folder counts: ${wrapped.join(', ')}`);
   await page.click('[data-folder-card]');
   await page.waitFor(
     'document.querySelector("[aria-current=page]")?.textContent === "Work"',
