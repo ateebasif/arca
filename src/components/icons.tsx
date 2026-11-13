@@ -143,3 +143,22 @@ export const LinkIcon = (p: IconProps) => (
     <path d="M9.25 6.75a2.75 2.75 0 0 0-3.9 0l-2 2a2.76 2.76 0 0 0 3.9 3.9l.6-.6" />
   </Icon>
 );
+
+export const ArrowLeftIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12.5 8h-9M7 4 3 8l4 4" />
+  </Icon>
+);
+
+export const ArrowRightIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3.5 8h9M9 4l4 4-4 4" />
+  </Icon>
+);
+
+export const KeyboardIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="1.75" y="4" width="12.5" height="8" rx="1.5" />
+    <path d="M4.5 6.75h.01M7 6.75h.01M9.5 6.75h.01M12 6.75h.01M5 9.5h6" />
+  </Icon>
+);

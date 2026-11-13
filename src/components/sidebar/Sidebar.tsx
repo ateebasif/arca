@@ -1,7 +1,7 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
 import { useOverlays } from '@/src/store/overlays';
-import { GearIcon, SidebarIcon } from '../icons';
+import { GearIcon, KeyboardIcon, SidebarIcon } from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
 
@@ -40,6 +40,15 @@ export function Sidebar() {
           className="text-ink-muted hover:bg-hover hover:text-ink flex h-8 items-center gap-2 rounded-lg px-2 text-[13px]"
         >
           <GearIcon /> Settings
+        </button>
+        <button
+          type="button"
+          aria-label="Keyboard shortcuts (?)"
+          title="Keyboard shortcuts (?)"
+          onClick={() => useOverlays.getState().setShortcutsOpen(true)}
+          className="text-ink-muted hover:bg-hover hover:text-ink mr-auto grid size-8 place-items-center rounded-lg"
+        >
+          <KeyboardIcon />
         </button>
         <ThemeSwitch />
       </div>

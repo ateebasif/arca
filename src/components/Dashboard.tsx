@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useHotkeys } from '@/src/lib/hotkeys';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { useOverlays } from '@/src/store/overlays';
 import { IconButton } from './IconButton';
 import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
+import { NavButtons } from './main/NavButtons';
 import { FolderView } from './main/FolderView';
 import { AddMenu } from './main/AddMenu';
 import { ScopeSwitch, Toolbar } from './main/Toolbar';
@@ -25,11 +27,33 @@ export function Dashboard({ surface }: DashboardProps) {
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const currentFolderId = useUi((s) => s.currentFolderId);
-  const openFolder = useUi((s) => s.openFolder);
   const searching = useUi((s) => s.query.trim().length > 0);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
 
-  useHotkeys({ 'mod+\\': () => toggleSidebar() });
+  useHotkeys({
+    'mod+\\': () => toggleSidebar(),
+    '[': () => useUi.getState().goBack(),
+    ']': () => useUi.getState().goForward(),
+    'alt+arrowup': () => {
+      const ui = useUi.getState();
+      const parent = state.nodes.get(ui.currentFolderId)?.parentId;
+      // Don't go above the root folders.
+      if (parent && parent !== '0') ui.openFolder(parent);
+    },
+    '?': () => useOverlays.getState().setShortcutsOpen(true),
+  });
+
+  // Mouse side buttons (3 = back, 4 = forward) move through folder history.
+  useEffect(() => {
+    const onMouseUp = (e: MouseEvent) => {
+      if (e.button !== 3 && e.button !== 4) return;
+      e.preventDefault();
+      if (e.button === 3) useUi.getState().goBack();
+      else useUi.getState().goForward();
+    };
+    window.addEventListener('mouseup', onMouseUp);
+    return () => window.removeEventListener('mouseup', onMouseUp);
+  }, []);
 
   // Performance mark for the e2e paint budget (PRD §10: interactive < 200 ms).
   useEffect(() => {
@@ -41,9 +65,9 @@ export function Dashboard({ surface }: DashboardProps) {
   // If the open folder disappears (deleted elsewhere), fall back to the first root.
   useEffect(() => {
     if (state.ready && !state.nodes.has(currentFolderId) && state.rootIds[0]) {
-      openFolder(state.rootIds[0]);
+      useUi.getState().replaceFolder(state.rootIds[0]);
     }
-  }, [state, currentFolderId, openFolder]);
+  }, [state, currentFolderId]);
 
   return (
     <div className="flex h-full" data-surface={surface}>
@@ -56,6 +80,7 @@ export function Dashboard({ surface }: DashboardProps) {
                 <SidebarIcon />
               </IconButton>
             )}
+            <NavButtons />
             <div className="min-w-0 flex-1">
               <Breadcrumbs />
             </div>
