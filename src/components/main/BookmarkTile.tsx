@@ -12,12 +12,15 @@ import { MoreButton } from './MoreButton';
 interface BookmarkTileProps {
   bookmark: BNode;
   density: Density;
+  /** Folder name to show instead of the host (all-links view). */
+  folderLabel?: string;
 }
 
 /** A bookmark in grid view. A real link, so ⌘-click and middle-click work. */
 export const BookmarkTile = memo(function BookmarkTile({
   bookmark,
   density,
+  folderLabel,
 }: BookmarkTileProps) {
   const renaming = useOverlays((s) => s.renamingId === bookmark.id);
   const url = bookmark.url ?? '';
@@ -98,8 +101,9 @@ export const BookmarkTile = memo(function BookmarkTile({
           )}
           <span
             className={`mt-0.5 block truncate text-[11px] ${link.blocked ? 'text-danger' : 'text-ink-faint'}`}
+            title={folderLabel}
           >
-            {link.blocked ? 'Blocked link' : host}
+            {link.blocked ? 'Blocked link' : folderLabel ? `📁 ${folderLabel}` : host}
           </span>
         </span>
       </a>
