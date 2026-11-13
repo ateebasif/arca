@@ -8,7 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · Phase 1 · P0
 - [ ] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · Phase 1 · P1
 - [ ] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · Phase 1 · P0
 - [ ] ARC-016 · Virtualize grid/list over 200 items · Phase 1 · P1
@@ -60,6 +59,7 @@
 
 ## Done
 
+- [x] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · `feature/newtab-modes` · 2026-11-13
 - [x] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · `feature/bookmark-editing` · 2026-11-13
 - [x] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · `feature/global-search` · 2026-11-13
 - [x] ARC-009 · Sort: manual, title A–Z, date added, domain · `feature/list-view-sort` · 2026-11-13
