@@ -88,6 +88,18 @@ export function Toaster() {
           }`}
         >
           {t.message}
+          {t.action && (
+            <button
+              type="button"
+              onClick={() => {
+                t.action?.run();
+                dismiss(t.id);
+              }}
+              className="text-accent hover:bg-accent-soft rounded-md px-2 py-0.5 text-[13px] font-semibold"
+            >
+              {t.action.label}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => dismiss(t.id)}

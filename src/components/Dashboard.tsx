@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useHotkeys } from '@/src/lib/hotkeys';
+import { undoLast } from '@/src/features/undo/undo';
+import { isTyping, useHotkeys } from '@/src/lib/hotkeys';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { useOverlays } from '@/src/store/overlays';
@@ -41,6 +42,12 @@ export function Dashboard({ surface }: DashboardProps) {
       if (parent && parent !== '0') ui.openFolder(parent);
     },
     '?': () => useOverlays.getState().setShortcutsOpen(true),
+    // In text fields ⌘Z keeps undoing typing; elsewhere it undoes the last action.
+    'mod+z': (e) => {
+      if (isTyping(e.target)) return false;
+      void undoLast();
+      return true;
+    },
   });
 
   // Mouse side buttons (3 = back, 4 = forward) move through folder history.

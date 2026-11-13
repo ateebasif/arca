@@ -2,6 +2,7 @@ import * as bm from '@/src/lib/bookmarks';
 import { ArcaError } from '@/src/lib/errors';
 import { getBookmarkStore } from '@/src/store/useBookmarks';
 import { useOverlays } from '@/src/store/overlays';
+import * as undo from '../undo/undo';
 
 /**
  * User-facing edit actions. They call the bookmarks wrapper (the store picks
@@ -37,8 +38,15 @@ async function run<T>(fn: () => Promise<T>): Promise<T | undefined> {
   }
 }
 
-export function renameNode(id: string, title: string) {
-  return run(() => bm.update(id, { title }));
+export async function renameNode(id: string, title: string) {
+  const before = getBookmarkStore().getSnapshot().nodes.get(id);
+  const result = await run(() => bm.update(id, { title }));
+  if (result && before) {
+    undo.record(
+      undo.changed(id, { title: before.title, url: before.url }, `Renamed to “${title}”`),
+    );
+  }
+  return result;
 }
 
 /** Deletes immediately unless it's a non-empty folder, which asks first. */
@@ -58,5 +66,5 @@ export function requestDelete(id: string): void {
 
 export async function deleteNode(id: string): Promise<void> {
   const removed = await run(() => bm.remove(id));
-  if (removed) useOverlays.getState().toast(`Deleted “${removed.title || 'Untitled'}”`);
+  if (removed) undo.record(undo.deleted(removed));
 }

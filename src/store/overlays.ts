@@ -18,10 +18,16 @@ export interface MenuState {
   y: number;
 }
 
+export interface ToastAction {
+  label: string;
+  run(): void;
+}
+
 export interface Toast {
   id: number;
   message: string;
   tone: 'info' | 'error';
+  action?: ToastAction;
 }
 
 interface OverlayState {
@@ -43,7 +49,7 @@ interface OverlayState {
   openSettings(): void;
   closeSettings(): void;
   setShortcutsOpen(open: boolean): void;
-  toast(message: string, tone?: Toast['tone']): void;
+  toast(message: string, tone?: Toast['tone'], action?: ToastAction): void;
   dismissToast(id: number): void;
 }
 
@@ -69,10 +75,11 @@ export const useOverlays = create<OverlayState>()((set) => ({
   openSettings: () => set({ settingsOpen: true, menu: null }),
   closeSettings: () => set({ settingsOpen: false }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, menu: null }),
-  toast: (message, tone = 'info') => {
+  toast: (message, tone = 'info', action) => {
     const id = nextToastId++;
-    set((s) => ({ toasts: [...s.toasts.slice(-2), { id, message, tone }] }));
-    setTimeout(() => useOverlays.getState().dismissToast(id), TOAST_MS);
+    set((s) => ({ toasts: [...s.toasts.slice(-2), { id, message, tone, action }] }));
+    // Toasts with an action (Undo) stay up long enough to use it (PRD: 8 s).
+    setTimeout(() => useOverlays.getState().dismissToast(id), action ? 8000 : TOAST_MS);
   },
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }));

@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { errorMessage } from '@/src/features/editing/actions';
 import { normalizeInputUrl } from '@/src/features/editing/url';
+import * as undo from '@/src/features/undo/undo';
 import * as bm from '@/src/lib/bookmarks';
 import { useOverlays, type EditorState } from '@/src/store/overlays';
 import { folderOptions } from '@/src/store/selectors';
@@ -52,10 +53,30 @@ export function EditDialog({ editor }: { editor: EditorState }) {
     setSaving(true);
     try {
       if (!existing) {
-        await bm.create({ parentId, title: finalTitle, url: finalUrl });
+        const node = await bm.create({ parentId, title: finalTitle, url: finalUrl });
+        undo.record(undo.created(node));
       } else {
-        await bm.update(existing.id, { title: finalTitle, url: finalUrl });
-        if (existing.parentId !== parentId) await bm.move(existing.id, { parentId });
+        const steps: undo.UndoAction[] = [];
+        const before = { title: existing.title, url: existing.url };
+        if (
+          before.title !== finalTitle ||
+          (finalUrl !== undefined && before.url !== finalUrl)
+        ) {
+          await bm.update(existing.id, { title: finalTitle, url: finalUrl });
+          steps.push(undo.changed(existing.id, before, ''));
+        }
+        if (existing.parentId !== parentId && existing.parentId) {
+          const from = await bm.getNode(existing.id);
+          await bm.move(existing.id, { parentId });
+          steps.push(
+            undo.moved(
+              existing.id,
+              { parentId: existing.parentId, index: from.index ?? 0 },
+              '',
+            ),
+          );
+        }
+        if (steps.length) undo.record(undo.combine(`Edited “${finalTitle}”`, steps));
       }
       close();
     } catch (error) {
