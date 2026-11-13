@@ -31,3 +31,22 @@ export function onSiteAccessChange(callback: (granted: boolean) => void): () => 
     browser.permissions.onRemoved.removeListener(onRemoved);
   };
 }
+
+/** Access to one specific origin pattern, e.g. "http://localhost:11434/*". */
+export function hasOrigin(pattern: string): Promise<boolean> {
+  return callApi('permissions.contains', () =>
+    browser.permissions.contains({ origins: [pattern] }),
+  );
+}
+
+/** Asks for one origin. Must be called from a user gesture. */
+export function requestOrigin(pattern: string): Promise<boolean> {
+  return callApi('permissions.request', () =>
+    browser.permissions.request({ origins: [pattern] }),
+  );
+}
+
+/** This extension's id, for instructions like OLLAMA_ORIGINS. */
+export function extensionId(): string {
+  return browser.runtime.id;
+}
