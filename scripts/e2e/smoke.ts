@@ -284,6 +284,43 @@ check('1,000-bookmark folder is virtualized, scrolls and reveals', async (page) 
   await page.eval(`chrome.bookmarks.removeTree(window.__bigId)`);
 });
 
+check('New Tab paint budgets with 5,000 bookmarks', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.eval(`(async () => {
+    const root = await chrome.bookmarks.create({ parentId: '2', title: 'arca-e2e-perf' });
+    for (let f = 0; f < 50; f++) {
+      const folder = await chrome.bookmarks.create({ parentId: root.id, title: 'Perf ' + f });
+      await Promise.all(Array.from({ length: 100 }, (_, i) =>
+        chrome.bookmarks.create({ parentId: folder.id, title: 'P ' + f + '-' + i, url: 'https://perf' + f + '.example.com/' + i })));
+    }
+  })()`);
+  const runs: Array<{ fcp: number; interactive: number }> = [];
+  for (let i = 0; i < 3; i++) {
+    await page.reload();
+    await page.waitFor('document.querySelector("[data-bookmark-id]")');
+    runs.push(
+      await page.eval(`(() => {
+        const fcp = performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? -1;
+        const interactive = performance.getEntriesByName('arca:interactive')[0]?.startTime ?? -1;
+        return { fcp, interactive };
+      })()`),
+    );
+  }
+  const best = (k: 'fcp' | 'interactive') => Math.min(...runs.map((r) => r[k]));
+  console.log(
+    `    FCP ${runs.map((r) => r.fcp.toFixed(0)).join('/')} ms, interactive ${runs.map((r) => r.interactive.toFixed(0)).join('/')} ms`,
+  );
+  await page.eval(`(async () => {
+    const [n] = await chrome.bookmarks.search({ title: 'arca-e2e-perf' });
+    await chrome.bookmarks.removeTree(n.id);
+  })()`);
+  assert.ok(best('fcp') > 0 && best('fcp') < 100, `FCP ${best('fcp')}`);
+  assert.ok(
+    best('interactive') > 0 && best('interactive') < 200,
+    `interactive ${best('interactive')}`,
+  );
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);

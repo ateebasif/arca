@@ -93,9 +93,9 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger';
 }) {
   const styles = {
-    primary: 'bg-accent text-white hover:opacity-90',
+    primary: 'bg-accent-strong text-white hover:opacity-90',
     secondary: 'text-ink hover:bg-hover border border-line',
-    danger: 'bg-danger text-white hover:opacity-90',
+    danger: 'bg-danger-strong text-white hover:opacity-90',
   }[variant];
   return (
     <button

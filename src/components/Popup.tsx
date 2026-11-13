@@ -118,7 +118,7 @@ function CurrentTab() {
                 setError(errorMessage(e));
               }
             }}
-            className="bg-accent h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium text-white hover:opacity-90"
+            className="bg-accent-strong h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium text-white hover:opacity-90"
           >
             Bookmark this tab
           </button>

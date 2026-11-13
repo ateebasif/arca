@@ -39,7 +39,7 @@ export function AddMenu() {
         aria-expanded={open}
         title="Add bookmark or folder"
         onClick={() => setOpen(!open)}
-        className="bg-accent grid size-8 place-items-center rounded-lg text-white transition-opacity duration-150 hover:opacity-90"
+        className="bg-accent-strong grid size-8 place-items-center rounded-lg text-white transition-opacity duration-150 hover:opacity-90"
       >
         <PlusIcon />
       </button>

@@ -8,7 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · Phase 1 · P1
 - [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · Phase 1 · P0
 - [ ] ARC-019 · Release v0.1.0 · Phase 1 · P0
 
@@ -56,6 +55,7 @@
 
 ## Done
 
+- [x] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · `style/theme-contrast-polish` · 2026-11-13
 - [x] ARC-016 · Virtualize grid/list over 200 items · `perf/virtualize-grid-list` · 2026-11-13
 - [x] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · `feature/popup-quick-search` · 2026-11-13
 - [x] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · `feature/popup-quick-search` · 2026-11-13
