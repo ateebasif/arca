@@ -56,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-B01 · Settings dialog clipped in short windows; Local AI showed Connected despite Ollama 403 on POST · `fix/settings-ollama-check` · 2026-11-14
 - [x] ARC-058 · AI organize with local Ollama: embed (qwen3-embedding / nomic-embed-text), k-means locally, name folders (llama3.2), review + one undo · `feature/ai-organize` · 2026-11-14
 - [x] ARC-057 · Fix 8 issues from independent code review (undo ids/URLs, Tidy keeper/stale ids, keyboard DnD, preview reset, popup Esc) · `fix/review-findings` · 2026-11-14
 - [x] ARC-056 · Interactive preview card: hover into it, scroll excerpt/headings, folder/date/link, Open/New tab/Mini window · `feature/interactive-previews` · 2026-11-14

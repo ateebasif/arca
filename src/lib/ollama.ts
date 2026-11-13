@@ -95,6 +95,25 @@ export async function listModels(base: string): Promise<OllamaModel[]> {
     .filter((m) => m.name.length > 0 && m.name.length < 200);
 }
 
+/**
+ * Checks that Ollama accepts requests from this extension. Listing models is
+ * a GET, which browsers send without an Origin header, so it succeeds even
+ * when OLLAMA_ORIGINS doesn't allow Arca; the real work is POST, which does
+ * carry the origin. This cheap POST surfaces that 403 up front.
+ */
+export async function checkAccess(base: string, model: string): Promise<void> {
+  try {
+    await call(base, '/api/show', {
+      method: 'POST',
+      body: JSON.stringify({ model }),
+      timeoutMs: 4000,
+    });
+  } catch (e) {
+    // A missing model still proves the request got through.
+    if (!(e instanceof OllamaError && e.reason === 'MODEL')) throw e;
+  }
+}
+
 /** True for models meant for embeddings (by name or family). */
 export const isEmbeddingModel = (m: OllamaModel) =>
   /embed|bert|nomic|mxbai|bge|e5/i.test(`${m.name} ${m.family}`);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { clearEmbeddings } from '@/src/features/ai/embedCache';
 import { hasOrigin, requestOrigin } from '@/src/lib/permissions';
 import {
+  checkAccess,
   isEmbeddingModel,
   listModels,
   localOllamaUrl,
@@ -28,7 +29,9 @@ export function AiSettings() {
   const check = async (base = s.ollamaUrl) => {
     setStatus({ kind: 'checking' });
     try {
-      setStatus({ kind: 'ok', models: await listModels(base) });
+      const models = await listModels(base);
+      if (models[0]) await checkAccess(base, models[0].name);
+      setStatus({ kind: 'ok', models });
     } catch (e) {
       setStatus({
         kind: 'error',
