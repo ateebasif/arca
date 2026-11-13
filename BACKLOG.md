@@ -18,7 +18,6 @@
 - [ ] ARC-021 · Drag & drop into folder cards / tree nodes, descendant guard, 600 ms auto-expand · Phase 2 · P0
 - [ ] ARC-022 · Multi-select: ⌘-click, ⇧-click, hover checkbox · Phase 2 · P1
 - [ ] ARC-023 · Bulk actions: move, delete, open all (warn > 10) · Phase 2 · P1
-- [ ] ARC-024 · Undo stack: 20 actions, 8 s toast, ⌘Z, subtree recreate on delete · Phase 2 · P0
 - [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
 - [ ] ARC-026 · Home view: Recently added (12) + Most visited, each hideable · Phase 2 · P1
 - [ ] ARC-027 · Settings page (§8.13), stored in `chrome.storage.local` · Phase 2 · P1
@@ -55,6 +54,7 @@
 
 ## Done
 
+- [x] ARC-024 · Undo stack: 20 actions, 8 s toast, ⌘Z, subtree recreate on delete · `feature/undo` · 2026-11-13
 - [x] ARC-054 · "Open links in" setting: same tab / new tab / background / mini window · `feature/open-links-setting` · 2026-11-13
 - [x] ARC-053 · Back/forward folder history: buttons, [ ], ⌥↑, mouse side buttons, ? shortcuts sheet · `feature/folder-history-nav` · 2026-11-13
 - [x] ARC-052 · Search folds duplicate copies ("in N folders"), compact paths, collapsing breadcrumbs · `fix/search-duplicates-paths` · 2026-11-13
@@ -98,7 +98,6 @@
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
 - Favicon placeholder detection fingerprints Chrome's generic globe per size. If Ardia or a Chrome update changes that image, detection silently stops and globes show again (cosmetic only).
 - ⌘N / ⇧⌘N (PRD §8.14) are reserved by Chrome (new window / incognito) and can't be captured by a page. Pick alternatives in ARC-028 (e.g. `N` / `⇧N` when not typing).
-- Deleting a single bookmark has no confirmation or undo until ARC-024 (undo) lands.
 - Sidebar tree and search results are not virtualized (tree shows only expanded folders; search caps at 50). Revisit if someone has thousands of folders.
 - `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
 - e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.

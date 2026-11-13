@@ -37,6 +37,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Undo for deletes (whole folders restored in place), renames, edits, moves and
+  adds: an Undo button in the toast for 8 seconds, or ⌘Z for the last 20.
 - Settings → "Open links in": same tab, new tab, new background tab, or a mini
   window (small, toolbar-less). Applies to tiles, search, the popup and the
   minimal New Tab. The item menu also offers "Open in mini window".

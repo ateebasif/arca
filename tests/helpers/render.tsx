@@ -1,5 +1,6 @@
 import { render, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
+import { clearUndoForTests } from '@/src/features/undo/undo';
 import { BookmarkStore } from '@/src/store/bookmarkStore';
 import { resetOverlaysForTests } from '@/src/store/overlays';
 import { resetSettingsForTests } from '@/src/store/settings';
@@ -27,6 +28,7 @@ export async function renderWithBookmarks(
   resetUiForTests();
   resetOverlaysForTests();
   resetSettingsForTests();
+  clearUndoForTests();
   await store.start();
   const result = render(ui);
   return { ...result, fake, store };
