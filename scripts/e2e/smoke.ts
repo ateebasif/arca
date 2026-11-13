@@ -46,6 +46,10 @@ check('grid shows folder cards and tiles; folders open on click', async (page) =
   await page.eval(`document.querySelector('[aria-label="Compact density"]').click()`);
   await page.screenshot(`${OUT}/folder-work-compact.png`);
   await page.eval(`document.querySelector('[aria-label="Comfortable density"]').click()`);
+  await page.eval(`document.querySelector('[aria-label="List view"]').click()`);
+  await page.waitFor('document.querySelector("[role=table]")');
+  await page.screenshot(`${OUT}/folder-work-list.png`);
+  await page.eval(`document.querySelector('[aria-label="Grid view"]').click()`);
 });
 
 check('tree follows bookmark changes made outside Arca', async (page) => {

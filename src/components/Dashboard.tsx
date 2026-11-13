@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { useHotkeys } from '@/src/lib/hotkeys';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
-import { DensityIcon, SidebarIcon } from './icons';
+import { IconButton } from './IconButton';
+import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { FolderView } from './main/FolderView';
+import { Toolbar } from './main/Toolbar';
 import { Sidebar } from './sidebar/Sidebar';
 
 interface DashboardProps {
@@ -51,47 +53,5 @@ export function Dashboard({ surface }: DashboardProps) {
         </section>
       </main>
     </div>
-  );
-}
-
-function Toolbar() {
-  const density = useUi((s) => s.density);
-  const setDensity = useUi((s) => s.setDensity);
-  return (
-    <div className="flex shrink-0 items-center gap-1">
-      <IconButton
-        label={density === 'compact' ? 'Comfortable density' : 'Compact density'}
-        pressed={density === 'compact'}
-        onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
-      >
-        <DensityIcon />
-      </IconButton>
-    </div>
-  );
-}
-
-interface IconButtonProps {
-  label: string;
-  onClick(): void;
-  pressed?: boolean;
-  children: React.ReactNode;
-}
-
-export function IconButton({ label, onClick, pressed, children }: IconButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={pressed}
-      title={label}
-      className={`grid size-8 place-items-center rounded-lg transition-colors duration-150 ${
-        pressed
-          ? 'bg-accent-soft text-accent'
-          : 'text-ink-muted hover:bg-hover hover:text-ink'
-      }`}
-    >
-      {children}
-    </button>
   );
 }

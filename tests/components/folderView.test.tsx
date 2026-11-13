@@ -74,3 +74,47 @@ describe('folder view', () => {
     expect(within(bookmarks()).getByRole('link', { name: /GH/ })).toBeInTheDocument();
   });
 });
+
+describe('list view and sorting', () => {
+  it('switches to a list with sortable columns', async () => {
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(useUi.getState().view).toBe('list');
+    const table = screen.getByRole('table', { name: 'Folder contents' });
+    const rows = () =>
+      within(table)
+        .getAllByRole('row')
+        .slice(1)
+        .map((r) => r.textContent);
+    // Manual order: folders first, then bookmarks in browser order.
+    expect(rows()[0]).toContain('Dev');
+    expect(rows()[1]).toContain('GitHub');
+
+    await userEvent.click(within(table).getByRole('button', { name: 'Title' }));
+    expect(within(table).getByRole('columnheader', { name: /Title/ })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    );
+    await userEvent.click(within(table).getByRole('button', { name: /Title/ }));
+    expect(useUi.getState()).toMatchObject({ sort: 'title', sortDirection: 'desc' });
+    const titles = within(table)
+      .getAllByRole('row')
+      .filter((r) => r.hasAttribute('data-bookmark-id'))
+      .map((r) => r.querySelector('[role=cell] span:last-child')?.textContent);
+    expect(titles).toEqual(['News', 'GitHub']);
+  });
+
+  it('sorts the grid from the toolbar', async () => {
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Sort by' }),
+      'title',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Ascending' }));
+    const links = within(bookmarks()).getAllByRole('link');
+    expect(links.map((l) => l.getAttribute('href'))).toEqual([
+      'https://news.ycombinator.com/',
+      'https://github.com/',
+    ]);
+  });
+});

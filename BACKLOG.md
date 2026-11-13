@@ -8,8 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-007 · List view with sortable columns + remembered grid/list toggle · Phase 1 · P1
-- [ ] ARC-009 · Sort: manual, title A–Z, date added, domain · Phase 1 · P1
 - [ ] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · Phase 1 · P0
 - [ ] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · Phase 1 · P0
 - [ ] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · Phase 1 · P0
@@ -63,6 +61,8 @@
 
 ## Done
 
+- [x] ARC-009 · Sort: manual, title A–Z, date added, domain · `feature/list-view-sort` · 2026-11-13
+- [x] ARC-007 · List view with sortable columns + remembered grid/list toggle · `feature/list-view-sort` · 2026-11-13
 - [x] ARC-010 · Favicons via `_favicon` endpoint with lettered fallback tile · `feature/bookmark-grid` · 2026-11-13
 - [x] ARC-008 · Breadcrumbs for the current folder path · `feature/bookmark-grid` · 2026-11-13
 - [x] ARC-006 · Main area: folder cards + grid view (comfortable / compact) · `feature/bookmark-grid` · 2026-11-13

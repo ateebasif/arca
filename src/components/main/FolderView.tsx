@@ -1,24 +1,37 @@
 import { useMemo } from 'react';
-import { folderCounts, folderPreview, getChildren } from '@/src/store/selectors';
+import { sortNodes } from '@/src/features/sort';
+import { folderCounts, folderPreview, getChildren, getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { BookmarkRow, FolderRow, ListHeader } from './BookmarkList';
 import { BookmarkTile } from './BookmarkTile';
 import { FolderCard } from './FolderCard';
 
-/** Contents of the open folder: folder cards first, then bookmarks. */
+/** Contents of the open folder: folders first, then bookmarks, in grid or list. */
 export function FolderView() {
   const state = useBookmarks();
   const currentFolderId = useUi((s) => s.currentFolderId);
   const density = useUi((s) => s.density);
+  const view = useUi((s) => s.view);
+  const sort = useUi((s) => s.sort);
+  const direction = useUi((s) => s.sortDirection);
   const openFolder = useUi((s) => s.openFolder);
 
   const { folders, bookmarks } = useMemo(() => {
     const children = getChildren(state, currentFolderId);
     return {
-      folders: children.filter((c) => c.childIds !== null),
-      bookmarks: children.filter((c) => c.childIds === null),
+      folders: sortNodes(
+        children.filter((c) => c.childIds !== null),
+        sort === 'domain' ? 'title' : sort,
+        direction,
+      ),
+      bookmarks: sortNodes(
+        children.filter((c) => c.childIds === null),
+        sort,
+        direction,
+      ),
     };
-  }, [state, currentFolderId]);
+  }, [state, currentFolderId, sort, direction]);
   const counts = folderCounts(state);
 
   if (!state.ready) return null;
@@ -28,6 +41,30 @@ export function FolderView() {
       <div className="text-ink-muted flex flex-col items-center justify-center gap-1 py-24 text-center">
         <p className="text-ink text-[15px] font-medium">This folder is empty</p>
         <p className="text-sm">Bookmarks you add here show up in the browser too.</p>
+      </div>
+    );
+  }
+
+  if (view === 'list') {
+    const folderPath = getPath(state, currentFolderId)
+      .map((n) => n.title)
+      .join(' / ');
+    return (
+      <div role="table" aria-label="Folder contents" className="flex flex-col">
+        <ListHeader />
+        <div role="rowgroup" className="flex flex-col gap-px">
+          {folders.map((folder) => (
+            <FolderRow
+              key={folder.id}
+              folder={folder}
+              count={counts.get(folder.id) ?? 0}
+              onOpen={openFolder}
+            />
+          ))}
+          {bookmarks.map((bookmark) => (
+            <BookmarkRow key={bookmark.id} bookmark={bookmark} folderPath={folderPath} />
+          ))}
+        </div>
       </div>
     );
   }
