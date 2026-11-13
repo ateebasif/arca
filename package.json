@@ -18,8 +18,10 @@
     "e2e": "bun scripts/e2e/smoke.ts"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "3.14.26",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "zustand": "5.1.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
