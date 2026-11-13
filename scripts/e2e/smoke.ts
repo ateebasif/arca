@@ -412,6 +412,35 @@ check('security: websites cannot frame or fetch Arca pages', async (page) => {
   }
 });
 
+check('theme: dark mode overrides a light system and sticks', async (page) => {
+  await page.waitFor('document.querySelector("[role=radiogroup]")');
+  await page.setViewport(1280, 800, false); // system says light
+  const bodyBg = () =>
+    page.eval<string>('getComputedStyle(document.body).backgroundColor');
+  const lightBg = await bodyBg();
+  await page.click('[role=radiogroup] [aria-label="Dark"]');
+  await page.waitFor('document.documentElement.dataset.theme === "dark"');
+  await page.screenshot(`${OUT}/theme-dark-forced.png`);
+  const darkBg = await bodyBg();
+  assert.notEqual(darkBg, lightBg);
+
+  await page.reload();
+  // Applied from the localStorage mirror before React renders.
+  await page.waitFor('document.readyState === "complete"');
+  assert.equal(await page.eval('document.documentElement.dataset.theme'), 'dark');
+  assert.equal(await bodyBg(), darkBg);
+
+  const origin = await page.eval<string>('location.origin');
+  await page.navigate(`${origin}/popup.html`);
+  await page.waitFor('document.querySelector("main")');
+  assert.equal(await page.eval('document.documentElement.dataset.theme'), 'dark');
+
+  await page.navigate(`${origin}/newtab.html`);
+  await page.waitFor('document.querySelector("[role=radiogroup]")');
+  await page.click('[role=radiogroup] [aria-label="Match system"]');
+  await page.waitFor('document.documentElement.dataset.theme === undefined');
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);

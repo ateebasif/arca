@@ -47,7 +47,6 @@
 
 ### Tooling
 
-- [ ] ARC-048 · Theme setting: system / light / dark (split out of ARC-027) · P1
 - [ ] ARC-044 · Commit hooks: lefthook + commitlint (needs approval for deps) · P2
 
 ## Ideas (unscoped)
@@ -57,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-048 · Theme setting: system / light / dark (split out of ARC-027) · `feature/theme-setting` · 2026-11-13
 - [x] ARC-047 · Security hardening: CSP, block external messaging, URL scheme allowlist, storage validation, security checks · `fix/security-hardening` · 2026-11-13
 - [x] ARC-046 · E2E no-network audit (PRD §15): fail on any request leaving the extension · `test/e2e-network-audit` · 2026-11-13
 - [x] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · `style/theme-contrast-polish` · 2026-11-13

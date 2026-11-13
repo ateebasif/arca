@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import { useOverlays } from '@/src/store/overlays';
 import { useSettings, type NewTabMode } from '@/src/store/settings';
+import { ThemeSwitch } from '../ThemeSwitch';
 import { Button, Dialog, Field, inputClass } from './Dialog';
 
 const MODES: Array<{ value: NewTabMode; label: string; hint: string }> = [
@@ -44,6 +45,10 @@ export function SettingsDialog() {
         </>
       }
     >
+      <div className="mb-4">
+        <p className="text-ink-muted mb-2 text-xs font-medium">Appearance</p>
+        <ThemeSwitch showLabels />
+      </div>
       <fieldset>
         <legend className="text-ink-muted mb-2 text-xs font-medium">New Tab</legend>
         <div className="flex flex-col gap-1.5">
