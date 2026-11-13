@@ -38,6 +38,7 @@ export const DEFAULT_PREFS: UiPrefs = {
 
 export const SIDEBAR_MIN = 180;
 export const SIDEBAR_MAX = 420;
+const HISTORY_LIMIT = 50;
 
 interface UiState extends UiPrefs {
   /** Folder shown in the main area. */
@@ -51,7 +52,14 @@ interface UiState extends UiPrefs {
   activeResult: number;
   /** Item to scroll to and focus after "reveal in folder". */
   revealId: string | null;
+  /** Folder history for back/forward (most recent last). Not persisted. */
+  backStack: string[];
+  forwardStack: string[];
   openFolder(id: string): void;
+  goBack(): void;
+  goForward(): void;
+  /** Switch folder without adding a history entry (e.g. after a deletion). */
+  replaceFolder(id: string): void;
   setQuery(query: string): void;
   setSearchInFolder(on: boolean): void;
   setActiveResult(index: number): void;
@@ -77,12 +85,59 @@ export const useUi = create<UiState>()((set) => ({
   searchInFolder: false,
   activeResult: 0,
   revealId: null,
-  openFolder: (id) => set({ currentFolderId: id, lastFolderId: id }),
+  backStack: [],
+  forwardStack: [],
+  openFolder: (id) =>
+    set((s) =>
+      id === s.currentFolderId
+        ? s
+        : {
+            currentFolderId: id,
+            lastFolderId: id,
+            backStack: [...s.backStack, s.currentFolderId].slice(-HISTORY_LIMIT),
+            forwardStack: [],
+          },
+    ),
+  replaceFolder: (id) => set({ currentFolderId: id, lastFolderId: id }),
+  goBack: () =>
+    set((s) => {
+      const target = s.backStack.at(-1);
+      if (target === undefined) return s;
+      return {
+        currentFolderId: target,
+        lastFolderId: target,
+        backStack: s.backStack.slice(0, -1),
+        forwardStack: [...s.forwardStack, s.currentFolderId],
+        query: '',
+      };
+    }),
+  goForward: () =>
+    set((s) => {
+      const target = s.forwardStack.at(-1);
+      if (target === undefined) return s;
+      return {
+        currentFolderId: target,
+        lastFolderId: target,
+        forwardStack: s.forwardStack.slice(0, -1),
+        backStack: [...s.backStack, s.currentFolderId],
+        query: '',
+      };
+    }),
   setQuery: (query) => set({ query, activeResult: 0 }),
   setSearchInFolder: (searchInFolder) => set({ searchInFolder, activeResult: 0 }),
   setActiveResult: (activeResult) => set({ activeResult }),
   reveal: (id, folderId) =>
-    set({ revealId: id, query: '', currentFolderId: folderId, lastFolderId: folderId }),
+    set((s) => ({
+      revealId: id,
+      query: '',
+      currentFolderId: folderId,
+      lastFolderId: folderId,
+      backStack:
+        folderId === s.currentFolderId
+          ? s.backStack
+          : [...s.backStack, s.currentFolderId].slice(-HISTORY_LIMIT),
+      forwardStack: folderId === s.currentFolderId ? s.forwardStack : [],
+    })),
   clearReveal: () => set({ revealId: null }),
   setView: (view) => set({ view }),
   setDensity: (density) => set({ density }),
@@ -164,5 +219,7 @@ export function resetUiForTests(): void {
     searchInFolder: false,
     activeResult: 0,
     revealId: null,
+    backStack: [],
+    forwardStack: [],
   });
 }

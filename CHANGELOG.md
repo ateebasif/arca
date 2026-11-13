@@ -37,6 +37,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Back / forward through folders: buttons next to the breadcrumbs, `[` and `]`,
+  ⌥↑ for the parent folder, and mouse side buttons. `?` shows all shortcuts.
 - "All links" view: every bookmark inside the open folder and its subfolders
   in one grid or list, each labelled with the folder it lives in.
 - Arca icon: a strongbox with an arched lid, used for the toolbar, the

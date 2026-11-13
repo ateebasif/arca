@@ -6,6 +6,7 @@ import { Button, Dialog } from './Dialog';
 import { EditDialog } from './EditDialog';
 import { ItemMenu } from './ItemMenu';
 import { SettingsDialog } from './SettingsDialog';
+import { ShortcutsDialog } from './ShortcutsDialog';
 
 /** Renders whichever dialog, menu and toasts are open. Mount once per page. */
 export function OverlayHost() {
@@ -13,12 +14,14 @@ export function OverlayHost() {
   const menu = useOverlays((s) => s.menu);
   const confirmDeleteId = useOverlays((s) => s.confirmDeleteId);
   const settingsOpen = useOverlays((s) => s.settingsOpen);
+  const shortcutsOpen = useOverlays((s) => s.shortcutsOpen);
   return (
     <>
       {editor && <EditDialog key={JSON.stringify(editor)} editor={editor} />}
       {menu && <ItemMenu key={menu.id} menu={menu} />}
       {confirmDeleteId && <ConfirmDelete id={confirmDeleteId} />}
       {settingsOpen && <SettingsDialog />}
+      {shortcutsOpen && <ShortcutsDialog />}
       <Toaster />
     </>
   );

@@ -88,3 +88,75 @@ describe('sidebar folder tree', () => {
     expect(tree()).toBeInTheDocument();
   });
 });
+
+describe('folder history', () => {
+  it('goes back and forward with buttons, [ ], and mouse side buttons', async () => {
+    const { fake } = await renderWithBookmarks(
+      <Dashboard surface="dashboard" />,
+      SAMPLE_SEED,
+    );
+    const dev = fake.findByTitle('Dev')!.id;
+    const nested = fake.findByTitle('Nested')!.id;
+    const back = () => screen.getByRole('button', { name: /^Back/ });
+    const forward = () => screen.getByRole('button', { name: /^Forward/ });
+    expect(back()).toBeDisabled();
+
+    act(() => useUi.getState().openFolder(dev));
+    act(() => useUi.getState().openFolder(nested));
+    expect(back()).toHaveAccessibleName('Back to Dev ([)');
+    await userEvent.click(back());
+    expect(useUi.getState().currentFolderId).toBe(dev);
+    expect(forward()).toBeEnabled();
+
+    fireEvent.keyDown(window, { key: '[' });
+    expect(useUi.getState().currentFolderId).toBe('1');
+    fireEvent.keyDown(window, { key: ']' });
+    expect(useUi.getState().currentFolderId).toBe(dev);
+    fireEvent.mouseUp(window, { button: 4 });
+    expect(useUi.getState().currentFolderId).toBe(nested);
+    fireEvent.mouseUp(window, { button: 3 });
+    expect(useUi.getState().currentFolderId).toBe(dev);
+
+    // Opening a new folder clears forward history.
+    act(() => useUi.getState().openFolder('2'));
+    expect(forward()).toBeDisabled();
+  });
+
+  it('goes up with alt+arrow-up but not past the root folders', async () => {
+    const { fake } = await renderWithBookmarks(
+      <Dashboard surface="dashboard" />,
+      SAMPLE_SEED,
+    );
+    act(() => useUi.getState().openFolder(fake.findByTitle('Nested')!.id));
+    fireEvent.keyDown(window, { key: 'ArrowUp', altKey: true });
+    expect(useUi.getState().currentFolderId).toBe(fake.findByTitle('Dev')!.id);
+    fireEvent.keyDown(window, { key: 'ArrowUp', altKey: true });
+    fireEvent.keyDown(window, { key: 'ArrowUp', altKey: true });
+    expect(useUi.getState().currentFolderId).toBe('1');
+  });
+
+  it('ignores [ ] while typing and opens the shortcuts sheet with ?', async () => {
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    act(() => useUi.getState().openFolder('2'));
+    const input = screen.getByRole('combobox', { name: 'Search bookmarks' });
+    await userEvent.type(input, '[[');
+    expect(useUi.getState().currentFolderId).toBe('2');
+    input.blur();
+    fireEvent.keyDown(window, { key: '?', shiftKey: true });
+    expect(
+      screen.getByRole('dialog', { name: 'Keyboard shortcuts' }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not keep a deleted folder in history', async () => {
+    const { fake } = await renderWithBookmarks(
+      <Dashboard surface="dashboard" />,
+      SAMPLE_SEED,
+    );
+    const dev = fake.findByTitle('Dev')!.id;
+    act(() => useUi.getState().openFolder(dev));
+    await act(() => bm.remove(dev));
+    expect(useUi.getState().currentFolderId).toBe('1');
+    expect(useUi.getState().backStack).toEqual(['1']);
+  });
+});
