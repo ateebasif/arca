@@ -1,6 +1,7 @@
 import { SORT_LABELS } from '@/src/features/sort';
 import { useUi, type SortMode } from '@/src/store/ui';
 import { IconButton } from '../IconButton';
+import { AddMenu } from './AddMenu';
 import { ChevronRight, DensityIcon, GridIcon, ListIcon, SortIcon } from '../icons';
 
 export function Toolbar() {
@@ -68,6 +69,8 @@ export function Toolbar() {
           <ListIcon />
         </ViewButton>
       </div>
+      <span className="bg-line mx-1 h-4 w-px" aria-hidden="true" />
+      <AddMenu />
     </div>
   );
 }

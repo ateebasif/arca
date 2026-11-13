@@ -1,9 +1,13 @@
 import { memo } from 'react';
+import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { displayHost } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
+import { useOverlays } from '@/src/store/overlays';
 import { useUi, type SortMode } from '@/src/store/ui';
 import { ChevronRight, FolderIcon } from '../icons';
+import { InlineRename } from '../overlays/InlineRename';
 import { Favicon } from './Favicon';
+import { MoreButton } from './MoreButton';
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
@@ -86,27 +90,39 @@ export const FolderRow = memo(function FolderRow({
   count,
   onOpen,
 }: FolderRowProps) {
+  const renaming = useOverlays((s) => s.renamingId === folder.id);
+  const handlers = itemHandlers(folder);
   return (
     <div
       role="row"
       tabIndex={0}
       data-folder-row={folder.id}
-      onClick={() => onOpen(folder.id)}
+      onClick={() => !renaming && onOpen(folder.id)}
+      onContextMenu={handlers.onContextMenu}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') onOpen(folder.id);
+        if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(folder.id);
+        else handlers.onKeyDown(e);
       }}
-      className={`grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
         <FolderIcon className="text-accent shrink-0" />
-        <span className="truncate font-medium">{folder.title || 'Untitled'}</span>
+        {renaming ? (
+          <InlineRename id={folder.id} initial={folder.title} className="h-7" />
+        ) : (
+          <span className="truncate font-medium">{folder.title || 'Untitled'}</span>
+        )}
       </div>
       <div role="cell" className="text-ink-faint truncate text-xs">
         {count === 1 ? '1 bookmark' : `${count} bookmarks`}
       </div>
       <div role="cell" />
-      <div role="cell" className="text-ink-muted text-xs tabular-nums">
+      <div
+        role="cell"
+        className="text-ink-muted flex items-center justify-between text-xs tabular-nums"
+      >
         {folder.dateAdded ? dateFormat.format(folder.dateAdded) : ''}
+        <MoreButton id={folder.id} title={folder.title || 'Untitled'} />
       </div>
     </div>
   );
@@ -124,17 +140,24 @@ export const BookmarkRow = memo(function BookmarkRow({
 }: BookmarkRowProps) {
   const url = bookmark.url ?? '';
   const title = bookmark.title || displayHost(url) || url;
+  const renaming = useOverlays((s) => s.renamingId === bookmark.id);
   return (
     <a
       role="row"
       href={url}
-      title={`${title}\n${url}`}
+      title={renaming ? undefined : `${title}\n${url}`}
       data-bookmark-id={bookmark.id}
-      className={`grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      onClick={(e) => renaming && e.preventDefault()}
+      {...itemHandlers(bookmark)}
+      className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
       <span role="cell" className="flex min-w-0 items-center gap-2.5">
         <Favicon url={url} title={title} size={16} />
-        <span className="truncate">{title}</span>
+        {renaming ? (
+          <InlineRename id={bookmark.id} initial={bookmark.title} className="h-7" />
+        ) : (
+          <span className="truncate">{title}</span>
+        )}
       </span>
       <span role="cell" className="text-ink-muted truncate text-xs">
         {url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
@@ -142,8 +165,12 @@ export const BookmarkRow = memo(function BookmarkRow({
       <span role="cell" className="text-ink-faint truncate text-xs">
         {folderPath}
       </span>
-      <span role="cell" className="text-ink-muted text-xs tabular-nums">
+      <span
+        role="cell"
+        className="text-ink-muted flex items-center justify-between text-xs tabular-nums"
+      >
         {bookmark.dateAdded ? dateFormat.format(bookmark.dateAdded) : ''}
+        <MoreButton id={bookmark.id} title={title} />
       </span>
     </a>
   );

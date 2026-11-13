@@ -1,6 +1,7 @@
 import { render, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { BookmarkStore } from '@/src/store/bookmarkStore';
+import { resetOverlaysForTests } from '@/src/store/overlays';
 import { resetUiForTests } from '@/src/store/ui';
 import { setBookmarkStoreForTests } from '@/src/store/useBookmarks';
 import {
@@ -23,6 +24,7 @@ export async function renderWithBookmarks(
   const store = new BookmarkStore();
   setBookmarkStoreForTests(store);
   resetUiForTests();
+  resetOverlaysForTests();
   await store.start();
   const result = render(ui);
   return { ...result, fake, store };
