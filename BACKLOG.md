@@ -69,6 +69,7 @@
 
 ## Done
 
+- [x] ARC-045 · E2E smoke harness: real Chrome via DevTools pipe + `Extensions.loadUnpacked` · `test/e2e-harness` · 2026-11-13
 - [x] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · `feature/bookmarks-api-wrapper` + `feature/chrome-api-wrappers` · 2026-11-13
 - [x] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · `chore/scaffold-wxt-react` · 2026-11-13
 - [x] ARC-001 · Repo + git setup, guides, CLAUDE.md, backlog · `main` (initial commit) · 2026-11-13
@@ -83,4 +84,4 @@
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. Fine for the wrapper; the store (ARC-004) should answer ancestry from its in-memory map.
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
-- The in-memory bookmarks fake (`tests/fakes/bookmarks.ts`) copies Chromium's move-index quirk from source reading; double-check against a real browser during ARC-020 (drag & drop).
+- E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
