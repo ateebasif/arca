@@ -1,7 +1,8 @@
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import { highlightParts, search, type SearchResult } from '@/src/features/search/search';
-import { openUrl, type OpenDisposition } from '@/src/lib/tabs';
+import { openSafely } from '@/src/features/open';
+import type { OpenDisposition } from '@/src/lib/tabs';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { FolderIcon, SearchIcon } from '../icons';
 import { Favicon } from '../main/Favicon';
@@ -48,8 +49,7 @@ export function QuickSearch({
       onOpenFolder?.(node.id);
       return;
     }
-    await openUrl(node.url, disposition);
-    onOpened?.();
+    if (await openSafely(node.url, disposition)) onOpened?.();
   };
 
   const onKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
@@ -66,8 +66,7 @@ export function QuickSearch({
       const result = results[active];
       if (result) await open(result, disposition);
       else if (typedUrl) {
-        await openUrl(typedUrl, disposition);
-        onOpened?.();
+        if (await openSafely(typedUrl, disposition)) onOpened?.();
       }
     } else if (e.key === 'Escape' && query) {
       e.preventDefault();

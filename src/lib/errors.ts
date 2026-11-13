@@ -3,6 +3,7 @@ export type ArcaErrorCode =
   | 'INVALID_MOVE' // folder into itself/descendant, or target is not a folder
   | 'NOT_FOUND' // id does not exist
   | 'NOT_A_FOLDER' // parent for create/move is a bookmark, not a folder
+  | 'BLOCKED_URL' // javascript:, data: and other schemes Arca never opens
   | 'API'; // the browser API rejected the call
 
 /** Error thrown by the src/lib wrappers. `code` is stable; `message` is for logs. */

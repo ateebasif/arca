@@ -1,3 +1,4 @@
+import { Toaster } from './overlays/OverlayHost';
 import { useEffect, useMemo, useState } from 'react';
 import { errorMessage } from '@/src/features/editing/actions';
 import * as bm from '@/src/lib/bookmarks';
@@ -26,6 +27,7 @@ export function Popup() {
       >
         <GridIcon /> Open dashboard
       </button>
+      <Toaster />
     </main>
   );
 }

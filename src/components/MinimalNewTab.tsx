@@ -1,3 +1,4 @@
+import { Toaster } from './overlays/OverlayHost';
 import { QuickSearch } from './quick/QuickSearch';
 
 /** "Minimal search page" New Tab mode: just a bookmark search box. */
@@ -14,6 +15,7 @@ export function MinimalNewTab() {
       >
         Open dashboard
       </a>
+      <Toaster />
     </main>
   );
 }

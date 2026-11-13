@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
+import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
@@ -23,13 +24,34 @@ export const BookmarkTile = memo(function BookmarkTile({
   const host = displayHost(url);
   const title = bookmark.title || host || url;
   const handlers = itemHandlers(bookmark);
+  const link = bookmarkLinkProps(url);
   const linkProps = {
-    href: url,
-    title: renaming ? undefined : `${title}\n${url}`,
+    href: link.href,
+    role: link.role,
+    tabIndex: link.tabIndex,
+    title: renaming
+      ? undefined
+      : `${title}\n${url}${link.blocked ? '\nBlocked: Arca never opens this kind of link' : ''}`,
     'data-bookmark-id': bookmark.id,
+    'data-blocked': link.blocked || undefined,
     draggable: !renaming,
-    onClick: (e: React.MouseEvent) => renaming && e.preventDefault(),
-    ...handlers,
+    onClick: (e: React.MouseEvent) => {
+      if (renaming) e.preventDefault();
+      else link.onActivate?.(e);
+    },
+    onContextMenu: handlers.onContextMenu,
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (
+        e.key === 'Enter' &&
+        !renaming &&
+        link.onActivate &&
+        e.target === e.currentTarget
+      ) {
+        link.onActivate?.(e);
+        return;
+      }
+      handlers.onKeyDown(e);
+    },
   };
   const label = renaming ? (
     <InlineRename id={bookmark.id} initial={bookmark.title} className="h-6 text-[13px]" />
@@ -74,7 +96,11 @@ export const BookmarkTile = memo(function BookmarkTile({
               {title}
             </span>
           )}
-          <span className="text-ink-faint mt-0.5 block truncate text-[11px]">{host}</span>
+          <span
+            className={`mt-0.5 block truncate text-[11px] ${link.blocked ? 'text-danger' : 'text-ink-faint'}`}
+          >
+            {link.blocked ? 'Blocked link' : host}
+          </span>
         </span>
       </a>
       <MoreButton id={bookmark.id} title={title} className="absolute top-1.5 right-1.5" />

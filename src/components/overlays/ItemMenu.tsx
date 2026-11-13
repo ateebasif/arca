@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { requestDelete } from '@/src/features/editing/actions';
-import { openUrl } from '@/src/lib/tabs';
+import { openSafely } from '@/src/features/open';
 import { useOverlays, type MenuState } from '@/src/store/overlays';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
@@ -58,10 +58,10 @@ export function ItemMenu({ menu }: { menu: MenuState }) {
     ...(isFolder
       ? [{ label: 'Open', run: () => openFolder(node.id) }]
       : [
-          { label: 'Open', run: () => void openUrl(node.url ?? '', 'current') },
+          { label: 'Open', run: () => void openSafely(node.url, 'current') },
           {
             label: 'Open in new tab',
-            run: () => void openUrl(node.url ?? '', 'background'),
+            run: () => void openSafely(node.url, 'background'),
           },
         ]),
     {
