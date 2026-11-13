@@ -38,6 +38,8 @@ interface OverlayState {
   settingsOpen: boolean;
   shortcutsOpen: boolean;
   tidyOpen: boolean;
+  /** Ask Arca panel, with text to start the composer with. */
+  ask: { draft: string } | null;
   /** Last Tidy up tab, so reopening the panel returns to it. */
   tidyTab: string;
   toasts: Toast[];
@@ -53,6 +55,8 @@ interface OverlayState {
   closeSettings(): void;
   setShortcutsOpen(open: boolean): void;
   setTidyOpen(open: boolean): void;
+  openAsk(draft?: string): void;
+  closeAsk(): void;
   setTidyTab(tab: string): void;
   toast(message: string, tone?: Toast['tone'], action?: ToastAction): void;
   dismissToast(id: number): void;
@@ -70,6 +74,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   shortcutsOpen: false,
   tidyOpen: false,
   tidyTab: 'duplicates',
+  ask: null,
   toasts: [],
   openEditor: (editor) => set({ editor, menu: null }),
   closeEditor: () => set({ editor: null }),
@@ -84,6 +89,8 @@ export const useOverlays = create<OverlayState>()((set) => ({
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, menu: null }),
   setTidyOpen: (tidyOpen) => set({ tidyOpen, menu: null }),
   setTidyTab: (tidyTab) => set({ tidyTab }),
+  openAsk: (draft = '') => set({ ask: { draft }, menu: null }),
+  closeAsk: () => set({ ask: null }),
   toast: (message, tone = 'info', action) => {
     const id = nextToastId++;
     set((s) => ({ toasts: [...s.toasts.slice(-2), { id, message, tone, action }] }));
@@ -103,6 +110,7 @@ export function resetOverlaysForTests(): void {
     shortcutsOpen: false,
     tidyOpen: false,
     tidyTab: 'duplicates',
+    ask: null,
     toasts: [],
   });
 }

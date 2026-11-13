@@ -55,6 +55,11 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   folder-name replies are treated as untrusted: control, zero-width, bidi and path
   characters are stripped, length is capped, and the bookmark text is marked as data in
   the prompt. Every suggestion is shown for review, and one Undo reverses the move.
+- Ask Arca: the chat model only sees a short list of candidate bookmarks (title,
+  site, folder, date) and can only answer with their numbers; numbers outside the
+  list are dropped, so every result shown is a real bookmark, opened through the
+  same safe-link rules as everywhere else. Its reply is cleaned like folder names
+  and rendered as plain text. The conversation is kept in memory only.
 - Embeddings are cached in IndexedDB (private to Arca) and can be cleared in Settings.
 
 ### How links open

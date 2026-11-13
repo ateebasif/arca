@@ -1,5 +1,11 @@
 import { Suspense } from 'react';
-import { EditDialog, SettingsDialog, ShortcutsDialog, TidyPanel } from './lazyOverlays';
+import {
+  AskPanel,
+  EditDialog,
+  SettingsDialog,
+  ShortcutsDialog,
+  TidyPanel,
+} from './lazyOverlays';
 import { deleteNode } from '@/src/features/editing/actions';
 import { useOverlays } from '@/src/store/overlays';
 import { folderCounts } from '@/src/store/selectors';
@@ -15,6 +21,7 @@ export function OverlayHost() {
   const settingsOpen = useOverlays((s) => s.settingsOpen);
   const shortcutsOpen = useOverlays((s) => s.shortcutsOpen);
   const tidyOpen = useOverlays((s) => s.tidyOpen);
+  const ask = useOverlays((s) => s.ask);
   return (
     <>
       <Suspense fallback={null}>
@@ -27,6 +34,12 @@ export function OverlayHost() {
       {tidyOpen && (
         <Suspense fallback={null}>
           <TidyPanel />
+        </Suspense>
+      )}
+      {ask && (
+        <Suspense fallback={null}>
+          {/* Keyed so "Ask Arca about …" from search refills an open panel. */}
+          <AskPanel key={ask.draft} />
         </Suspense>
       )}
       <Toaster />

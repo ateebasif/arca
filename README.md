@@ -27,6 +27,8 @@ data stays on your machine.
 - **AI organize** (opt-in, local only): groups links by topic with your own
   [Ollama](https://ollama.com) models and suggests folder names; you review
   before anything moves, and one Undo reverses it. See _Local AI_ below.
+- **Ask Arca** (opt-in, local only): describe a bookmark you half remember and
+  Arca finds it, with follow-up questions to narrow it down.
 - **Open links in**: same tab, new tab, background tab or a mini window.
 - **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
   excerpt, headings and quick-open buttons. Fetched once without cookies,
@@ -57,6 +59,9 @@ names each group.
 3. Settings → Local AI → turn on (the browser asks to allow `localhost:11434`), pick
    models.
 4. Open a folder → Tidy up → AI organize → Suggest folders → review → Apply.
+5. Or click **Ask Arca** in the sidebar (or "Ask Arca" in search results) and
+   describe what you're looking for. The first question reads every bookmark once
+   (cached); after that, answers take a few seconds.
 
 ## Keyboard shortcuts
 

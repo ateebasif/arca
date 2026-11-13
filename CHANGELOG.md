@@ -60,6 +60,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Ask Arca** (sidebar, or "Ask Arca" in search results): describe a bookmark the
+  way you remember it ("I had some torrent sites saved somewhere") and get your
+  real bookmarks back, with a short answer. Follow-ups refine it ("only the movie
+  ones"). Runs on local Ollama: the embedding model finds links by meaning and
+  keywords, the chat model picks the ones that fit and can only point at real
+  bookmarks. The first question reads all bookmarks once; later answers take a
+  few seconds.
 - AI organize shows live progress: elapsed time, an estimate of what's left,
   which links are being read (or which group is being named), how many came
   from the cache, and a "Starting the model" state for the first batch.

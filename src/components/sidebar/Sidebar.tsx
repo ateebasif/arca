@@ -1,8 +1,9 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
 import { useAiRun } from '@/src/store/aiRun';
+import { useAskChat } from '@/src/store/askChat';
 import { useOverlays } from '@/src/store/overlays';
-import { GearIcon, KeyboardIcon, SidebarIcon, SparkleIcon } from '../icons';
+import { GearIcon, KeyboardIcon, SearchIcon, SidebarIcon, SparkleIcon } from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
 
@@ -34,6 +35,16 @@ export function Sidebar() {
       <nav className="min-h-0 flex-1 overflow-y-auto">
         <FolderTree />
       </nav>
+      <div className="px-2 pb-1.5">
+        <button
+          type="button"
+          onClick={() => useOverlays.getState().openAsk()}
+          className="border-line text-ink-muted hover:bg-hover hover:text-ink flex h-9 w-full items-center gap-2 rounded-lg border px-2.5 text-[13px] transition-colors duration-150"
+        >
+          <SearchIcon className="text-accent" /> Ask Arca
+          <AskStatus />
+        </button>
+      </div>
       <div className="px-2 pb-2">
         <button
           type="button"
@@ -130,5 +141,18 @@ function TidyStatus() {
       )}
       {text}
     </span>
+  );
+}
+
+/** "find by description", or a pulse while Ask Arca is working. */
+function AskStatus() {
+  const working = useAskChat((s) => s.status.kind === 'working');
+  return working ? (
+    <span className="text-accent ml-auto flex items-center gap-1.5 text-[11px]">
+      <span className="bg-accent size-1.5 animate-pulse rounded-full" aria-hidden />
+      working
+    </span>
+  ) : (
+    <span className="text-ink-faint ml-auto text-[11px]">find by description</span>
   );
 }
