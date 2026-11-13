@@ -12,9 +12,48 @@ export interface PreviewMeta {
   siteName: string;
   /** Absolute http(s) URL of the preview image, if any. */
   imageUrl: string;
+  /** First paragraphs of the page's main text. */
+  excerpt: string;
+  /** Main section headings (h1–h3). */
+  headings: string[];
 }
 
-export const LIMITS = { title: 200, description: 400, siteName: 80, url: 2048 };
+export const LIMITS = {
+  title: 200,
+  description: 400,
+  siteName: 80,
+  url: 2048,
+  excerpt: 900,
+  heading: 120,
+  headings: 6,
+};
+
+/** Readable text from the page's main content: paragraphs, then headings. */
+function readableContent(doc: Document): { excerpt: string; headings: string[] } {
+  // Ignore navigation, footers and other chrome.
+  doc
+    .querySelectorAll(
+      'script, style, noscript, template, nav, header, footer, aside, form',
+    )
+    .forEach((el) => el.remove());
+  const root = doc.querySelector('article, main, [role=main]') ?? doc.body;
+  if (!root) return { excerpt: '', headings: [] };
+  const parts: string[] = [];
+  let length = 0;
+  for (const p of root.querySelectorAll('p')) {
+    const text = cleanText(p.textContent, LIMITS.excerpt);
+    if (text.length < 40) continue; // skip captions, buttons, bylines
+    parts.push(text);
+    length += text.length;
+    if (length >= LIMITS.excerpt) break;
+  }
+  const headings = [...root.querySelectorAll('h1, h2, h3')]
+    .map((h) => cleanText(h.textContent, LIMITS.heading))
+    .filter((h) => h.length > 2)
+    .filter((h, i, all) => all.indexOf(h) === i)
+    .slice(0, LIMITS.headings);
+  return { excerpt: cleanText(parts.join(' '), LIMITS.excerpt), headings };
+}
 
 /** Control, zero-width and bidi-override characters that could disguise text. */
 function isHiddenChar(code: number): boolean {
@@ -63,7 +102,7 @@ export function parsePreviewHtml(html: string, pageUrl: string): PreviewMeta {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   // A <base href> could re-point relative URLs; only trust the real page URL.
   const base = pageUrl;
-  return {
+  const meta_ = {
     title: cleanText(meta(doc, 'og:title', 'twitter:title') ?? doc.title, LIMITS.title),
     description: cleanText(
       meta(doc, 'og:description', 'twitter:description', 'description'),
@@ -82,4 +121,5 @@ export function parsePreviewHtml(html: string, pageUrl: string): PreviewMeta {
       base,
     ),
   };
+  return { ...meta_, ...readableContent(doc) };
 }

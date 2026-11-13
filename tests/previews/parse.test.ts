@@ -19,6 +19,8 @@ describe('parsePreviewHtml', () => {
       description: 'About this page',
       siteName: 'Example',
       imageUrl: 'https://example.com/img/cover.png',
+      excerpt: '',
+      headings: [],
     });
   });
 
@@ -78,6 +80,31 @@ describe('parsePreviewHtml', () => {
       'https://site.example/a',
     );
     expect(meta.imageUrl).toBe('https://site.example/i.png');
+  });
+});
+
+describe('readable content', () => {
+  it('takes the main paragraphs and headings, skipping nav, footers and scripts', () => {
+    const meta = parsePreviewHtml(
+      page(
+        '<title>T</title>',
+        `<nav><p>Home · About · Contact us anytime you like, really, any time.</p></nav>
+         <article>
+           <h1>How we built Arca</h1>
+           <p>Short.</p>
+           <p>Arca turns your bookmarks into a calm, fast dashboard that lives in your new tab.</p>
+           <h2>Speed</h2>
+           <p>Everything is indexed in memory so search returns in a few milliseconds even for thousands.</p>
+           <script>document.title = 'pwned'</script>
+         </article>
+         <footer><p>Copyright notice that is long enough to count as a paragraph here.</p></footer>`,
+      ),
+      'https://blog.example.com/arca',
+    );
+    expect(meta.headings).toEqual(['How we built Arca', 'Speed']);
+    expect(meta.excerpt).toMatch(/^Arca turns your bookmarks/);
+    expect(meta.excerpt).toContain('indexed in memory');
+    expect(meta.excerpt).not.toMatch(/Home · About|Copyright|Short\./);
   });
 });
 
