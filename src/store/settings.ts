@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
+import { isRecord, oneOf, str } from '@/src/lib/validate';
 
 /**
  * User settings (PRD §8.13), stored in chrome.storage.local under "settings".
@@ -23,9 +24,19 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export const SETTINGS_KEY = 'settings';
 
+/** Checks every saved field; anything invalid falls back to its default. */
+export function parseSettings(raw: unknown): Settings {
+  const r = isRecord(raw) ? raw : {};
+  const d = DEFAULT_SETTINGS;
+  return {
+    newTabMode: oneOf(r.newTabMode, ['dashboard', 'minimal', 'redirect'], d.newTabMode),
+    redirectUrl: str(r.redirectUrl, d.redirectUrl),
+    saveFolderId: str(r.saveFolderId, d.saveFolderId, 64),
+  };
+}
+
 export async function loadSettings(): Promise<Settings> {
-  const saved = await storageGet<Partial<Settings>>(SETTINGS_KEY, {});
-  return { ...DEFAULT_SETTINGS, ...saved };
+  return parseSettings(await storageGet<unknown>(SETTINGS_KEY, {}));
 }
 
 interface SettingsState extends Settings {
@@ -49,8 +60,8 @@ let unsubscribe: (() => void) | undefined;
 export async function hydrateSettings(): Promise<Settings> {
   const settings = await loadSettings();
   useSettings.setState({ ...settings, loaded: true });
-  unsubscribe ??= onStorageChange<Partial<Settings>>(SETTINGS_KEY, (next) =>
-    useSettings.setState({ ...DEFAULT_SETTINGS, ...next }),
+  unsubscribe ??= onStorageChange<unknown>(SETTINGS_KEY, (next) =>
+    useSettings.setState(parseSettings(next)),
   );
   return settings;
 }

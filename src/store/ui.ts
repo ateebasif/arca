@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { storageGet, storageSet } from '@/src/lib/storage';
+import { bool, idList, isRecord, num, oneOf, str } from '@/src/lib/validate';
 
 /** UI-only state. Bookmarks themselves live in the bookmark store. */
 
@@ -113,10 +114,25 @@ function pickPrefs(state: UiPrefs): UiPrefs {
 let persistTimer: ReturnType<typeof setTimeout> | undefined;
 let unsubscribePersist: (() => void) | undefined;
 
+/** Checks every saved field; anything invalid falls back to its default. */
+export function parsePrefs(raw: unknown): UiPrefs {
+  const r = isRecord(raw) ? raw : {};
+  const d = DEFAULT_PREFS;
+  return {
+    view: oneOf(r.view, ['grid', 'list'], d.view),
+    density: oneOf(r.density, ['comfortable', 'compact'], d.density),
+    sort: oneOf(r.sort, ['manual', 'title', 'date', 'domain'], d.sort),
+    sortDirection: oneOf(r.sortDirection, ['asc', 'desc'], d.sortDirection),
+    sidebarCollapsed: bool(r.sidebarCollapsed, d.sidebarCollapsed),
+    sidebarWidth: num(r.sidebarWidth, d.sidebarWidth, SIDEBAR_MIN, SIDEBAR_MAX),
+    expanded: idList(r.expanded, d.expanded),
+    lastFolderId: str(r.lastFolderId, d.lastFolderId, 64),
+  };
+}
+
 /** Loads saved prefs, then saves changes (debounced). Call once per page. */
 export async function hydrateUi(): Promise<void> {
-  const saved = await storageGet<Partial<UiPrefs>>(PREFS_KEY, {});
-  const prefs = { ...DEFAULT_PREFS, ...saved };
+  const prefs = parsePrefs(await storageGet<unknown>(PREFS_KEY, {}));
   useUi.setState({ ...prefs, currentFolderId: prefs.lastFolderId, hydrated: true });
   unsubscribePersist?.();
   unsubscribePersist = useUi.subscribe((state, prev) => {
