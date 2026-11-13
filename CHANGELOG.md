@@ -35,4 +35,7 @@ All notable changes to this project are documented here. The format follows
 - Root folders are read-only everywhere in the UI.
 - New Tab modes: dashboard, minimal search page, or redirect to a URL, chosen
   in a new Settings dialog.
+- Toolbar popup (⌥⇧B): quick search with the top 8 results, "Bookmark this tab"
+  with a remembered folder, "Saved in …" for bookmarked pages, and a button to
+  open the dashboard in a tab.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.

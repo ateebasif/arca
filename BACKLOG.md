@@ -8,8 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · Phase 1 · P1
-- [ ] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · Phase 1 · P0
 - [ ] ARC-016 · Virtualize grid/list over 200 items · Phase 1 · P1
 - [ ] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · Phase 1 · P1
 - [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · Phase 1 · P0
@@ -59,6 +57,8 @@
 
 ## Done
 
+- [x] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · `feature/popup-quick-search` · 2026-11-13
+- [x] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · `feature/popup-quick-search` · 2026-11-13
 - [x] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · `feature/newtab-modes` · 2026-11-13
 - [x] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · `feature/bookmark-editing` · 2026-11-13
 - [x] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · `feature/global-search` · 2026-11-13

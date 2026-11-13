@@ -208,6 +208,30 @@ check('New Tab modes: minimal search page and redirect', async (page) => {
   );
 });
 
+check('popup: quick search and dashboard page', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  await page.navigate(`${origin}/popup.html`);
+  await page.setViewport(380, 520);
+  await page.waitFor('document.activeElement?.getAttribute("role") === "combobox"');
+  await page.type('o');
+  await page.waitFor(
+    'document.querySelectorAll("[role=listbox] [role=option]").length > 0',
+  );
+  const count = await page.eval<number>(
+    'document.querySelectorAll("[role=listbox] [role=option]").length',
+  );
+  assert.ok(count <= 8, `popup shows ${count} results`);
+  const width = await page.eval<number>(
+    'document.querySelector("main").getBoundingClientRect().width',
+  );
+  assert.equal(width, 380);
+  await page.screenshot(`${OUT}/popup.png`);
+
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor('document.querySelector("[role=tree] [role=treeitem]")');
+  assert.equal(await page.eval('document.title'), 'Arca');
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);
