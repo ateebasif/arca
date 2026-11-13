@@ -18,4 +18,6 @@ All notable changes to this project are documented here. The format follows
 - In-memory bookmarks fake for tests that mirrors Chromium's behaviour.
 - Bookmark store: the tree is loaded once, kept in sync from browser events, and
   reloaded after browser imports or anything unexpected.
+- Sidebar folder tree with bookmark counts, keyboard navigation, resizing and
+  ⌘\ to hide it. View preferences are remembered.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.

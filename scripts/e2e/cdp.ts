@@ -152,6 +152,8 @@ export class Page {
   }
 
   async screenshot(path: string): Promise<void> {
+    // Let CSS transitions (150–200 ms) finish so colours are final.
+    await sleep(350);
     const { data } = await this.send<{ data: string }>('Page.captureScreenshot', {
       format: 'png',
     });

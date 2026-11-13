@@ -16,12 +16,31 @@ const checks: Array<[string, (page: Page) => Promise<void>]> = [];
 const check = (name: string, fn: (page: Page) => Promise<void>) =>
   checks.push([name, fn]);
 
-check('new tab renders without errors', async (page) => {
-  await page.waitFor('document.querySelector("h1")');
-  await page.setViewport(1200, 760);
+check('new tab renders the folder tree without errors', async (page) => {
+  await page.waitFor('document.querySelector("[role=tree] [role=treeitem]")');
+  const items = await page.eval<string[]>(
+    `[...document.querySelectorAll('[role=treeitem]')].map((el) => el.textContent)`,
+  );
+  assert.ok(
+    items.some((t) => t.startsWith('Work')),
+    `tree items: ${items.join(', ')}`,
+  );
+  await page.setViewport(1280, 800);
   await page.screenshot(`${OUT}/newtab-light.png`);
-  await page.setViewport(1200, 760, true);
+  await page.setViewport(1280, 800, true);
   await page.screenshot(`${OUT}/newtab-dark.png`);
+});
+
+check('tree follows bookmark changes made outside Arca', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);
+  await page.waitFor(
+    `[...document.querySelectorAll('[role=treeitem]')].some((el) => el.textContent.startsWith('Made elsewhere'))`,
+  );
+  await page.eval(`(async () => {
+    const [n] = await chrome.bookmarks.search({ title: 'Made elsewhere' });
+    await chrome.bookmarks.remove(n.id);
+  })()`);
 });
 
 check('chrome move semantics match the test fake', async (page) => {
@@ -45,9 +64,38 @@ check('chrome move semantics match the test fake', async (page) => {
   assert.deepEqual(result, { order: 'BACD', eventIndex: 1 });
 });
 
+/** Seeds a realistic bookmark tree once, through the real API. */
+async function seed(page: Page) {
+  await page.eval(`(async () => {
+    const bm = chrome.bookmarks;
+    const add = async (parentId, items) => {
+      for (const item of items) {
+        const node = await bm.create({ parentId, title: item.t, url: item.u });
+        if (item.c) await add(node.id, item.c);
+      }
+    };
+    await add('1', [
+      { t: 'GitHub', u: 'https://github.com/' },
+      { t: 'Work', c: [
+        { t: 'Linear', u: 'https://linear.app/' },
+        { t: 'Figma', u: 'https://www.figma.com/' },
+        { t: 'Docs', c: [{ t: 'MDN', u: 'https://developer.mozilla.org/' }] },
+      ] },
+      { t: 'Reading', c: [
+        { t: 'Hacker News', u: 'https://news.ycombinator.com/' },
+        { t: 'The Verge', u: 'https://www.theverge.com/' },
+      ] },
+      { t: 'YouTube', u: 'https://www.youtube.com/' },
+    ]);
+    await add('2', [{ t: 'Recipes', c: [{ t: 'Serious Eats', u: 'https://www.seriouseats.com/' }] }]);
+  })()`);
+}
+
 const browser = await launch();
 let failed = 0;
 try {
+  const setup = await browser.open('newtab.html');
+  await seed(setup);
   for (const [name, fn] of checks) {
     const page = await browser.open('newtab.html');
     try {
