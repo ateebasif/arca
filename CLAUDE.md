@@ -18,8 +18,7 @@ fast, visual, editable dashboard (Opera GX speed-dial style). Primary target: **
 
 ## Project location
 
-- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/` (the PRD's §4 path
-  `claude-code-directory/arca` is outdated; this folder is the real root).
+- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/`.
 - Keep every project file inside this folder. Never write to the parent directory.
 
 ## Stack
