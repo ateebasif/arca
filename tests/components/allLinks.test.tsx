@@ -31,7 +31,7 @@ describe('All links view', () => {
   const tiles = () =>
     within(screen.getByRole('region', { name: 'All links' }))
       .getAllByRole('link')
-      .map((a) => a.textContent);
+      .map((a) => a.querySelector('.line-clamp-2')?.textContent ?? a.textContent);
 
   it('shows every link under the folder, labelled with its folder', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
@@ -39,9 +39,18 @@ describe('All links view', () => {
     expect(useUi.getState().scope).toBe('all');
     expect(screen.getByText('4 links across 3 folders')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Folders' })).toBeNull();
-    const text = tiles().join(' | ');
+    const text = within(screen.getByRole('region', { name: 'All links' }))
+      .getAllByRole('link')
+      .map((a) => a.textContent)
+      .join(' | ');
     expect(text).toContain('Deep');
-    expect(text).toContain('Dev / Nested');
+    expect(text).toContain('Nested');
+    // Tiles show the nearest folder; the full path is in the tooltip.
+    expect(
+      screen
+        .getByRole('region', { name: 'All links' })
+        .querySelector('[title="Dev / Nested"]'),
+    ).not.toBeNull();
     expect(text).toContain('MDN');
   });
 

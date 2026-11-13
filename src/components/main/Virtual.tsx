@@ -5,6 +5,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from 'react';
 import { ScrollParentContext } from './scrollParent';
@@ -103,8 +104,13 @@ export function VirtualRows<T>({
               gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
             }}
           >
-            {rowItems.map((item) => (
-              <div key={getKey(item)} className="@container min-w-0">
+            {rowItems.map((item, j) => (
+              <div
+                key={getKey(item)}
+                data-tile=""
+                className="@container min-w-0"
+                style={{ '--i': Math.min(row.index * columns + j, 24) } as CSSProperties}
+              >
                 {render(item)}
               </div>
             ))}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { sortNodes } from '@/src/features/sort';
 import {
   folderCounts,
@@ -15,8 +15,34 @@ import { FolderCard } from './FolderCard';
 import { VIRTUALIZE_OVER } from './scrollParent';
 import { VirtualRows } from './Virtual';
 
+const stagger = (i: number) => ({ '--i': Math.min(i, 24) }) as CSSProperties;
+
+/**
+ * Plays the tile entrance animation once when mounted (keyed by folder and
+ * view), then stops so tiles that scroll into view later don't animate.
+ */
+function Entering({ children }: { children: ReactNode }) {
+  const [entering, setEntering] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setEntering(false), 900);
+    return () => clearTimeout(timer);
+  }, []);
+  return <div className={entering ? 'arca-entering' : undefined}>{children}</div>;
+}
+
 /** Contents of the open folder: folders first, then bookmarks, in grid or list. */
 export function FolderView() {
+  const currentFolderId = useUi((s) => s.currentFolderId);
+  const scope = useUi((s) => s.scope);
+  const view = useUi((s) => s.view);
+  return (
+    <Entering key={`${currentFolderId}:${scope}:${view}`}>
+      <FolderContents />
+    </Entering>
+  );
+}
+
+function FolderContents() {
   const state = useBookmarks();
   const currentFolderId = useUi((s) => s.currentFolderId);
   const density = useUi((s) => s.density);
@@ -97,12 +123,16 @@ export function FolderView() {
     <div className="flex flex-col gap-6">
       {folders.length > 0 && (
         <section aria-label="Folders">
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
-            {folders.map((folder) => (
-              <li key={folder.id}>
+          <ul className={gridClass('comfortable')}>
+            {folders.map((folder, i) => (
+              <li key={folder.id} data-tile="" style={stagger(i)}>
                 <FolderCard
                   folder={folder}
                   count={counts.get(folder.id) ?? 0}
+                  subfolders={
+                    (folder.childIds ?? []).filter((c) => state.nodes.get(c)?.childIds)
+                      .length
+                  }
                   preview={folderPreview(state, folder)}
                   onOpen={openFolder}
                 />
@@ -127,8 +157,13 @@ export function FolderView() {
             />
           ) : (
             <ul className={gridClass(density)}>
-              {bookmarks.map((bookmark) => (
-                <li key={bookmark.id} className="@container min-w-0">
+              {bookmarks.map((bookmark, i) => (
+                <li
+                  key={bookmark.id}
+                  data-tile=""
+                  className="@container min-w-0"
+                  style={stagger(i + folders.length)}
+                >
                   <BookmarkTile bookmark={bookmark} density={density} />
                 </li>
               ))}
@@ -230,8 +265,8 @@ function AllLinksView() {
         />
       ) : (
         <ul className={gridClass(density)}>
-          {items.map((b) => (
-            <li key={b.id} className="@container min-w-0">
+          {items.map((b, i) => (
+            <li key={b.id} data-tile="" className="@container min-w-0" style={stagger(i)}>
               {render(b)}
             </li>
           ))}
@@ -242,12 +277,12 @@ function AllLinksView() {
 }
 
 /** Grid sizing shared by the folder view and the all-links view. */
-export const TILE_MIN_WIDTH = 132;
+export const TILE_MIN_WIDTH = 176;
 export const TILE_ROW_HEIGHT = 156;
 function gridClass(density: 'comfortable' | 'compact'): string {
   return density === 'compact'
     ? 'grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-1'
-    : 'grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3';
+    : 'grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-3';
 }
 
 /**

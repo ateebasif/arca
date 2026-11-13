@@ -110,7 +110,7 @@ export function ItemMenu({ menu }: { menu: MenuState }) {
       role="menu"
       aria-label={`Actions for ${node.title || 'Untitled'}`}
       onKeyDown={onKeyDown}
-      className="border-line bg-surface-strong fixed z-40 min-w-48 rounded-xl border p-1 shadow-(--shadow-pop) backdrop-blur-xl"
+      className="animate-pop border-line bg-surface-strong fixed z-40 min-w-48 rounded-xl border p-1 shadow-(--shadow-pop) backdrop-blur-xl"
       style={{ left: pos.x, top: pos.y }}
     >
       {items.map((item) => (

@@ -66,7 +66,7 @@ export function SearchResults() {
           id={RESULTS_ID}
           role="listbox"
           aria-label="Search results"
-          className="flex flex-col gap-px"
+          className="animate-fade flex flex-col gap-px"
         >
           {results.map((result, index) => (
             <ResultRow

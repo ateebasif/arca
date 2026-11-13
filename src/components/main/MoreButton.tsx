@@ -6,11 +6,17 @@ export function MoreButton({
   id,
   title,
   className = '',
+  onCover = false,
 }: {
   id: string;
   title: string;
   className?: string;
+  /** Sits on a coloured tile cover: translucent dark chip with white icon. */
+  onCover?: boolean;
 }) {
+  const tone = onCover
+    ? 'bg-black/25 text-white hover:bg-black/45 backdrop-blur-sm'
+    : 'text-ink-muted hover:text-ink hover:bg-hover bg-surface-strong';
   return (
     <button
       type="button"
@@ -21,7 +27,7 @@ export function MoreButton({
         e.stopPropagation();
         openMenuAt(id, e.currentTarget);
       }}
-      className={`text-ink-muted hover:text-ink hover:bg-hover bg-surface-strong grid size-7 place-items-center rounded-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 ${className}`}
+      className={`${tone} grid size-7 place-items-center rounded-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 ${className}`}
     >
       <MoreIcon />
     </button>

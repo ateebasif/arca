@@ -125,7 +125,7 @@ function PreviewCard({ anchor, url }: { anchor: HTMLElement; url: string }) {
       ref={ref}
       role="tooltip"
       data-testid="link-preview"
-      className="border-line bg-surface-strong pointer-events-none fixed z-30 overflow-hidden rounded-(--radius-panel) border shadow-(--shadow-pop) backdrop-blur-xl"
+      className="animate-pop border-line bg-surface-strong pointer-events-none fixed z-30 overflow-hidden rounded-(--radius-panel) border shadow-(--shadow-pop) backdrop-blur-xl"
       style={{ width: CARD_WIDTH, left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
     >
       {!preview ? (
