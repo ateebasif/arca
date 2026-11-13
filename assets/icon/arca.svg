@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Arca: a strongbox (Latin "arca") with an arched lid. Source for 32px and up. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b7dff"/>
+      <stop offset="1" stop-color="#4a38d4"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".24"/>
+      <stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#tile)"/>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#shine)"/>
+  <!-- lid -->
+  <path d="M28 59V52c0-18 16-29 36-29s36 11 36 29v7z" fill="#fff"/>
+  <!-- body -->
+  <rect x="28" y="65" width="72" height="39" rx="8" fill="#fff"/>
+  <!-- clasp -->
+  <rect x="54" y="52" width="20" height="26" rx="6" fill="#5444df" stroke="#fff" stroke-width="4"/>
+  <circle cx="64" cy="62" r="3.2" fill="#fff"/>
+  <rect x="62.4" y="63" width="3.2" height="8" rx="1.6" fill="#fff"/>
+</svg>

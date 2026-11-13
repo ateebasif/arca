@@ -316,7 +316,8 @@ export async function launch(options: LaunchOptions = {}): Promise<Browser> {
     extensionId,
     extraIds,
     async open(path: string) {
-      const url = path.includes('://')
+      // Absolute URLs (https:, about:, data:…) as-is; anything else is an Arca page.
+      const url = /^[a-z][a-z0-9+.-]*:/i.test(path)
         ? path
         : `chrome-extension://${extensionId}/${path}`;
       const { targetId } = await conn.send<{ targetId: string }>('Target.createTarget', {

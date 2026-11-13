@@ -16,7 +16,10 @@ export function Sidebar() {
       style={{ width }}
     >
       <div className="flex h-14 shrink-0 items-center justify-between px-4">
-        <span className="text-[15px] font-semibold tracking-tight">Arca</span>
+        <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+          <img src="/icon/32.png" alt="" width={20} height={20} draggable={false} />
+          Arca
+        </span>
         <button
           type="button"
           onClick={toggleSidebar}
