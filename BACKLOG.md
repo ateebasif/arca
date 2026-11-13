@@ -7,6 +7,9 @@
 
 ## Up Next
 
+- [ ] ARC-059 · AI search: meaning search in ⌘K using cached embeddings (embed query, cosine match, merged with keyword results); optional "Ask" chat via llama3.2 that only cites real bookmarks; include cached preview descriptions when available · needs ARC-058 · P2
+- [ ] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, output in Other Bookmarks, Bookmarks Bar opt-in, higher folder cap (~40–60) · part of / follow-up to ARC-058 · P1
+
 ## Backlog
 
 ### Phase 1 – Core

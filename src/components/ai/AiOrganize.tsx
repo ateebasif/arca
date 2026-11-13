@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { chooseK } from '@/src/features/ai/kmeans';
 import {
   applyGroups,
+  estimateSeconds,
   planGroups,
   type OrganizeItem,
   type ProposedGroup,
@@ -145,6 +146,16 @@ export function AiOrganize() {
           >
             Suggest folders
           </Button>
+          {phase.kind === 'ready' && items.length > 200 && (
+            <span className="text-ink-faint text-xs">
+              First run ≈{' '}
+              {Math.max(
+                1,
+                Math.round(estimateSeconds(settings.embedModel, items.length) / 60),
+              )}{' '}
+              min · later runs only read new links
+            </span>
+          )}
           {phase.kind === 'done' && (
             <span className="text-ink-muted text-xs" role="status">
               Created {phase.count} folders in “Organized by Arca”. Undo is in the toast

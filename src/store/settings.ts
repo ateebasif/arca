@@ -39,7 +39,8 @@ export const DEFAULT_SETTINGS: Settings = {
   openIn: 'current',
   aiEnabled: false,
   ollamaUrl: DEFAULT_OLLAMA_URL,
-  embedModel: 'nomic-embed-text:latest',
+  // Best grouping in testing; nomic-embed-text is ~10× faster but rougher.
+  embedModel: 'qwen3-embedding:4b',
   chatModel: 'llama3.2:latest',
 };
 

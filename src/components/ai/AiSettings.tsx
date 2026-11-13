@@ -76,8 +76,12 @@ export function AiSettings() {
   const models = status.kind === 'ok' ? status.models : [];
   const embedders = models.filter(isEmbeddingModel);
   const chatters = models.filter((m) => !isEmbeddingModel(m));
-  const pick = (list: OllamaModel[], current: string) =>
-    list.some((m) => m.name === current) ? current : (list[0]?.name ?? current);
+  const pick = (list: OllamaModel[], current: string, preferred: RegExp[]) =>
+    list.some((m) => m.name === current)
+      ? current
+      : (preferred.map((re) => list.find((m) => re.test(m.name))?.name).find(Boolean) ??
+        list[0]?.name ??
+        current);
 
   return (
     <div className="border-line mt-4 border-t pt-4">
@@ -146,17 +150,20 @@ export function AiSettings() {
             <div className="grid grid-cols-2 gap-2">
               <ModelSelect
                 label="Grouping model (embeddings)"
-                value={pick(embedders, s.embedModel)}
+                value={pick(embedders, s.embedModel, [
+                  /qwen3-embedding/,
+                  /nomic-embed-text/,
+                ])}
                 models={embedders.length ? embedders : models}
                 onChange={(embedModel) => void s.update({ embedModel })}
-                hint="Recommended: nomic-embed-text"
+                hint="Best: qwen3-embedding · Fastest: nomic-embed-text"
               />
               <ModelSelect
                 label="Naming model"
-                value={pick(chatters, s.chatModel)}
+                value={pick(chatters, s.chatModel, [/^llama3\.2/, /mistral/])}
                 models={chatters.length ? chatters : models}
                 onChange={(chatModel) => void s.update({ chatModel })}
-                hint="Recommended: llama3.2"
+                hint="Recommended: llama3.2 (mistral for nicer names)"
               />
             </div>
           )}

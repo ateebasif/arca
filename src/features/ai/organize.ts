@@ -45,11 +45,23 @@ export interface PlanOptions {
 
 const EMBED_BATCH = 64;
 
-export function embeddingText(item: OrganizeItem): string {
+/**
+ * Text that gets embedded for a bookmark: title, site and its own folder
+ * name. Folder names shared by most items carry no signal and are dropped
+ * (see planGroups), so they don't drown out the topic.
+ */
+export function embeddingText(item: OrganizeItem, includeFolder = true): string {
   const site = mainDomain(item.url);
-  return [item.title || site, site, item.folder && `in ${item.folder}`]
-    .filter(Boolean)
-    .join(' · ');
+  const folder = includeFolder ? item.folder.split(' / ').at(-1) : '';
+  return [item.title || site, site, folder && `in ${folder}`].filter(Boolean).join(' · ');
+}
+
+/**
+ * Some embedding models are trained with task prefixes; nomic-embed-text
+ * groups much better with "clustering: " in front.
+ */
+export function taskPrefix(model: string): string {
+  return /nomic-embed/i.test(model) ? 'clustering: ' : '';
 }
 
 /** Folder names from the model are cleaned like any untrusted input. */
@@ -85,7 +97,18 @@ async function embedAll(
   items: OrganizeItem[],
   opts: PlanOptions,
 ): Promise<Float32Array[]> {
-  const texts = items.map(embeddingText);
+  // Drop the folder when one folder holds most items: it says nothing about topic.
+  const lastFolder = (it: OrganizeItem) => it.folder.split(' / ').at(-1) ?? '';
+  const counts = new Map<string, number>();
+  for (const it of items)
+    counts.set(lastFolder(it), (counts.get(lastFolder(it)) ?? 0) + 1);
+  const common = new Set(
+    [...counts].filter(([, n]) => n > items.length * 0.4).map(([folder]) => folder),
+  );
+  const prefix = taskPrefix(opts.embedModel);
+  const texts = items.map(
+    (it) => prefix + embeddingText(it, !common.has(lastFolder(it))),
+  );
   const vectors: (number[] | null)[] = await Promise.all(
     texts.map((t) => readCached(opts.embedModel, t)),
   );
@@ -214,4 +237,14 @@ export async function applyGroups(
     );
   }
   return root.id;
+}
+
+/** Rough first-run time in seconds (measured on Apple Silicon; cached runs are fast). */
+export function estimateSeconds(model: string, count: number): number {
+  const msPerItem = /qwen3-embedding/i.test(model)
+    ? 90
+    : /nomic-embed/i.test(model)
+      ? 9
+      : 40;
+  return Math.round((count * msPerItem) / 1000);
 }
