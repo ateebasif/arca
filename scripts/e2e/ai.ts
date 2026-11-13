@@ -154,6 +154,15 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       await settings(`http://127.0.0.1:${PORT}`);
       await openAi();
       await suggest();
+      // Live progress (elapsed time, what's being read); best effort, since a
+      // fast model can finish before we look.
+      await page
+        .waitFor(
+          `document.querySelector('[role=dialog] [role=status]')?.textContent.includes('elapsed')`,
+          3000,
+        )
+        .then(() => page.screenshot(`${out}/ai-running.png`))
+        .catch(() => {});
       await page.waitFor(
         `document.querySelectorAll('[data-ai-group]').length >= 2`,
         120000,

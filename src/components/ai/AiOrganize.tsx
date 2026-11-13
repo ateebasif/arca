@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { chooseK } from '@/src/features/ai/kmeans';
 import {
   applyGroups,
   estimateSeconds,
   planGroups,
   type OrganizeItem,
+  type ProgressInfo,
   type ProposedGroup,
   type Stage,
 } from '@/src/features/ai/organize';
@@ -25,7 +26,14 @@ const STAGE_LABEL: Record<Stage, string> = {
 
 type Phase =
   | { kind: 'ready' }
-  | { kind: 'running'; stage: Stage; done: number; total: number }
+  | {
+      kind: 'running';
+      stage: Stage;
+      done: number;
+      total: number;
+      info?: ProgressInfo;
+      startedAt: number;
+    }
   | { kind: 'review'; groups: ProposedGroup[] }
   | { kind: 'applying'; done: number; total: number }
   | { kind: 'done'; count: number }
@@ -77,7 +85,14 @@ export function AiOrganize() {
     abort.current = new AbortController();
     setNames({});
     setSkipped(new Set());
-    setPhase({ kind: 'running', stage: 'embedding', done: 0, total: items.length });
+    const startedAt = Date.now();
+    setPhase({
+      kind: 'running',
+      stage: 'embedding',
+      done: 0,
+      total: items.length,
+      startedAt,
+    });
     try {
       const groups = await planGroups(items, {
         base: settings.ollamaUrl,
@@ -85,8 +100,16 @@ export function AiOrganize() {
         chatModel: settings.chatModel,
         groups: groupsWanted || undefined,
         signal: abort.current.signal,
-        onProgress: (stage, done, total) =>
-          setPhase({ kind: 'running', stage, done, total }),
+        onProgress: (stage, done, total, info) =>
+          setPhase((prev) => ({
+            kind: 'running',
+            stage,
+            done,
+            total,
+            // Keep the cache count from the embedding stage for the summary line.
+            info: { ...(prev.kind === 'running' ? prev.info : {}), ...info },
+            startedAt,
+          })),
       });
       setPhase({ kind: 'review', groups });
     } catch (e) {
@@ -167,23 +190,16 @@ export function AiOrganize() {
 
       {phase.kind === 'error' && <OllamaHelp error={phase.error} />}
 
-      {(phase.kind === 'running' || phase.kind === 'applying') && (
+      {phase.kind === 'running' && (
+        <RunProgress phase={phase} onCancel={() => abort.current?.abort()} />
+      )}
+
+      {phase.kind === 'applying' && (
         <div className="flex items-center gap-3 text-xs" role="status">
-          <div className="bg-hover h-1.5 flex-1 overflow-hidden rounded-full">
-            <div
-              className="bg-accent-strong h-full transition-[width] duration-200"
-              style={{
-                width: `${Math.round((phase.done / Math.max(1, phase.total)) * 100)}%`,
-              }}
-            />
-          </div>
+          <Bar done={phase.done} total={phase.total} />
           <span className="text-ink-muted tabular-nums">
-            {phase.kind === 'running' ? STAGE_LABEL[phase.stage] : 'Moving links'} ·{' '}
-            {phase.done}/{phase.total}
+            Moving links · {phase.done}/{phase.total}
           </span>
-          {phase.kind === 'running' && (
-            <Button onClick={() => abort.current?.abort()}>Cancel</Button>
-          )}
         </div>
       )}
 
@@ -248,6 +264,79 @@ export function AiOrganize() {
             ))}
           </ul>
         </>
+      )}
+    </div>
+  );
+}
+
+function Bar({ done, total }: { done: number; total: number }) {
+  return (
+    <div className="bg-hover h-1.5 flex-1 overflow-hidden rounded-full">
+      <div
+        className="bg-accent-strong h-full transition-[width] duration-200"
+        style={{ width: `${Math.round((done / Math.max(1, total)) * 100)}%` }}
+      />
+    </div>
+  );
+}
+
+const clock = (seconds: number) => {
+  const s = Math.max(0, Math.round(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+
+/**
+ * Live progress while AI organize runs: elapsed time, an estimate of what's
+ * left (from the speed so far), and which links are being read right now.
+ */
+function RunProgress({
+  phase,
+  onCancel,
+}: {
+  phase: Extract<Phase, { kind: 'running' }>;
+  onCancel(): void;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const { stage, done, total, info, startedAt } = phase;
+  const elapsed = (now - startedAt) / 1000;
+  const cached = info?.cached ?? 0;
+  const fresh = done - cached; // read from Ollama during this run
+  const loading = stage === 'embedding' && fresh <= 0 && total > cached;
+  const left =
+    stage === 'embedding' && fresh > 0 && elapsed > 2
+      ? ((total - done) * elapsed) / fresh
+      : null;
+  const label = loading ? 'Starting the model' : STAGE_LABEL[stage];
+
+  return (
+    <div className="space-y-1.5 text-xs" role="status">
+      <div className="flex items-center gap-3">
+        <Bar done={done} total={total} />
+        <span className="text-ink-muted tabular-nums">
+          {label} · {done}/{total}
+        </span>
+        <Button onClick={onCancel}>Cancel</Button>
+      </div>
+      <p className="text-ink-faint tabular-nums">
+        {clock(elapsed)} elapsed
+        {left !== null &&
+          ` · about ${left < 60 ? 'under a minute' : `${Math.ceil(left / 60)} min`} left`}
+        {loading && ' · the first batch takes longer while Ollama loads the model'}
+        {cached > 0 && ` · ${cached} links already read on an earlier run`}
+      </p>
+      {info?.titles && info.titles.length > 0 && stage !== 'grouping' && (
+        <p className="text-ink-faint truncate" title={info.titles.join('\n')}>
+          {stage === 'naming' ? 'Naming the group with: ' : 'Now reading: '}
+          {info.titles.slice(0, 3).filter(Boolean).join(' · ')}
+          {stage === 'embedding' &&
+            info.titles.length > 3 &&
+            ` +${info.titles.length - 3} more`}
+        </p>
       )}
     </div>
   );
