@@ -13,6 +13,7 @@ import { displayHost } from '@/src/lib/url';
 import { useOverlays } from '@/src/store/overlays';
 import { getBookmarkStore, useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { useAiRun } from '@/src/store/aiRun';
 import { AiOrganize } from '../ai/AiOrganize';
 import { FolderIcon } from '../icons';
 import { Favicon } from '../main/Favicon';
@@ -38,7 +39,16 @@ export default function TidyPanel() {
   const state = useBookmarks();
   const folderId = useUi((s) => s.currentFolderId);
   const folderTitle = state.nodes.get(folderId)?.title || 'this folder';
-  const [tab, setTab] = useState<Tab>('duplicates');
+  // Reopen on the last tab; jump to AI organize while a run is going or waiting.
+  const [tab, setTabState] = useState<Tab>(() => {
+    if (useAiRun.getState().phase.kind !== 'ready') return 'ai';
+    const last = useOverlays.getState().tidyTab;
+    return TABS.some(([v]) => v === last) ? (last as Tab) : 'duplicates';
+  });
+  const setTab = (next: Tab) => {
+    setTabState(next);
+    useOverlays.getState().setTidyTab(next);
+  };
   const [wholeLibrary, setWholeLibrary] = useState(true);
   const [busy, setBusy] = useState<{ done: number; total: number } | null>(null);
 

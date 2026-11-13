@@ -56,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-B02 · AI organize run lost when switching Tidy tabs or closing the panel; run state moved to a store, sidebar status · `fix/ai-run-persists` · 2026-11-14
 - [x] ARC-061 · AI organize live progress: elapsed/ETA, current links, cache count, model-start state; batches of 32 · `feature/ai-progress` · 2026-11-14
 - [x] ARC-B01 · Settings dialog clipped in short windows; Local AI showed Connected despite Ollama 403 on POST · `fix/settings-ollama-check` · 2026-11-14
 - [x] ARC-058 · AI organize with local Ollama: embed (qwen3-embedding / nomic-embed-text), k-means locally, name folders (llama3.2), review + one undo · `feature/ai-organize` · 2026-11-14

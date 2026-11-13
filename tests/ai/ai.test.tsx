@@ -23,7 +23,9 @@ import {
   localOllamaUrl,
   OllamaError,
 } from '@/src/lib/ollama';
+import { resetAiRun, useAiRun } from '@/src/store/aiRun';
 import { parseSettings, useSettings } from '@/src/store/settings';
+import { useUi } from '@/src/store/ui';
 import { useOverlays } from '@/src/store/overlays';
 import { installFakeBookmarks } from '../fakes/bookmarks';
 import { renderWithBookmarks } from '../helpers/render';
@@ -98,7 +100,10 @@ const items = (titles: string[], folder = 'Imported'): OrganizeItem[] =>
     folder,
   }));
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  resetAiRun();
+});
 beforeEach(() => setEmbeddingStoreForTests(memoryStore()));
 
 describe('ollama client', () => {
@@ -436,5 +441,89 @@ describe('AI organize panel', () => {
     await vi.waitFor(() => expect(fake.findByTitle('Recipes')).toBeDefined());
     expect(fake.childIds(fake.findByTitle('Recipes')!.id)).toHaveLength(5);
     expect(fake.findByTitle('Frontend')).toBeUndefined();
+  });
+
+  it('keeps running across tab switches, closing the panel and browsing', async () => {
+    // Hold the embedding request until we say so.
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const { fn } = fakeOllama();
+    const real = fn.getMockImplementation()!;
+    fn.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith('/api/embed')) await gate;
+      return real(url, init);
+    });
+    const { fake } = await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [
+        ...[...REACT, ...FOOD].map((t) => ({
+          title: t,
+          url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+        })),
+        { title: 'Elsewhere', children: [] },
+      ],
+    });
+    const bar = useUi.getState().currentFolderId;
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().setTidyOpen(true));
+    let panel = await screen.findByRole('dialog', { name: 'Tidy up' });
+    await userEvent.click(within(panel).getByRole('tab', { name: 'AI organize' }));
+    await userEvent.click(within(panel).getByRole('button', { name: 'Suggest folders' }));
+    expect(await within(panel).findByText(/elapsed/)).toBeInTheDocument();
+
+    // Switch tabs, close the panel and open another folder mid-run.
+    await userEvent.click(within(panel).getByRole('tab', { name: 'Duplicates' }));
+    act(() => useOverlays.getState().setTidyOpen(false));
+    act(() => useUi.getState().openFolder(fake.findByTitle('Elsewhere')!.id));
+    expect(useAiRun.getState().phase.kind).toBe('running');
+    expect(screen.getByRole('button', { name: /Tidy up/ })).toHaveTextContent(/AI \d+%/);
+
+    await act(async () => release());
+    await vi.waitFor(() => expect(useAiRun.getState().phase.kind).toBe('review'));
+    expect(screen.getByRole('button', { name: /Tidy up/ })).toHaveTextContent(
+      'AI ready to review',
+    );
+
+    // Reopening lands on AI organize with the suggestions, for the original folder.
+    act(() => useOverlays.getState().setTidyOpen(true));
+    panel = await screen.findByRole('dialog', { name: 'Tidy up' });
+    expect(within(panel).getByRole('tab', { name: 'AI organize' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(
+      within(panel).getByRole('button', { name: 'Go to folder' }),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      within(panel).getByRole('button', { name: /^Apply 2 folders/ }),
+    );
+    await vi.waitFor(() => expect(fake.findByTitle('Organized by Arca')).toBeDefined());
+    expect(fake.findByTitle('Organized by Arca')!.parentId).toBe(bar);
+  });
+
+  it('Cancel stops the run', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const { fn } = fakeOllama();
+    const real = fn.getMockImplementation()!;
+    fn.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith('/api/embed')) await gate;
+      return real(url, init);
+    });
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [...REACT, ...FOOD].map((t) => ({
+        title: t,
+        url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+      })),
+    });
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().setTidyOpen(true));
+    const panel = await screen.findByRole('dialog', { name: 'Tidy up' });
+    await userEvent.click(within(panel).getByRole('tab', { name: 'AI organize' }));
+    await userEvent.click(within(panel).getByRole('button', { name: 'Suggest folders' }));
+    await userEvent.click(await within(panel).findByRole('button', { name: 'Cancel' }));
+    expect(useAiRun.getState().phase.kind).toBe('ready');
+    await act(async () => release());
+    await new Promise((r) => setTimeout(r, 10));
+    expect(useAiRun.getState().phase.kind).toBe('ready');
   });
 });
