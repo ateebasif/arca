@@ -12,10 +12,15 @@ export type EditorState =
     }
   | { mode: 'edit'; id: string };
 
+/** Where an item is shown: the main view or the sidebar folder tree. */
+export type ItemPlace = 'main' | 'tree';
+
 export interface MenuState {
   id: string;
   x: number;
   y: number;
+  /** Where the menu was opened, so Rename edits that copy of the item. */
+  from?: ItemPlace;
 }
 
 export interface ToastAction {
@@ -34,6 +39,8 @@ interface OverlayState {
   editor: EditorState | null;
   menu: MenuState | null;
   renamingId: string | null;
+  /** The same folder can be in the sidebar and the main view; rename one. */
+  renameIn: ItemPlace;
   confirmDeleteId: string | null;
   settingsOpen: boolean;
   shortcutsOpen: boolean;
@@ -47,7 +54,7 @@ interface OverlayState {
   closeEditor(): void;
   openMenu(menu: MenuState): void;
   closeMenu(): void;
-  startRename(id: string): void;
+  startRename(id: string, place?: ItemPlace): void;
   stopRename(): void;
   askDelete(id: string): void;
   closeDelete(): void;
@@ -69,6 +76,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   editor: null,
   menu: null,
   renamingId: null,
+  renameIn: 'main',
   confirmDeleteId: null,
   settingsOpen: false,
   shortcutsOpen: false,
@@ -80,7 +88,8 @@ export const useOverlays = create<OverlayState>()((set) => ({
   closeEditor: () => set({ editor: null }),
   openMenu: (menu) => set({ menu }),
   closeMenu: () => set({ menu: null }),
-  startRename: (renamingId) => set({ renamingId, menu: null }),
+  startRename: (renamingId, renameIn = 'main') =>
+    set({ renamingId, renameIn, menu: null }),
   stopRename: () => set({ renamingId: null }),
   askDelete: (confirmDeleteId) => set({ confirmDeleteId, menu: null }),
   closeDelete: () => set({ confirmDeleteId: null }),
@@ -105,6 +114,7 @@ export function resetOverlaysForTests(): void {
     editor: null,
     menu: null,
     renamingId: null,
+    renameIn: 'main',
     confirmDeleteId: null,
     settingsOpen: false,
     shortcutsOpen: false,

@@ -31,7 +31,9 @@ export const FolderCard = memo(function FolderCard({
   preview,
   onOpen,
 }: FolderCardProps) {
-  const renaming = useOverlays((s) => s.renamingId === folder.id);
+  const renaming = useOverlays(
+    (s) => s.renamingId === folder.id && s.renameIn === 'main',
+  );
   const title = folder.title || 'Untitled';
   const drag = useDragItem(folder);
   const drop = useFolderDrop(folder.id, 'card');

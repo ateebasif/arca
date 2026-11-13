@@ -54,13 +54,13 @@ check('grid shows folder cards and tiles; folders open on click', async (page) =
   );
   await page.setViewport(1280, 800);
   await page.screenshot(`${OUT}/folder-work.png`);
-  await page.eval(`document.querySelector('[aria-label="Compact density"]').click()`);
+  await page.eval(`document.querySelector('[aria-label="Small tiles"]').click()`);
   await page.screenshot(`${OUT}/folder-work-compact.png`);
-  await page.eval(`document.querySelector('[aria-label="Comfortable density"]').click()`);
-  await page.eval(`document.querySelector('[aria-label="List view"]').click()`);
+  await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
+  await page.eval(`document.querySelector('[aria-label="List"]').click()`);
   await page.waitFor('document.querySelector("[role=table]")');
   await page.screenshot(`${OUT}/folder-work-list.png`);
-  await page.eval(`document.querySelector('[aria-label="Grid view"]').click()`);
+  await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
 });
 
 check('search: mod+K, type, arrows, alt+Enter reveals in folder', async (page) => {
