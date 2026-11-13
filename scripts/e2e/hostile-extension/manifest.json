@@ -1,0 +1,8 @@
+{
+  "manifest_version": 3,
+  "name": "Arca e2e hostile extension",
+  "version": "1.0.0",
+  "description": "Test-only extension that tries to talk to and read from Arca.",
+  "permissions": ["bookmarks"],
+  "background": { "service_worker": "worker.js" }
+}

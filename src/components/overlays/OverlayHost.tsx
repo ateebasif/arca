@@ -68,7 +68,7 @@ function ConfirmDelete({ id }: { id: string }) {
   );
 }
 
-function Toaster() {
+export function Toaster() {
   const toasts = useOverlays((s) => s.toasts);
   const dismiss = useOverlays((s) => s.dismissToast);
   return (

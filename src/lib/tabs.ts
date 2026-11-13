@@ -1,5 +1,6 @@
 import { browser, type Browser } from 'wxt/browser';
-import { callApi } from './errors';
+import { ArcaError, callApi } from './errors';
+import { classifyUrl } from './url';
 
 export type Tab = Browser.tabs.Tab;
 
@@ -17,10 +18,17 @@ export async function getActiveTab(): Promise<Tab | undefined> {
   return tab;
 }
 
+function assertOpenable(url: string): void {
+  if (classifyUrl(url) === 'blocked') {
+    throw new ArcaError('BLOCKED_URL', `Refusing to open ${url.slice(0, 40)}`);
+  }
+}
+
 export async function openUrl(
   url: string,
   disposition: OpenDisposition = 'current',
 ): Promise<void> {
+  assertOpenable(url);
   if (disposition === 'current') {
     await callApi('tabs.update', () => browser.tabs.update({ url }));
     return;
@@ -32,6 +40,7 @@ export async function openUrl(
 
 /** Opens each URL in a background tab, in order. Callers warn above 10 (PRD §8.5). */
 export async function openUrls(urls: readonly string[]): Promise<void> {
+  urls.forEach(assertOpenable);
   for (const url of urls) {
     await callApi('tabs.create', () => browser.tabs.create({ url, active: false }));
   }

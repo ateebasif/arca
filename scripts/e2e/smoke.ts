@@ -7,6 +7,8 @@
  */
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { launch, MOD, sleep, type Page } from './cdp';
 
 const OUT = '.e2e';
@@ -321,6 +323,95 @@ check('New Tab paint budgets with 5,000 bookmarks', async (page) => {
   );
 });
 
+check('security: other extensions cannot message or read Arca', async (page) => {
+  const arcaId = browser.extensionId;
+  const [hostileId] = browser.extraIds;
+  const origin = await page.eval<string>('location.origin');
+  await page.navigate(`chrome-extension://${hostileId}/attack.html`);
+  const result = await page.eval<Record<string, string>>(`(async () => {
+    const out = {};
+    const attempt = async (name, fn) => {
+      try { out[name] = 'ok: ' + JSON.stringify(await fn()); }
+      catch (e) { out[name] = 'blocked: ' + (e && e.message || e); }
+    };
+    await attempt('sendMessage', () => chrome.runtime.sendMessage(${JSON.stringify(arcaId)}, { cmd: 'getSettings' }));
+    await attempt('connect', () => new Promise((resolve, reject) => {
+      const port = chrome.runtime.connect(${JSON.stringify(arcaId)});
+      port.onDisconnect.addListener(() => reject(new Error(chrome.runtime.lastError?.message || 'disconnected')));
+      setTimeout(() => resolve('still connected'), 500);
+    }));
+    await attempt('fetchPage', () => fetch('chrome-extension://${arcaId}/newtab.html').then((r) => r.status));
+    await attempt('fetchScript', () => fetch('chrome-extension://${arcaId}/manifest.json').then((r) => r.status));
+    return out;
+  })()`);
+  await page.navigate(`${origin}/newtab.html`);
+  console.log(`    ${JSON.stringify(result)}`);
+  for (const [name, outcome] of Object.entries(result)) {
+    assert.match(outcome, /^blocked/, `${name} should be blocked, got ${outcome}`);
+  }
+});
+
+check('security: planted javascript: bookmarks are inert', async (page) => {
+  const [hostileId] = browser.extraIds;
+  const origin = await page.eval<string>('location.origin');
+  // The hostile extension plants a bookmarklet through Chrome's own API.
+  await page.navigate(`chrome-extension://${hostileId}/attack.html`);
+  await page.eval(
+    `chrome.bookmarks.create({ parentId: '1', title: 'Planted', url: 'javascript:document.title="pwned"' })`,
+  );
+  await page.navigate(`${origin}/newtab.html`);
+  await page.waitFor(
+    `[...document.querySelectorAll('[data-bookmark-id]')].some((a) => a.textContent.includes('Planted'))`,
+  );
+  const sel = `[...document.querySelectorAll('[data-bookmark-id]')].find((a) => a.textContent.includes('Planted'))`;
+  assert.equal(await page.eval(`${sel}.hasAttribute('href')`), false);
+  await page.eval(`${sel}.click()`);
+  await page.eval(`${sel}.focus()`);
+  await page.key('Enter');
+  await page.waitFor('document.querySelector("[role=alert]")');
+  assert.equal(await page.eval('document.title'), 'New Tab');
+  assert.equal(await page.eval('location.pathname'), '/newtab.html');
+  await page.eval(`(async () => {
+    const [n] = await chrome.bookmarks.search({ title: 'Planted' });
+    await chrome.bookmarks.remove(n.id);
+  })()`);
+});
+
+check('security: websites cannot frame or fetch Arca pages', async (page) => {
+  const arcaUrl = `chrome-extension://${browser.extensionId}/newtab.html`;
+  const server = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`<!doctype html><iframe id="f" src="${arcaUrl}"></iframe>`);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address() as AddressInfo;
+  const origin = await page.eval<string>('location.origin');
+  try {
+    await page.navigate(`http://127.0.0.1:${port}/`);
+    await sleep(800);
+    const tree = await page.send<{
+      frameTree: {
+        childFrames?: Array<{ frame: { url: string; unreachableUrl?: string } }>;
+      };
+    }>('Page.getFrameTree');
+    const child = tree.frameTree.childFrames?.[0]?.frame;
+    const fetched = await page.eval<string>(
+      `fetch(${JSON.stringify(arcaUrl)}).then((r) => 'ok ' + r.status, (e) => 'blocked ' + e.message)`,
+    );
+    console.log(
+      `    iframe → ${child?.url} ${child?.unreachableUrl ?? ''}; fetch → ${fetched}`,
+    );
+    assert.ok(
+      !child || child.url !== arcaUrl,
+      'Arca page loaded inside a website iframe',
+    );
+    assert.match(fetched, /^blocked/);
+  } finally {
+    server.close();
+    await page.navigate(`${origin}/newtab.html`);
+  }
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);
@@ -381,7 +472,7 @@ async function seed(page: Page) {
   })()`);
 }
 
-const browser = await launch();
+const browser = await launch({ extraExtensions: ['scripts/e2e/hostile-extension'] });
 let failed = 0;
 try {
   const setup = await browser.open('newtab.html');
@@ -392,13 +483,19 @@ try {
       await fn(page);
       assert.deepEqual(page.consoleErrors, [], 'console errors');
       // PRD §15: no network requests. Extension, data and blob URLs are local;
-      // the redirect check deliberately navigates to a .invalid host.
+      // the redirect check deliberately navigates to a .invalid host, and the
+      // hostile-website check loads a page from the local test server.
       const external = page.requests.filter(
         (u) =>
-          !/^(chrome-extension|data|blob|chrome|about):/.test(u) &&
-          !u.includes('.invalid/'),
+          !/^(chrome-extension|chrome-error|data|blob|chrome|about):/.test(u) &&
+          !u.includes('.invalid/') &&
+          !u.startsWith('http://127.0.0.1:'),
       );
-      assert.deepEqual(external, [], 'unexpected network requests');
+      assert.deepEqual(
+        external,
+        [],
+        `unexpected network requests: ${external.join(', ')}`,
+      );
       console.log(`  ✓ ${name}`);
     } catch (error) {
       failed++;

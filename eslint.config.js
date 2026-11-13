@@ -21,6 +21,36 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Security: no code from strings, no raw HTML injection, no script URLs.
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
+      'no-script-url': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message: 'Render text with React instead of injecting HTML.',
+        },
+        {
+          selector:
+            'AssignmentExpression[left.property.name=/^(innerHTML|outerHTML|srcdoc)$/]',
+          message: 'Never assign HTML strings; build DOM with React.',
+        },
+        {
+          selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+          message: 'Never inject HTML strings.',
+        },
+        {
+          selector:
+            "CallExpression[callee.object.name='document'][callee.property.name=/^write(ln)?$/]",
+          message: 'document.write is not allowed.',
+        },
+        {
+          selector: "CallExpression[callee.property.name='executeScript']",
+          message: 'Arca never injects scripts into pages.',
+        },
+      ],
       // Components must go through src/lib for chrome.* / browser.* (CLAUDE.md).
       'no-restricted-globals': [
         'error',
@@ -40,8 +70,9 @@ export default tseslint.config(
     rules: { 'no-restricted-globals': 'off' },
   },
   {
-    // Test code and fakes may assert shapes they just built.
+    // Test code and fakes may assert shapes they just built, and security
+    // tests deliberately contain javascript: URLs as attack inputs.
     files: ['tests/**', 'scripts/**', '**/*.test.{ts,tsx}'],
-    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off', 'no-script-url': 'off' },
   },
 );

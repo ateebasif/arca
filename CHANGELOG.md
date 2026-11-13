@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- Strict Content Security Policy for all extension pages.
+- Other extensions and websites can't message, frame or fetch Arca.
+- `javascript:`, `data:` and similar bookmark URLs are never opened or rendered as
+  links (shown as "Blocked link"), and Arca refuses to save them.
+- Stored settings are validated on load.
+- `bun run security` checks the built extension; e2e simulates a hostile extension,
+  a hostile website and a planted bookmarklet. See SECURITY.md.
+
 ### Added
 
 - Repository setup: git guides, CLAUDE.md, backlog, PR template.

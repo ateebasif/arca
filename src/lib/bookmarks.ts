@@ -1,5 +1,12 @@
 import { browser, type Browser } from 'wxt/browser';
 import { ArcaError, callApi } from './errors';
+import { classifyUrl } from './url';
+
+function assertSafeUrl(url: string | undefined): void {
+  if (url !== undefined && classifyUrl(url) === 'blocked') {
+    throw new ArcaError('BLOCKED_URL', 'Arca only saves web and browser-page URLs');
+  }
+}
 
 /**
  * The only module that talks to the browser bookmarks API. Everything else
@@ -100,6 +107,7 @@ export interface CreateInput {
 }
 
 export async function create(input: CreateInput): Promise<BookmarkNode> {
+  assertSafeUrl(input.url);
   const parent = await getFolder(input.parentId);
   if (parent.id === ROOT_ID) {
     throw new ArcaError('ROOT_FOLDER', 'Cannot add items to the top-level root');
@@ -121,6 +129,7 @@ export interface UpdateInput {
 }
 
 export async function update(id: string, changes: UpdateInput): Promise<BookmarkNode> {
+  assertSafeUrl(changes.url);
   const node = await getMutable(id);
   if (changes.url !== undefined && isFolder(node)) {
     throw new ArcaError('NOT_A_FOLDER', 'Folders have no URL');

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
+import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
@@ -141,14 +142,33 @@ export const BookmarkRow = memo(function BookmarkRow({
   const url = bookmark.url ?? '';
   const title = bookmark.title || displayHost(url) || url;
   const renaming = useOverlays((s) => s.renamingId === bookmark.id);
+  const link = bookmarkLinkProps(url);
+  const handlers = itemHandlers(bookmark);
   return (
     <a
       role="row"
-      href={url}
+      href={link.href}
+      tabIndex={0}
       title={renaming ? undefined : `${title}\n${url}`}
       data-bookmark-id={bookmark.id}
-      onClick={(e) => renaming && e.preventDefault()}
-      {...itemHandlers(bookmark)}
+      data-blocked={link.blocked || undefined}
+      onClick={(e) => {
+        if (renaming) e.preventDefault();
+        else link.onActivate?.(e);
+      }}
+      onContextMenu={handlers.onContextMenu}
+      onKeyDown={(e) => {
+        if (
+          e.key === 'Enter' &&
+          !renaming &&
+          link.onActivate &&
+          e.target === e.currentTarget
+        ) {
+          link.onActivate?.(e);
+          return;
+        }
+        handlers.onKeyDown(e);
+      }}
       className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
       <span role="cell" className="flex min-w-0 items-center gap-2.5">

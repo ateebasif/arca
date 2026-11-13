@@ -110,6 +110,11 @@ export class Page {
     return this.conn.send<T>(method, params, this.sessionId);
   }
 
+  /** Listens for a CDP event on this page. */
+  on(method: string, fn: (params: Record<string, unknown>) => void): void {
+    this.conn.on(method, (params, sid) => sid === this.sessionId && fn(params));
+  }
+
   /** Evaluates an expression (async allowed) in the page and returns its JSON value. */
   async eval<T = unknown>(expression: string): Promise<T> {
     const result = await this.send<{
@@ -224,11 +229,18 @@ function keyCodeFor(key: string): number {
 
 export interface Browser {
   extensionId: string;
+  /** Ids of extra extensions loaded with `launch({ extraExtensions })`. */
+  extraIds: string[];
   open(path: string): Promise<Page>;
   close(): void;
 }
 
-export async function launch(): Promise<Browser> {
+export interface LaunchOptions {
+  /** Paths of additional unpacked extensions (e.g. a hostile test extension). */
+  extraExtensions?: string[];
+}
+
+export async function launch(options: LaunchOptions = {}): Promise<Browser> {
   const buildPath = resolve('.output/chrome-mv3');
   if (!existsSync(join(buildPath, 'manifest.json'))) {
     throw new Error('Run `bun run build` first.');
@@ -257,9 +269,19 @@ export async function launch(): Promise<Browser> {
   const { id: extensionId } = await conn.send<{ id: string }>('Extensions.loadUnpacked', {
     path: extensionPath,
   });
+  const extraIds: string[] = [];
+  for (const [i, extra] of (options.extraExtensions ?? []).entries()) {
+    const copy = join(workDir, `extra-${i}`);
+    cpSync(extra, copy, { recursive: true });
+    const { id } = await conn.send<{ id: string }>('Extensions.loadUnpacked', {
+      path: copy,
+    });
+    extraIds.push(id);
+  }
 
   return {
     extensionId,
+    extraIds,
     async open(path: string) {
       const url = path.includes('://')
         ? path

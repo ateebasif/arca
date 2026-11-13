@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "wxt prepare",
-    "e2e": "bun scripts/e2e/smoke.ts"
+    "e2e": "bun scripts/e2e/smoke.ts",
+    "security": "bun scripts/security-check.ts"
   },
   "dependencies": {
     "@tanstack/react-virtual": "3.14.26",

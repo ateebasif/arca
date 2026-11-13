@@ -19,6 +19,8 @@ export function errorMessage(error: unknown): string {
         return 'That item no longer exists.';
       case 'NOT_A_FOLDER':
         return 'Pick a folder as the destination.';
+      case 'BLOCKED_URL':
+        return "For safety, Arca doesn't open or save javascript:, data: and similar links.";
       default:
         return error.message;
     }
