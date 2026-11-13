@@ -2,10 +2,10 @@
 
 ## In Progress
 
+- [ ] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · `feature/bookmarks-api-wrapper` → `feature/chrome-api-wrappers` · Phase 1
 
 ## Up Next
 
-- [ ] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · Phase 1 · P0
 - [ ] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · Phase 1 · P0
 
 ## Backlog
@@ -82,4 +82,5 @@
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
 - React + ReactDOM is ~220 KB of the 400 KB JS budget. Keep an eye on bundle size as features land.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
-- Use WXT's built-in `browser` types (`@wxt-dev/browser`) instead of adding `@types/chrome`; confirm `favicon`/`topSites` typing during ARC-003.
+- `getAncestorIds` and the move guard call `bookmarks.get` once per level. Fine for the wrapper; the store (ARC-004) should answer ancestry from its in-memory map.
+- The in-memory bookmarks fake (`tests/fakes/bookmarks.ts`) copies Chromium's move-index quirk from source reading; double-check against a real browser during ARC-020 (drag & drop).

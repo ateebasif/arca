@@ -32,6 +32,10 @@ Prettier. Package manager: **bun** (fall back to pnpm only if WXT breaks; docume
 - Path alias `@/` = project root, so app code imports as `@/src/lib/...`.
 - Tests use WXT's `fakeBrowser` (in-memory `browser.*`), reset after each test in
   `tests/setup.ts`. ESLint blocks the `chrome` global outside `src/lib`, background and tests.
+- `fakeBrowser` has no bookmarks API: call `installFakeBookmarks(seed)` from
+  `tests/fakes/bookmarks.ts` in `beforeEach` to get a Chromium-like in-memory tree.
+- Wrappers throw `ArcaError` with a stable `code` (`ROOT_FOLDER`, `INVALID_MOVE`,
+  `NOT_FOUND`, `NOT_A_FOLDER`, `API`); the UI should branch on `code`, not `message`.
 
 - No Next.js, no server, no remote scripts, no inline scripts (MV3 CSP).
 - Ask before adding any dependency not listed here or deviating from the stack.
