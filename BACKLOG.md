@@ -56,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-046 · E2E no-network audit (PRD §15): fail on any request leaving the extension · `test/e2e-network-audit` · 2026-11-13
 - [x] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · `style/theme-contrast-polish` · 2026-11-13
 - [x] ARC-016 · Virtualize grid/list over 200 items · `perf/virtualize-grid-list` · 2026-11-13
 - [x] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · `feature/popup-quick-search` · 2026-11-13

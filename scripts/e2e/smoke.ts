@@ -391,6 +391,14 @@ try {
     try {
       await fn(page);
       assert.deepEqual(page.consoleErrors, [], 'console errors');
+      // PRD §15: no network requests. Extension, data and blob URLs are local;
+      // the redirect check deliberately navigates to a .invalid host.
+      const external = page.requests.filter(
+        (u) =>
+          !/^(chrome-extension|data|blob|chrome|about):/.test(u) &&
+          !u.includes('.invalid/'),
+      );
+      assert.deepEqual(external, [], 'unexpected network requests');
       console.log(`  ✓ ${name}`);
     } catch (error) {
       failed++;

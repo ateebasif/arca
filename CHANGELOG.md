@@ -44,4 +44,6 @@ All notable changes to this project are documented here. The format follows
   ~30 ms and is interactive in ~35 ms with 5,000 bookmarks.
 - README: install steps for Chrome-family browsers and Ardia, plus what is
   still unverified in Ardia.
-- `bun run e2e`: smoke checks against real Chrome with the built extension.
+- `bun run e2e`: smoke checks against real Chrome with the built extension,
+  including performance budgets and an audit that no request leaves the
+  extension.
