@@ -77,7 +77,7 @@ export function ItemMenu({ menu }: { menu: MenuState }) {
       label: 'Rename',
       shortcut: 'F2',
       disabled: locked,
-      run: () => startRename(node.id),
+      run: () => startRename(node.id, menu.from),
     },
     {
       label: 'Delete',

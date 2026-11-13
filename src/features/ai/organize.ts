@@ -204,9 +204,41 @@ export async function planGroups(
   return groups;
 }
 
+export const ORGANIZED_TITLE = 'Organized by Arca';
+
+const sameName = (a: string, b: string) =>
+  a.trim().toLowerCase() === b.trim().toLowerCase();
+
 /**
- * Creates one folder per group inside a new "Organized by Arca" folder in
- * `parentId`, and moves each group's bookmarks in. One undo reverses it all.
+ * Where suggestions go, without nesting "Organized by Arca" folders:
+ * - organizing inside an Arca folder (or one of its topic folders) works in
+ *   that folder directly;
+ * - organizing a folder that already holds an Arca folder reuses it;
+ * - otherwise a new "Organized by Arca" folder is created at the top.
+ */
+async function targetFolder(
+  parentId: string,
+): Promise<{ id: string; created: bm.BookmarkNode | null }> {
+  const chain = [parentId, ...(await bm.getAncestorIds(parentId).catch(() => []))];
+  for (const id of chain) {
+    const node = await bm.getNode(id).catch(() => null);
+    if (node && node.url === undefined && sameName(node.title, ORGANIZED_TITLE)) {
+      return { id: parentId, created: null };
+    }
+  }
+  const existing = (await bm.getChildren(parentId)).find(
+    (c) => c.url === undefined && sameName(c.title, ORGANIZED_TITLE),
+  );
+  if (existing) return { id: existing.id, created: null };
+  const root = await bm.create({ parentId, title: ORGANIZED_TITLE, index: 0 });
+  return { id: root.id, created: root };
+}
+
+/**
+ * Moves each group's bookmarks into a topic folder (see targetFolder for
+ * where). Topic folders that already exist with the same name are reused, and
+ * folders there that this run emptied are removed. One undo reverses it all.
+ * Returns the id of the folder that holds the topics.
  */
 export async function applyGroups(
   parentId: string,
@@ -216,28 +248,44 @@ export async function applyGroups(
   const total = groups.reduce((n, g) => n + g.ids.length, 0);
   const steps: undo.UndoAction[] = [];
   let done = 0;
-  const root = await bm.create({ parentId, title: 'Organized by Arca', index: 0 });
-  steps.push(undo.created(root));
+  const target = await targetFolder(parentId);
+  if (target.created) steps.push(undo.created(target.created));
   try {
+    const before = await bm.getChildren(target.id);
+    const folders = before.filter((c) => c.url === undefined);
+    const used = new Set<string>();
+    const movedFrom = new Set<string>();
     for (const group of groups) {
-      const folder = await bm.create({ parentId: root.id, title: group.name });
-      steps.push(undo.created(folder));
+      let folder = folders.find((f) => !used.has(f.id) && sameName(f.title, group.name));
+      if (!folder) {
+        folder = await bm.create({ parentId: target.id, title: group.name });
+        steps.push(undo.created(folder));
+      }
+      used.add(folder.id);
       for (const id of group.ids) {
         const from = await bm.getNode(id).catch(() => null);
         if (!from?.parentId || from.url === undefined) continue; // gone or changed
+        if (from.parentId === folder.id) continue; // already there
         await bm.move(id, { parentId: folder.id });
+        movedFrom.add(from.parentId);
         steps.push(
           undo.moved(id, { parentId: from.parentId, index: from.index ?? 0 }, ''),
         );
         onProgress?.(++done, total);
       }
     }
+    // Old topic folders this run emptied (a re-organize) go away.
+    for (const folder of folders) {
+      if (used.has(folder.id) || !movedFrom.has(folder.id)) continue;
+      const left = await bm.getChildren(folder.id).catch(() => null);
+      if (left?.length === 0) steps.push(undo.deleted(await bm.remove(folder.id)));
+    }
   } finally {
     undo.record(
       undo.combine(`Organized ${done} links into ${groups.length} folders`, steps),
     );
   }
-  return root.id;
+  return target.id;
 }
 
 /** Rough first-run time in seconds (measured on Apple Silicon; cached runs are fast). */

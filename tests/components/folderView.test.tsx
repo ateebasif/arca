@@ -58,10 +58,10 @@ describe('folder view', () => {
 
   it('switches density', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await userEvent.click(screen.getByRole('button', { name: 'Compact density' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Small tiles' }));
     expect(useUi.getState().density).toBe('compact');
-    expect(screen.getByRole('button', { name: 'Comfortable density' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('radio', { name: 'Small tiles' })).toHaveAttribute(
+      'aria-checked',
       'true',
     );
   });
@@ -79,7 +79,7 @@ describe('folder view', () => {
 describe('list view and sorting', () => {
   it('switches to a list with sortable columns', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'List' }));
     expect(useUi.getState().view).toBe('list');
     const table = screen.getByRole('table', { name: 'Folder contents' });
     const rows = () =>
@@ -130,7 +130,7 @@ describe('virtualization', () => {
     });
     expect(document.querySelector('[data-virtualized]')).not.toBeNull();
     expect(screen.queryAllByRole('link').length).toBeLessThan(300);
-    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'List' }));
     expect(document.querySelector('[data-virtualized]')).not.toBeNull();
   });
 

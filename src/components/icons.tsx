@@ -83,9 +83,18 @@ export const SortIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** Small tiles: a 3×3 grid. */
 export const DensityIcon = (p: IconProps) => (
   <Icon {...p}>
-    <path d="M2.5 3.5h11M2.5 8h11M2.5 12.5h11" />
+    <rect x="1.75" y="1.75" width="3" height="3" rx=".75" />
+    <rect x="6.5" y="1.75" width="3" height="3" rx=".75" />
+    <rect x="11.25" y="1.75" width="3" height="3" rx=".75" />
+    <rect x="1.75" y="6.5" width="3" height="3" rx=".75" />
+    <rect x="6.5" y="6.5" width="3" height="3" rx=".75" />
+    <rect x="11.25" y="6.5" width="3" height="3" rx=".75" />
+    <rect x="1.75" y="11.25" width="3" height="3" rx=".75" />
+    <rect x="6.5" y="11.25" width="3" height="3" rx=".75" />
+    <rect x="11.25" y="11.25" width="3" height="3" rx=".75" />
   </Icon>
 );
 

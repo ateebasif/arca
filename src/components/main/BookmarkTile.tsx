@@ -26,7 +26,9 @@ export const BookmarkTile = memo(function BookmarkTile({
   density,
   folderLabel,
 }: BookmarkTileProps) {
-  const renaming = useOverlays((s) => s.renamingId === bookmark.id);
+  const renaming = useOverlays(
+    (s) => s.renamingId === bookmark.id && s.renameIn === 'main',
+  );
   const url = bookmark.url ?? '';
   const host = displayHost(url);
   const title = bookmark.title || host || url;

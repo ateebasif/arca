@@ -400,6 +400,77 @@ describe('applyGroups', () => {
     expect(await undo.undoLast()).toBe(true);
     expect(strip((await fake.getTree())[0]!)).toEqual(before);
   });
+
+  it('re-organizing never nests another "Organized by Arca"', async () => {
+    undo.clearUndoForTests();
+    const fake = installFakeBookmarks({
+      bar: [
+        {
+          title: 'Imported',
+          children: [...REACT, ...FOOD].map((t) => ({
+            title: t,
+            url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+          })),
+        },
+      ],
+    });
+    const strip = (n: BookmarkNode): unknown => ({
+      t: n.title,
+      u: n.url,
+      c: n.children?.map(strip),
+    });
+    const id = (t: string) => fake.findByTitle(t)!.id;
+    const imported = id('Imported');
+    const arcaFolders = async () =>
+      JSON.stringify(strip((await fake.getTree())[0]!)).split('Organized by Arca')
+        .length - 1;
+    await applyGroups(imported, [
+      { name: 'Frontend', ids: REACT.map(id), samples: [] },
+      { name: 'Cooking', ids: FOOD.map(id), samples: [] },
+    ]);
+    const root = id('Organized by Arca');
+    const afterFirst = strip((await fake.getTree())[0]!);
+
+    // 1. Organize again from inside the Arca folder: works in place.
+    const target = await applyGroups(root, [
+      { name: 'React', ids: REACT.slice(0, 3).map(id), samples: [] },
+      { name: 'Cooking', ids: [...FOOD, ...REACT.slice(3)].map(id), samples: [] },
+    ]);
+    expect(target).toBe(root);
+    expect(await arcaFolders()).toBe(1);
+    const topics = fake
+      .childIds(root)
+      .map((c) => fake.findById(c)!.title)
+      .sort();
+    // "Frontend" was emptied and removed; "Cooking" was reused, not duplicated.
+    expect(topics).toEqual(['Cooking', 'React']);
+    expect(fake.childIds(id('Cooking'))).toHaveLength(7);
+
+    // 2. Organize the parent again: reuses the existing Arca folder.
+    expect(
+      await applyGroups(imported, [
+        { name: 'Everything', ids: [...REACT, ...FOOD].map(id), samples: [] },
+      ]),
+    ).toBe(root);
+    expect(await arcaFolders()).toBe(1);
+    expect(fake.childIds(root).map((c) => fake.findById(c)!.title)).toEqual([
+      'Everything',
+    ]);
+
+    // 3. Inside a topic folder: subfolders go right there, no wrapper.
+    expect(
+      await applyGroups(id('Everything'), [
+        { name: 'Food', ids: FOOD.map(id), samples: [] },
+      ]),
+    ).toBe(id('Everything'));
+    expect(await arcaFolders()).toBe(1);
+
+    // Undo steps back through each run exactly.
+    await undo.undoLast();
+    await undo.undoLast();
+    await undo.undoLast();
+    expect(strip((await fake.getTree())[0]!)).toEqual(afterFirst);
+  });
 });
 
 describe('AI organize panel', () => {

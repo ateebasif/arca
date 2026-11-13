@@ -44,28 +44,32 @@ export function Toolbar() {
         </IconButton>
       )}
       <span className="bg-line mx-1 h-4 w-px" aria-hidden="true" />
-      {view === 'grid' && (
-        <IconButton
-          label={density === 'compact' ? 'Comfortable density' : 'Compact density'}
-          pressed={density === 'compact'}
-          onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
-        >
-          <DensityIcon />
-        </IconButton>
-      )}
-      <div role="group" aria-label="View" className="bg-hover flex rounded-lg p-0.5">
+      <div
+        role="radiogroup"
+        aria-label="Layout"
+        className="bg-hover flex gap-0.5 rounded-lg p-0.5"
+      >
         <ViewButton
-          label="Grid view"
-          active={view === 'grid'}
-          onClick={() => setView('grid')}
+          label="Large tiles"
+          active={view === 'grid' && density === 'comfortable'}
+          onClick={() => {
+            setView('grid');
+            setDensity('comfortable');
+          }}
         >
           <GridIcon />
         </ViewButton>
         <ViewButton
-          label="List view"
-          active={view === 'list'}
-          onClick={() => setView('list')}
+          label="Small tiles"
+          active={view === 'grid' && density === 'compact'}
+          onClick={() => {
+            setView('grid');
+            setDensity('compact');
+          }}
         >
+          <DensityIcon />
+        </ViewButton>
+        <ViewButton label="List" active={view === 'list'} onClick={() => setView('list')}>
           <ListIcon />
         </ViewButton>
       </div>
@@ -87,14 +91,15 @@ function ViewButton({
   return (
     <button
       type="button"
+      role="radio"
       aria-label={label}
-      aria-pressed={active}
+      aria-checked={active}
       title={label}
       onClick={onClick}
-      className={`grid h-7 w-8 place-items-center rounded-md transition-colors duration-150 ${
+      className={`grid h-7 w-8 place-items-center rounded-md transition-colors duration-150 focus-visible:outline-offset-[-2px] ${
         active
-          ? 'bg-surface-strong text-ink shadow-(--shadow-tile)'
-          : 'text-ink-muted hover:text-ink'
+          ? 'bg-surface-strong text-accent shadow-(--shadow-tile)'
+          : 'text-ink-muted hover:bg-surface/60 hover:text-ink'
       }`}
     >
       {children}

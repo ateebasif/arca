@@ -59,7 +59,7 @@ describe('hostile bookmarks', () => {
 
   it('is safe in list view and search too', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, HOSTILE);
-    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'List' }));
     expect(item('Evil')).not.toHaveAttribute('href');
     await userEvent.click(item('Evil'));
 

@@ -93,7 +93,9 @@ export const FolderRow = memo(function FolderRow({
   count,
   onOpen,
 }: FolderRowProps) {
-  const renaming = useOverlays((s) => s.renamingId === folder.id);
+  const renaming = useOverlays(
+    (s) => s.renamingId === folder.id && s.renameIn === 'main',
+  );
   const handlers = itemHandlers(folder);
   const drag = useDragItem(folder);
   const drop = useFolderDrop(folder.id, 'row');
@@ -162,7 +164,9 @@ export const BookmarkRow = memo(function BookmarkRow({
 }: BookmarkRowProps) {
   const url = bookmark.url ?? '';
   const title = bookmark.title || displayHost(url) || url;
-  const renaming = useOverlays((s) => s.renamingId === bookmark.id);
+  const renaming = useOverlays(
+    (s) => s.renamingId === bookmark.id && s.renameIn === 'main',
+  );
   const link = bookmarkLinkProps(url);
   const handlers = itemHandlers(bookmark);
   const drag = useDragItem(bookmark);

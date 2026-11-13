@@ -123,6 +123,7 @@ export function FolderTree() {
       ref={treeRef}
       role="tree"
       aria-label="Folders"
+      data-folder-tree
       className="flex flex-col gap-px px-2 pb-4"
       onKeyDown={onKeyDown}
     >
@@ -163,7 +164,7 @@ const TreeRow = memo(function TreeRow({
 }: TreeRowProps) {
   const { node, depth, hasChildFolders, expanded } = row;
   const Icon = node.isRoot && depth === 0 && node.id === '1' ? BarIcon : FolderIcon;
-  const renaming = useOverlays((s) => s.renamingId === node.id);
+  const renaming = useOverlays((s) => s.renamingId === node.id && s.renameIn === 'tree');
   const handlers = itemHandlers(node);
   const drop = useFolderDrop(node.id, 'tree', hasChildFolders && !expanded);
   return (
@@ -178,7 +179,9 @@ const TreeRow = memo(function TreeRow({
       tabIndex={tabbable ? 0 : -1}
       onFocus={(e) => e.target === e.currentTarget && onFocus(node.id)}
       onClick={() => onOpen(node.id)}
-      onDoubleClick={() => !node.isRoot && useOverlays.getState().startRename(node.id)}
+      onDoubleClick={() =>
+        !node.isRoot && useOverlays.getState().startRename(node.id, 'tree')
+      }
       onContextMenu={handlers.onContextMenu}
       onKeyDown={handlers.onKeyDown}
       className={`group flex h-8 items-center gap-1.5 rounded-lg pr-2 text-[13px] outline-offset-[-2px] transition-colors duration-150 select-none ${

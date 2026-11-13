@@ -18,6 +18,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Rename from the right-click / ⋯ menu did nothing for folders that also show in
+  the sidebar: both copies opened a name field and fought over focus. Rename now
+  opens only where you started it (main view or sidebar).
+- AI organize no longer nests "Organized by Arca" inside itself. Organizing
+  inside it (or one of its topic folders) works in place, organizing a folder
+  that already has one reuses it, topic folders with the same name are reused,
+  and old topic folders the run emptied are removed. One Undo still reverses it.
+- The layout switcher is one control (Large tiles · Small tiles · List) with a
+  single clear selected state, instead of a density toggle that looked selected
+  next to the Grid/List pair.
 - AI organize no longer stops when you switch Tidy up tabs, close the panel or
   open another folder. The run keeps going, the sidebar's Tidy up button shows
   its progress ("AI 42%", "AI ready to review"), and reopening Tidy up returns

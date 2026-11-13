@@ -219,6 +219,10 @@ export class FakeBookmarks {
     return [...(this.requireFolder(id).children ?? [])];
   }
 
+  findById(id: string): Node | undefined {
+    return this.nodes.has(id) ? this.toNode(id, false) : undefined;
+  }
+
   findByTitle(title: string): Node | undefined {
     const found = [...this.nodes.values()].find((n) => n.title === title);
     return found ? this.toNode(found.id, false) : undefined;
