@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+/* Light/dark follows the system by default. A `data-theme` attribute on <html>
+   will override it once the theme setting lands (ARC-027). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --radius-tile: 14px;
+  --color-surface: rgb(255 255 255 / 0.72);
+  --color-ink: #1c1c1e;
+  --color-ink-muted: #6e6e73;
+  --color-accent: #6b5cff;
+  --color-backdrop-from: #f4f1ff;
+  --color-backdrop-to: #eaf3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-surface: rgb(36 36 40 / 0.72);
+    --color-ink: #f2f2f7;
+    --color-ink-muted: #a1a1aa;
+    --color-backdrop-from: #17151f;
+    --color-backdrop-to: #0f1720;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-surface: rgb(36 36 40 / 0.72);
+  --color-ink: #f2f2f7;
+  --color-ink-muted: #a1a1aa;
+  --color-backdrop-from: #17151f;
+  --color-backdrop-to: #0f1720;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: linear-gradient(
+    135deg,
+    var(--color-backdrop-from),
+    var(--color-backdrop-to)
+  );
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
