@@ -2,13 +2,14 @@
 
 ## In Progress
 
+- [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · `docs/readme-load-unpacked` · Phase 1 · README done; waiting on a manual Ardia check
+
 ## Up Next
 
 ## Backlog
 
 ### Phase 1 – Core
 
-- [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · Phase 1 · P0
 - [ ] ARC-019 · Release v0.1.0 · Phase 1 · P0
 
 ### Phase 2 – Management
@@ -78,7 +79,7 @@
 
 ## Tech Debt / Risks to Verify
 
-- Ardia: confirm unpacked loading via `chrome://extensions` and that the New Tab override applies (PRD §16.1–16.2). Track under ARC-018.
+- Ardia (0.2.46, Chromium 157) disables DevTools automation (`DevToolsAcceptDebuggingConnections`), so it can't run `bun run e2e`. Unpacked loading and the New Tab override need a manual check (PRD §16.1–16.2, ARC-018).
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
 - JS is 320 KB raw / 99 KB gzip at end of Phase 1 (budget 400 KB raw); React is ~220 KB of that. Lazy-load Phase 3 views (§10).
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
