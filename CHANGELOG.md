@@ -24,4 +24,6 @@ All notable changes to this project are documented here. The format follows
   comfortable and compact density, breadcrumbs, and an empty-folder state.
 - Favicons from the browser cache with a coloured letter tile when the browser
   only has its generic placeholder.
+- List view with title, URL, folder and date columns; click a column to sort.
+- Sort by manual order, title, date added or domain, in either direction.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.
