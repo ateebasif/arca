@@ -20,23 +20,43 @@ export function OllamaHelp({ error }: { error: OllamaError }) {
       {error.reason === 'FORBIDDEN' && error.message.startsWith('Ollama') && (
         <>
           <p className="text-ink-muted mt-1">
-            Ollama only accepts requests from apps it trusts. Allow Arca (only Arca) by
-            running this in Terminal, then quit and reopen Ollama:
+            Ollama blocks browser extensions unless you allow them. To allow Arca (only
+            Arca):
           </p>
-          <div className="mt-2 flex items-center gap-2">
-            <code className="bg-hover min-w-0 flex-1 truncate rounded px-2 py-1 font-mono text-[11px]">
-              {command}
+          <ol className="text-ink-muted mt-2 list-decimal space-y-1.5 pl-4">
+            <li>
+              Copy this command, paste it into Terminal and press Return:
+              <div className="mt-1.5 flex items-start gap-2">
+                <code className="bg-hover text-ink min-w-0 flex-1 rounded px-2 py-1 font-mono text-[11px] break-all select-all">
+                  {command}
+                </code>
+                <button
+                  type="button"
+                  className="text-accent shrink-0 py-1 hover:underline"
+                  onClick={() =>
+                    void navigator.clipboard
+                      ?.writeText(command)
+                      .then(() => setCopied(true))
+                  }
+                >
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </li>
+            <li>
+              Quit Ollama from the menu bar (llama icon → Quit Ollama), then open it
+              again. Closing its window isn't enough.
+            </li>
+            <li>Come back here and press Test connection or try again.</li>
+          </ol>
+          <p className="text-ink-faint mt-2">
+            Running <code>ollama serve</code> in Terminal instead? Start it with{' '}
+            <code className="break-all">
+              OLLAMA_ORIGINS=&quot;chrome-extension://{extensionId()}&quot; ollama serve
             </code>
-            <button
-              type="button"
-              className="text-accent shrink-0 hover:underline"
-              onClick={() =>
-                void navigator.clipboard?.writeText(command).then(() => setCopied(true))
-              }
-            >
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
+            . The setting resets when the Mac restarts; run step 1 again if this message
+            comes back.
+          </p>
         </>
       )}
       {error.reason === 'MODEL' && (

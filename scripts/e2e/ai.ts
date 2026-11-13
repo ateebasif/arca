@@ -116,6 +116,40 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       if (reachable) assert.match(help, /OLLAMA_ORIGINS/, `help text: ${help}`);
       await page.screenshot(`${out}/ai-forbidden.png`);
 
+      // Settings in a short window: the dialog scrolls instead of being cut off,
+      // and Test connection reports the 403 even though listing models works.
+      await page.key('Escape');
+      await page.setViewport(1280, 640, true);
+      await page.eval(
+        `[...document.querySelectorAll('aside button')].find((b) => b.textContent.includes('Settings')).click()`,
+      );
+      await page.waitFor(
+        `document.querySelector('[role=dialog]')?.textContent.includes('Local AI')`,
+      );
+      const fit = await page.eval<{ bottom: number; scrolls: boolean }>(`(() => {
+        const d = document.querySelector('[role=dialog]');
+        const body = d.children[1];
+        return { bottom: d.getBoundingClientRect().bottom, scrolls: body.scrollHeight > body.clientHeight };
+      })()`);
+      assert.ok(
+        fit.bottom <= 640,
+        `settings dialog fits the window (bottom ${fit.bottom})`,
+      );
+      assert.ok(fit.scrolls, 'settings body scrolls');
+      if (reachable) {
+        await page.waitFor(
+          `document.querySelector('[role=dialog] [role=alert]')?.textContent.includes('OLLAMA_ORIGINS')`,
+          8000,
+        );
+        await page.eval(
+          `document.querySelector('[role=dialog] [role=alert]').scrollIntoView({ block: 'center' })`,
+        );
+      }
+      await sleep(300);
+      await page.screenshot(`${out}/ai-settings-forbidden.png`);
+      await page.key('Escape');
+      await page.setViewport(1280, 860, true);
+
       // 2. Temporary server that allows Arca → suggest, review, apply, undo.
       await settings(`http://127.0.0.1:${PORT}`);
       await openAi();

@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Settings (and other long dialogs) ran off the bottom of short windows; the
+  body now scrolls while the title and buttons stay visible.
+- Settings → Local AI said "Connected" even when Ollama would refuse Arca's
+  requests. Test connection now checks the same kind of request AI organize
+  makes, and the fix is shown as numbered steps.
 - Undo could stop half-way when restoring a folder containing a bookmarklet
   (javascript:) link, and older undo steps broke after a deleted item was
   restored with a new id. Undo now restores browser URLs as they were and

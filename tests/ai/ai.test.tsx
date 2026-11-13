@@ -17,6 +17,7 @@ import type { BookmarkNode } from '@/src/lib/bookmarks';
 import { memoryStore } from '@/src/lib/idb';
 import {
   chatJson,
+  checkAccess,
   embed,
   listModels,
   localOllamaUrl,
@@ -153,6 +154,29 @@ describe('ollama client', () => {
     await expect(listModels('http://localhost:11434')).rejects.toMatchObject({
       reason: 'UNREACHABLE',
     });
+  });
+
+  it('checkAccess catches the 403 that a model list (GET) hides', async () => {
+    // Ollama answers GETs without an Origin header but refuses the extension's POSTs.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) =>
+        init?.method === 'POST'
+          ? new Response('forbidden', { status: 403 })
+          : Response.json({ models: [{ name: 'llama3.2:latest', size: 1 }] }),
+      ),
+    );
+    const base = 'http://localhost:11434';
+    await expect(listModels(base)).resolves.toHaveLength(1);
+    await expect(checkAccess(base, 'llama3.2:latest')).rejects.toMatchObject({
+      reason: 'FORBIDDEN',
+    });
+    // A missing model still means the request got through.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('?', { status: 404 })),
+    );
+    await expect(checkAccess(base, 'gone')).resolves.toBeUndefined();
   });
 });
 

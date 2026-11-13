@@ -77,17 +77,16 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={titleId}
         onKeyDown={onKeyDown}
-        className={`animate-pop border-line bg-surface-strong w-full ${wide ? 'flex max-h-[86vh] max-w-3xl flex-col' : 'max-w-md'} rounded-(--radius-panel) border p-5 shadow-(--shadow-pop) backdrop-blur-xl`}
+        className={`animate-pop border-line bg-surface-strong flex max-h-[calc(100dvh-2rem)] w-full flex-col ${wide ? 'max-w-3xl' : 'max-w-md'} rounded-(--radius-panel) border p-5 shadow-(--shadow-pop) backdrop-blur-xl`}
       >
-        <h2 id={titleId} className="mb-4 text-[15px] font-semibold">
+        <h2 id={titleId} className="mb-4 shrink-0 text-[15px] font-semibold">
           {title}
         </h2>
-        {wide ? (
-          <div className="-mr-2 min-h-0 flex-1 overflow-y-auto pr-2">{children}</div>
-        ) : (
-          children
-        )}
-        <div className="mt-5 flex justify-end gap-2">{footer}</div>
+        {/* Long content (Settings, Tidy up) scrolls; title and buttons stay put. */}
+        <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-1">
+          {children}
+        </div>
+        <div className="mt-5 flex shrink-0 justify-end gap-2">{footer}</div>
       </div>
     </div>
   );
