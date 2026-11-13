@@ -37,6 +37,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Link preview cards are interactive: move the pointer into the card to scroll a
+  readable excerpt and the page's headings, see the site, folder, date added and
+  full link, and open it in a tab or mini window.
 - Popup now shows Most visited sites, Recently added bookmarks and folder
   shortcuts (open the dashboard at that folder), plus Open dashboard and Tidy up.
 - Tidy up (sidebar): find and remove duplicate bookmarks (keeps the best copy,
