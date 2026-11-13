@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost } from '@/src/lib/url';
@@ -93,18 +94,32 @@ export const FolderRow = memo(function FolderRow({
 }: FolderRowProps) {
   const renaming = useOverlays((s) => s.renamingId === folder.id);
   const handlers = itemHandlers(folder);
+  const drag = useDragItem(folder);
+  const drop = useFolderDrop(folder.id, 'row');
+  const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
+    onKeyDown?: (e: React.KeyboardEvent) => void;
+  };
   return (
     <div
+      ref={(el) => {
+        drag.setNodeRef(el);
+        drop.setDropRef(el);
+      }}
+      style={drag.style}
+      {...dragHandle}
+      data-drop-folder={folder.id}
       role="row"
       tabIndex={0}
       data-folder-row={folder.id}
       onClick={() => !renaming && onOpen(folder.id)}
       onContextMenu={handlers.onContextMenu}
       onKeyDown={(e) => {
+        dragKeyDown?.(e);
+        if (e.defaultPrevented) return;
         if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(folder.id);
         else handlers.onKeyDown(e);
       }}
-      className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
         <FolderIcon className="text-accent shrink-0" />
@@ -144,8 +159,16 @@ export const BookmarkRow = memo(function BookmarkRow({
   const renaming = useOverlays((s) => s.renamingId === bookmark.id);
   const link = bookmarkLinkProps(url);
   const handlers = itemHandlers(bookmark);
+  const drag = useDragItem(bookmark);
+  const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
+    onKeyDown?: (e: React.KeyboardEvent) => void;
+  };
   return (
     <a
+      ref={drag.setNodeRef}
+      style={drag.style}
+      {...dragHandle}
+      draggable={false}
       role="row"
       href={link.href}
       tabIndex={0}
@@ -158,6 +181,8 @@ export const BookmarkRow = memo(function BookmarkRow({
       }}
       onContextMenu={handlers.onContextMenu}
       onKeyDown={(e) => {
+        dragKeyDown?.(e);
+        if (e.defaultPrevented) return;
         if (
           e.key === 'Enter' &&
           !renaming &&

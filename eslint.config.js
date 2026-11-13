@@ -21,6 +21,8 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Destructuring props away ({ role: _role, ...rest }) is intentional.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       // Security: no code from strings, no raw HTML injection, no script URLs.
       'no-eval': 'error',
       'no-implied-eval': 'error',
@@ -68,6 +70,19 @@ export default tseslint.config(
       '**/*.test.{ts,tsx}',
     ],
     rules: { 'no-restricted-globals': 'off' },
+  },
+  {
+    // dnd-kit hands out callback refs (setNodeRef) that react-hooks/refs
+    // mistakes for ref objects read during render. That rule only matters for
+    // the React Compiler, which Arca doesn't use.
+    files: [
+      'src/components/main/BookmarkTile.tsx',
+      'src/components/main/FolderCard.tsx',
+      'src/components/main/BookmarkList.tsx',
+      'src/components/main/Breadcrumbs.tsx',
+      'src/components/sidebar/FolderTree.tsx',
+    ],
+    rules: { 'react-hooks/refs': 'off' },
   },
   {
     // Test code and fakes may assert shapes they just built, and security

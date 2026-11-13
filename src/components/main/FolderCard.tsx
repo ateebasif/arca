@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
@@ -31,6 +32,12 @@ export const FolderCard = memo(function FolderCard({
 }: FolderCardProps) {
   const renaming = useOverlays((s) => s.renamingId === folder.id);
   const title = folder.title || 'Untitled';
+  const drag = useDragItem(folder);
+  const drop = useFolderDrop(folder.id, 'card');
+  const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
+    onKeyDown?: (e: React.KeyboardEvent) => void;
+  };
+  const handlers = itemHandlers(folder);
   const meta = [plural(count, 'link'), subfolders > 0 && plural(subfolders, 'folder')]
     .filter(Boolean)
     .join(' · ');
@@ -38,8 +45,16 @@ export const FolderCard = memo(function FolderCard({
   const body = (
     <>
       <span
+        ref={drop.setDropRef}
         aria-hidden="true"
-        className="relative flex h-[64px] shrink-0 items-center justify-between gap-2 px-3"
+        data-drop-folder={folder.id}
+        className={`relative flex h-[64px] shrink-0 items-center justify-between gap-2 px-3 transition-shadow duration-150 ${
+          drop.blocked
+            ? 'shadow-[inset_0_0_0_2px_var(--color-danger)]'
+            : drop.isOver
+              ? 'shadow-[inset_0_0_0_2px_var(--color-accent)]'
+              : ''
+        }`}
         style={{
           background:
             'linear-gradient(135deg, color-mix(in oklab, var(--color-accent) 34%, transparent), color-mix(in oklab, var(--color-accent) 10%, transparent))',
@@ -48,6 +63,11 @@ export const FolderCard = memo(function FolderCard({
         <span className="bg-accent-strong grid size-9 shrink-0 place-items-center rounded-[10px] text-white shadow-sm transition-transform duration-200 ease-(--ease-out-soft) group-hover:scale-105">
           <FolderIcon width={18} height={18} />
         </span>
+        {drop.isOver && (
+          <span className="bg-surface-strong text-ink animate-pop absolute inset-x-2 bottom-1.5 rounded-md px-2 py-0.5 text-center text-[11px] font-medium">
+            {drop.blocked ? "Can't move here" : 'Move here'}
+          </span>
+        )}
         {preview.length > 0 && (
           <span className="mr-7 flex shrink-0 -space-x-1.5">
             {preview.map((b) =>
@@ -83,7 +103,7 @@ export const FolderCard = memo(function FolderCard({
     'border-line bg-surface flex h-[144px] w-full flex-col overflow-hidden rounded-(--radius-tile) border shadow-(--shadow-tile) backdrop-blur-md transition-[transform,box-shadow,border-color] duration-200 ease-(--ease-out-soft) hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[0_16px_36px_-16px_var(--color-accent)] focus-visible:-translate-y-0.5';
 
   return (
-    <div className="group relative">
+    <div className="group relative" ref={drag.setNodeRef} style={drag.style}>
       {renaming ? (
         <div className={className}>{body}</div>
       ) : (
@@ -93,7 +113,12 @@ export const FolderCard = memo(function FolderCard({
           data-folder-card={folder.id}
           aria-label={`${title}, ${meta}`}
           className={className}
-          {...itemHandlers(folder)}
+          {...dragHandle}
+          onContextMenu={handlers.onContextMenu}
+          onKeyDown={(e) => {
+            dragKeyDown?.(e);
+            if (!e.defaultPrevented) handlers.onKeyDown(e);
+          }}
         >
           {body}
         </button>

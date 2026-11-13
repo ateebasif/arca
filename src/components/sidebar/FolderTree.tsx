@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useFolderDrop } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import type { BNode, BookmarkSnapshot } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
@@ -164,8 +165,11 @@ const TreeRow = memo(function TreeRow({
   const Icon = node.isRoot && depth === 0 && node.id === '1' ? BarIcon : FolderIcon;
   const renaming = useOverlays((s) => s.renamingId === node.id);
   const handlers = itemHandlers(node);
+  const drop = useFolderDrop(node.id, 'tree', hasChildFolders && !expanded);
   return (
     <li
+      ref={drop.setDropRef}
+      data-drop-folder={node.id}
       role="treeitem"
       aria-level={depth + 1}
       aria-selected={selected}
@@ -178,6 +182,12 @@ const TreeRow = memo(function TreeRow({
       onContextMenu={handlers.onContextMenu}
       onKeyDown={handlers.onKeyDown}
       className={`group flex h-8 items-center gap-1.5 rounded-lg pr-2 text-[13px] outline-offset-[-2px] transition-colors duration-150 select-none ${
+        drop.isOver
+          ? drop.blocked
+            ? 'ring-danger ring-2 ring-inset'
+            : 'ring-accent bg-accent-soft ring-2 ring-inset'
+          : ''
+      } ${
         selected
           ? 'bg-accent-soft text-ink font-medium'
           : 'text-ink-muted hover:bg-hover hover:text-ink'

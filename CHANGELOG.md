@@ -37,6 +37,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Drag & drop: reorder tiles and rows (manual sort), drop onto a folder card's
+  cover, a sidebar folder (collapsed ones open after 0.6 s) or a breadcrumb to
+  move. Folders can't go into themselves; root folders don't move. Keyboard:
+  Space to pick up and drop, arrows to move, Esc to cancel. Every move is
+  undoable.
 - Undo for deletes (whole folders restored in place), renames, edits, moves and
   adds: an Undo button in the toast for 8 seconds, or ⌘Z for the last 20.
 - Settings → "Open links in": same tab, new tab, new background tab, or a mini

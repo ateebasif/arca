@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
+import { useDragItem } from '@/src/features/dnd/hooks';
 import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost, mainDomain } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
@@ -30,7 +31,12 @@ export const BookmarkTile = memo(function BookmarkTile({
   const title = bookmark.title || host || url;
   const handlers = itemHandlers(bookmark);
   const link = bookmarkLinkProps(url);
+  const drag = useDragItem(bookmark);
+  const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
+    onKeyDown?: (e: React.KeyboardEvent) => void;
+  };
   const linkProps = {
+    ...dragHandle,
     href: link.href,
     role: link.role,
     tabIndex: link.tabIndex,
@@ -39,13 +45,16 @@ export const BookmarkTile = memo(function BookmarkTile({
       : `${title}\n${url}${link.blocked ? '\nBlocked: Arca never opens this kind of link' : ''}`,
     'data-bookmark-id': bookmark.id,
     'data-blocked': link.blocked || undefined,
-    draggable: !renaming,
+    // dnd-kit handles dragging; the browser's native link drag would cancel it.
+    draggable: false,
     onClick: (e: React.MouseEvent) => {
       if (renaming) e.preventDefault();
       else link.onActivate?.(e);
     },
     onContextMenu: handlers.onContextMenu,
     onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      dragKeyDown?.(e);
+      if (e.defaultPrevented) return;
       if (
         e.key === 'Enter' &&
         !renaming &&
@@ -64,7 +73,7 @@ export const BookmarkTile = memo(function BookmarkTile({
 
   if (density === 'compact') {
     return (
-      <div className="group relative">
+      <div className="group relative" ref={drag.setNodeRef} style={drag.style}>
         <a
           {...linkProps}
           className="hover:bg-surface-strong flex h-10 items-center gap-2.5 rounded-xl px-2.5 pr-9 transition-colors duration-150"
@@ -89,6 +98,8 @@ export const BookmarkTile = memo(function BookmarkTile({
   return (
     <CoverTile
       {...{
+        setNodeRef: drag.setNodeRef,
+        dragStyle: drag.style,
         url,
         host,
         title,
@@ -103,6 +114,8 @@ export const BookmarkTile = memo(function BookmarkTile({
 });
 
 interface CoverTileProps {
+  setNodeRef: ReturnType<typeof useDragItem>['setNodeRef'];
+  dragStyle: React.CSSProperties;
   url: string;
   host: string;
   title: string;
@@ -115,6 +128,8 @@ interface CoverTileProps {
 
 /** Comfortable grid tile: brand-coloured cover with the site, then title and folder. */
 function CoverTile({
+  setNodeRef,
+  dragStyle,
   url,
   host,
   title,
@@ -126,7 +141,7 @@ function CoverTile({
 }: CoverTileProps) {
   const cover = useCover(url, title);
   return (
-    <div className="group relative">
+    <div className="group relative" ref={setNodeRef} style={dragStyle}>
       <a
         {...linkProps}
         style={{ '--glow': cover.glow } as React.CSSProperties}

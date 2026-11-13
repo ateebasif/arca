@@ -123,7 +123,7 @@ describe('editing', () => {
     tile('GitHub').focus();
     await userEvent.keyboard('{Delete}');
     expect(fake.findByTitle('GitHub')).toBeUndefined();
-    expect(screen.getByRole('status')).toHaveTextContent('Deleted “GitHub”');
+    expect(screen.getByText('Deleted “GitHub”')).toBeInTheDocument();
 
     fireEvent.contextMenu(screen.getByRole('button', { name: /^Dev/ }));
     await userEvent.click(screen.getByRole('menuitem', { name: /Delete/ }));

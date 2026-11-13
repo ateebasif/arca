@@ -492,6 +492,86 @@ check('all links: flattens a big nested library with folder labels', async (page
   await page.eval(`chrome.bookmarks.removeTree(window.__importId)`);
 });
 
+check('drag & drop: move into folders, reorder, sidebar drop, undo', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.setViewport(1280, 800, true);
+  type LabIds = { root: string; target: string; inner: string } & Record<
+    'Drag A' | 'Drag B' | 'Drag C',
+    string
+  >;
+  const ids = await page.eval<LabIds>(`(async () => {
+    const bm = chrome.bookmarks;
+    const root = await bm.create({ parentId: '1', title: 'DnD Lab' });
+    const target = await bm.create({ parentId: root.id, title: 'Target' });
+    const inner = await bm.create({ parentId: target.id, title: 'Inner' });
+    const out = { root: root.id, target: target.id, inner: inner.id };
+    for (const t of ['Drag A', 'Drag B', 'Drag C']) {
+      out[t] = (await bm.create({ parentId: root.id, title: t, url: 'https://' + t.replace(' ', '').toLowerCase() + '.example.com/' })).id;
+    }
+    return out;
+  })()`);
+  const children = (folderId: string) =>
+    page.eval<string[]>(
+      `chrome.bookmarks.getChildren('${folderId}').then((c) => c.map((n) => n.title))`,
+    );
+  await page.eval(
+    `[...document.querySelectorAll('[role=radio]')].find((b) => b.textContent.trim() === 'Folders')?.click()`,
+  );
+  await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+  await page.waitFor(`document.querySelector('[data-folder-card="${ids.root}"]')`);
+  await page.eval(`document.querySelector('[data-folder-card="${ids.root}"]').click()`);
+  await page.waitFor(`document.querySelector('[data-bookmark-id="${ids['Drag A']}"]')`);
+  await sleep(900);
+
+  // 1. Tile onto a folder card's cover → moves into it.
+  await page.drag(
+    `[data-bookmark-id="${ids['Drag A']}"]`,
+    `[data-folder-card="${ids.target}"] [data-drop-folder]`,
+  );
+  assert.deepEqual(await children(ids.target), ['Inner', 'Drag A']);
+
+  // 2. Reorder: drag C onto B → C before B.
+  await page.drag(
+    `[data-bookmark-id="${ids['Drag C']}"]`,
+    `[data-bookmark-id="${ids['Drag B']}"]`,
+  );
+  assert.deepEqual(await children(ids.root), ['Target', 'Drag C', 'Drag B']);
+
+  // 3. Onto a sidebar tree folder (Other bookmarks).
+  await page.drag(`[data-bookmark-id="${ids['Drag B']}"]`, `li[data-drop-folder="2"]`);
+  assert.ok((await children('2')).includes('Drag B'));
+
+  // 4. Onto a breadcrumb: move "Inner" up to "DnD Lab".
+  //    (Folder-into-itself is refused; covered in tests/dnd/moves.test.ts.)
+  await page.eval(
+    `document.querySelector('[data-folder-card="${ids.target}"]').scrollIntoView()`,
+  );
+  await page.click(`[data-folder-card="${ids.target}"]`);
+  await page.waitFor(`document.querySelector('[data-folder-card="${ids.inner}"]')`);
+  await sleep(900);
+  await page.drag(
+    `[data-folder-card="${ids.inner}"]`,
+    `nav[aria-label=Breadcrumb] [data-drop-folder="${ids.root}"]`,
+  );
+  assert.deepEqual(
+    await children(ids.root),
+    ['Target', 'Drag C', 'Inner'].filter((t) => t !== 'Inner').concat('Inner'),
+  );
+  await page.screenshot(`${OUT}/dnd.png`);
+
+  // 5. Undo the last move with ⌘Z.
+  await page.key('z', MOD.meta);
+  await sleep(400);
+  assert.deepEqual(await children(ids.root), ['Target', 'Drag C']);
+  assert.deepEqual(await children(ids.target), ['Inner', 'Drag A']);
+
+  await page.eval(`(async () => {
+    await chrome.bookmarks.removeTree('${ids.root}');
+    const [b] = await chrome.bookmarks.search({ title: 'Drag B' });
+    if (b) await chrome.bookmarks.remove(b.id);
+  })()`);
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);
