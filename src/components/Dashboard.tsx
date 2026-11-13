@@ -1,17 +1,65 @@
+import { useEffect } from 'react';
+import { useHotkeys } from '@/src/lib/hotkeys';
+import { getChildren } from '@/src/store/selectors';
+import { useBookmarks } from '@/src/store/useBookmarks';
+import { useUi } from '@/src/store/ui';
+import { SidebarIcon } from './icons';
+import { Sidebar } from './sidebar/Sidebar';
+
 interface DashboardProps {
   /** Where the dashboard is rendered; New Tab and the dashboard tab share this UI. */
   surface: 'newtab' | 'dashboard';
 }
 
 export function Dashboard({ surface }: DashboardProps) {
+  const state = useBookmarks();
+  const collapsed = useUi((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUi((s) => s.toggleSidebar);
+  const currentFolderId = useUi((s) => s.currentFolderId);
+  const openFolder = useUi((s) => s.openFolder);
+
+  useHotkeys({ 'mod+\\': () => toggleSidebar() });
+
+  // If the open folder disappears (deleted elsewhere), fall back to the first root.
+  useEffect(() => {
+    if (state.ready && !state.nodes.has(currentFolderId) && state.rootIds[0]) {
+      openFolder(state.rootIds[0]);
+    }
+  }, [state, currentFolderId, openFolder]);
+
+  const folder = state.nodes.get(currentFolderId);
+
   return (
-    <main className="flex h-full items-center justify-center p-6">
-      <section className="rounded-(--radius-tile) bg-(--color-surface) px-8 py-6 text-center shadow-sm backdrop-blur">
-        <h1 className="text-2xl font-semibold tracking-tight">Arca</h1>
-        <p className="mt-1 text-sm text-(--color-ink-muted)">
-          {surface === 'newtab' ? 'New Tab' : 'Dashboard'} · bookmarks coming soon
-        </p>
-      </section>
-    </main>
+    <div className="flex h-full" data-surface={surface}>
+      {!collapsed && <Sidebar />}
+      <main className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-14 shrink-0 items-center gap-2 px-5">
+          {collapsed && (
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Show sidebar (⌘\)"
+              title="Show sidebar (⌘\)"
+              className="text-ink-muted hover:bg-hover hover:text-ink grid size-7 place-items-center rounded-lg"
+            >
+              <SidebarIcon />
+            </button>
+          )}
+          <h1 className="truncate text-[15px] font-semibold">
+            {folder?.title || (state.ready ? 'Untitled' : '')}
+          </h1>
+        </header>
+        <section
+          aria-label="Folder contents"
+          className="min-h-0 flex-1 overflow-y-auto px-5 pb-8"
+        >
+          <ul className="text-ink-muted text-sm">
+            {getChildren(state, currentFolderId).map((child) => (
+              <li key={child.id}>{child.title}</li>
+            ))}
+          </ul>
+        </section>
+      </main>
+    </div>
   );
 }
