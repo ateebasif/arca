@@ -13,16 +13,18 @@ import { displayHost } from '@/src/lib/url';
 import { useOverlays } from '@/src/store/overlays';
 import { getBookmarkStore, useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { AiOrganize } from '../ai/AiOrganize';
 import { FolderIcon } from '../icons';
 import { Favicon } from '../main/Favicon';
 import { Button, Dialog } from '../overlays/Dialog';
 
-type Tab = 'duplicates' | 'empty' | 'sort' | 'group';
+type Tab = 'duplicates' | 'empty' | 'sort' | 'group' | 'ai';
 const TABS: Array<[Tab, string]> = [
   ['duplicates', 'Duplicates'],
   ['empty', 'Empty folders'],
   ['sort', 'Sort folder'],
   ['group', 'Group by site'],
+  ['ai', 'AI organize'],
 ];
 
 const SHOW_GROUPS = 60;
@@ -135,6 +137,7 @@ export default function TidyPanel() {
         )}
         {tab === 'sort' && <SortFolder folderId={folderId} busy={!!busy} run={run} />}
         {tab === 'group' && <GroupBySite folderId={folderId} busy={!!busy} run={run} />}
+        {tab === 'ai' && <AiOrganize />}
       </div>
     </Dialog>
   );

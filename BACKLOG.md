@@ -2,6 +2,7 @@
 
 ## In Progress
 
+- [ ] ARC-058 · AI organize with local Ollama: embed (nomic-embed-text), cluster locally, name folders (llama3.2), preview + undo · `feature/ai-organize` · P1
 - [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · `docs/readme-load-unpacked` · Phase 1 · Ardia: loads unpacked, dashboard works with ~4k bookmarks; ⌘T opens Ardia's command bar (no New Tab override); popup still to check
 
 ## Up Next
