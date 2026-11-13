@@ -27,6 +27,7 @@ beforeEach(() => {
       { title: 'News', url: 'https://news.ycombinator.com/' },
     ],
     other: [{ title: 'Empty', children: [] }],
+    mobile: [],
   });
 });
 

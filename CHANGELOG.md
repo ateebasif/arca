@@ -16,3 +16,4 @@ All notable changes to this project are documented here. The format follows
 - `src/lib` wrappers for bookmarks, storage, tabs, top sites and favicons, with
   root-folder and move-into-descendant guards.
 - In-memory bookmarks fake for tests that mirrors Chromium's behaviour.
+- `bun run e2e`: smoke checks against real Chrome with the built extension.

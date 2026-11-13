@@ -34,6 +34,9 @@ Prettier. Package manager: **bun** (fall back to pnpm only if WXT breaks; docume
   `tests/setup.ts`. ESLint blocks the `chrome` global outside `src/lib`, background and tests.
 - `fakeBrowser` has no bookmarks API: call `installFakeBookmarks(seed)` from
   `tests/fakes/bookmarks.ts` in `beforeEach` to get a Chromium-like in-memory tree.
+- `bun run e2e` loads the built extension into headless Chrome (throwaway profile)
+  and runs `scripts/e2e/smoke.ts`; screenshots go to `.e2e/`. Use it to verify UI work
+  in a real browser. The fake's move semantics are checked against Chrome there.
 - Wrappers throw `ArcaError` with a stable `code` (`ROOT_FOLDER`, `INVALID_MOVE`,
   `NOT_FOUND`, `NOT_A_FOLDER`, `API`); the UI should branch on `code`, not `message`.
 
@@ -53,6 +56,7 @@ Prettier. Package manager: **bun** (fall back to pnpm only if WXT breaks; docume
 | Lint      | `bun run lint`                          |
 | Typecheck | `bun run typecheck`                     |
 | Format    | `bun run format` (`format:check` in CI) |
+| E2E       | `bun run build && bun run e2e`          |
 
 ## Structure
 

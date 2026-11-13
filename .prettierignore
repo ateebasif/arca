@@ -6,3 +6,4 @@ node_modules
 bun.lock
 arca-prd.md
 docs/git
+.e2e

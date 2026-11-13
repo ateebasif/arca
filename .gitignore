@@ -13,6 +13,7 @@ dist/
 
 # test
 coverage/
+.e2e/
 
 # OS / editor
 .DS_Store

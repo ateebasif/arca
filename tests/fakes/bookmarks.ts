@@ -4,7 +4,8 @@ import { fakeBrowser } from 'wxt/testing/fake-browser';
 /**
  * In-memory implementation of chrome.bookmarks that follows Chromium's
  * behaviour closely enough for wrapper, store, undo and dnd tests:
- * - root "0" holds Bookmarks Bar "1", Other Bookmarks "2", Mobile "3"
+ * - root "0" holds Bookmarks Bar "1", Other Bookmarks "2", and Mobile "3" only
+ *   when the seed includes `mobile` (real Chrome hides an empty Mobile folder)
  * - root folders reject update/move/remove
  * - same-parent move uses the pre-removal index (Chromium's BookmarkModel::Move)
  * - remove() rejects non-empty folders; removeTree() rejects bookmarks
@@ -79,10 +80,10 @@ export class FakeBookmarks {
     this.nodes.set('0', { id: '0', title: '', dateAdded: now, children: [] });
     this.addRoot('1', 'Bookmarks bar', 'bookmarks-bar');
     this.addRoot('2', 'Other bookmarks', 'other');
-    this.addRoot('3', 'Mobile bookmarks', 'mobile');
+    if (seed.mobile) this.addRoot('3', 'Mobile bookmarks', 'mobile');
     this.seedInto('1', seed.bar ?? []);
     this.seedInto('2', seed.other ?? []);
-    this.seedInto('3', seed.mobile ?? []);
+    if (seed.mobile) this.seedInto('3', seed.mobile);
   }
 
   // -- API surface --------------------------------------------------------
