@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- AI organize no longer stops when you switch Tidy up tabs, close the panel or
+  open another folder. The run keeps going, the sidebar's Tidy up button shows
+  its progress ("AI 42%", "AI ready to review"), and reopening Tidy up returns
+  to the suggestions, which still apply to the folder you started in. Tidy up
+  also reopens on the last tab you used.
 - Settings (and other long dialogs) ran off the bottom of short windows; the
   body now scrolls while the title and buttons stay visible.
 - Settings → Local AI said "Connected" even when Ollama would refuse Arca's

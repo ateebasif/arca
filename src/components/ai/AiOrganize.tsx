@@ -1,15 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { chooseK } from '@/src/features/ai/kmeans';
 import {
-  applyGroups,
   estimateSeconds,
-  planGroups,
   type OrganizeItem,
-  type ProgressInfo,
-  type ProposedGroup,
   type Stage,
 } from '@/src/features/ai/organize';
-import { OllamaError } from '@/src/lib/ollama';
+import { useAiRun, type AiPhase } from '@/src/store/aiRun';
 import { useOverlays } from '@/src/store/overlays';
 import { linksWithin } from '@/src/store/selectors';
 import { useSettings } from '@/src/store/settings';
@@ -24,30 +20,26 @@ const STAGE_LABEL: Record<Stage, string> = {
   naming: 'Naming folders',
 };
 
-type Phase =
-  | { kind: 'ready' }
-  | {
-      kind: 'running';
-      stage: Stage;
-      done: number;
-      total: number;
-      info?: ProgressInfo;
-      startedAt: number;
-    }
-  | { kind: 'review'; groups: ProposedGroup[] }
-  | { kind: 'applying'; done: number; total: number }
-  | { kind: 'done'; count: number }
-  | { kind: 'error'; error: OllamaError };
-
-/** Tidy up → AI organize: group the open folder's links by topic with local Ollama. */
+/**
+ * Tidy up → AI organize: group the open folder's links by topic with local
+ * Ollama. The run itself lives in useAiRun, so switching tabs or closing the
+ * panel doesn't interrupt it.
+ */
 export function AiOrganize() {
   const state = useBookmarks();
   const settings = useSettings();
-  const folderId = useUi((s) => s.currentFolderId);
-  const folderTitle = state.nodes.get(folderId)?.title || 'this folder';
+  const currentId = useUi((s) => s.currentFolderId);
+  const run = useAiRun();
+  const { phase } = run;
+  const idle = phase.kind === 'ready' || phase.kind === 'error' || phase.kind === 'done';
+  // While a run is going (or waiting for review) the panel is about that run's
+  // folder, even if you've browsed somewhere else since.
+  const folderId = !idle && run.folderId ? run.folderId : currentId;
+  const folderTitle =
+    state.nodes.get(folderId)?.title || run.folderTitle || 'this folder';
   const items = useMemo<OrganizeItem[]>(
     () =>
-      linksWithin(state, folderId)
+      linksWithin(state, currentId)
         .filter((l) => l.node.url && /^https?:/i.test(l.node.url))
         .map((l) => ({
           id: l.node.id,
@@ -55,16 +47,11 @@ export function AiOrganize() {
           url: l.node.url ?? '',
           folder: l.folderLabel,
         })),
-    [state, folderId],
+    [state, currentId],
   );
   const auto = chooseK(items.length);
-  const [groupsWanted, setGroupsWanted] = useState(0); // 0 = auto
-  const [phase, setPhase] = useState<Phase>({ kind: 'ready' });
-  const [names, setNames] = useState<Record<number, string>>({});
-  const [skipped, setSkipped] = useState<Set<number>>(new Set());
-  const abort = useRef<AbortController | null>(null);
 
-  if (!settings.aiEnabled) {
+  if (!settings.aiEnabled && idle) {
     return (
       <div className="py-8 text-center text-[13px]">
         <p className="font-medium">Group links by topic with a local AI</p>
@@ -81,78 +68,55 @@ export function AiOrganize() {
     );
   }
 
-  const run = async () => {
-    abort.current = new AbortController();
-    setNames({});
-    setSkipped(new Set());
-    const startedAt = Date.now();
-    setPhase({
-      kind: 'running',
-      stage: 'embedding',
-      done: 0,
-      total: items.length,
-      startedAt,
-    });
-    try {
-      const groups = await planGroups(items, {
+  const start = () =>
+    void run.start(
+      { id: currentId, title: state.nodes.get(currentId)?.title || 'this folder' },
+      items,
+      {
         base: settings.ollamaUrl,
         embedModel: settings.embedModel,
         chatModel: settings.chatModel,
-        groups: groupsWanted || undefined,
-        signal: abort.current.signal,
-        onProgress: (stage, done, total, info) =>
-          setPhase((prev) => ({
-            kind: 'running',
-            stage,
-            done,
-            total,
-            // Keep the cache count from the embedding stage for the summary line.
-            info: { ...(prev.kind === 'running' ? prev.info : {}), ...info },
-            startedAt,
-          })),
-      });
-      setPhase({ kind: 'review', groups });
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError')
-        setPhase({ kind: 'ready' });
-      else
-        setPhase({
-          kind: 'error',
-          error:
-            e instanceof OllamaError ? e : new OllamaError('BAD_RESPONSE', String(e)),
-        });
-    }
-  };
-
-  const apply = async (groups: ProposedGroup[]) => {
-    const chosen = groups
-      .map((g, i) => ({ ...g, name: (names[i] ?? g.name).trim() || g.name }))
-      .filter((_, i) => !skipped.has(i));
-    const total = chosen.reduce((n, g) => n + g.ids.length, 0);
-    setPhase({ kind: 'applying', done: 0, total });
-    await applyGroups(folderId, chosen, (done) =>
-      setPhase({ kind: 'applying', done, total }),
+        groups: run.groupsWanted || undefined,
+      },
     );
-    setPhase({ kind: 'done', count: chosen.length });
-  };
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-ink-muted text-xs leading-relaxed">
-        Groups the <strong className="text-ink">{items.length.toLocaleString()}</strong>{' '}
-        links in “{folderTitle}” (and its subfolders) by topic using{' '}
-        <code>{settings.embedModel}</code> and <code>{settings.chatModel}</code>. You
-        review everything before anything moves, and one Undo reverses it.
-      </p>
+      {idle ? (
+        <p className="text-ink-muted text-xs leading-relaxed">
+          Groups the <strong className="text-ink">{items.length.toLocaleString()}</strong>{' '}
+          links in “{folderTitle}” (and its subfolders) by topic using{' '}
+          <code>{settings.embedModel}</code> and <code>{settings.chatModel}</code>. You
+          review everything before anything moves, and one Undo reverses it.
+        </p>
+      ) : (
+        <p className="text-ink-muted text-xs leading-relaxed">
+          Organizing “<span className="text-ink">{folderTitle}</span>”. This keeps running
+          if you switch tabs, close this panel or open other folders; come back to Tidy up
+          → AI organize to see it.
+          {folderId !== currentId && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="text-accent hover:underline"
+                onClick={() => useUi.getState().openFolder(folderId)}
+              >
+                Go to folder
+              </button>
+            </>
+          )}
+        </p>
+      )}
 
-      {(phase.kind === 'ready' || phase.kind === 'error' || phase.kind === 'done') && (
+      {idle && (
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-ink-muted flex items-center gap-2 text-xs">
             Folders
             <select
               className="border-line bg-surface h-8 rounded-lg border px-2 text-[13px]"
-              value={groupsWanted}
-              onChange={(e) => setGroupsWanted(Number(e.target.value))}
+              value={run.groupsWanted}
+              onChange={(e) => run.setGroupsWanted(Number(e.target.value))}
             >
               <option value={0}>Auto ({auto})</option>
               {[4, 6, 8, 10, 12, 15, 20, 25, 30].map((n) => (
@@ -164,8 +128,8 @@ export function AiOrganize() {
           </label>
           <Button
             variant="primary"
-            disabled={items.length < 4}
-            onClick={() => void run()}
+            disabled={items.length < 4 || !settings.aiEnabled}
+            onClick={start}
           >
             Suggest folders
           </Button>
@@ -190,9 +154,7 @@ export function AiOrganize() {
 
       {phase.kind === 'error' && <OllamaHelp error={phase.error} />}
 
-      {phase.kind === 'running' && (
-        <RunProgress phase={phase} onCancel={() => abort.current?.abort()} />
-      )}
+      {phase.kind === 'running' && <RunProgress phase={phase} onCancel={run.cancel} />}
 
       {phase.kind === 'applying' && (
         <div className="flex items-center gap-3 text-xs" role="status">
@@ -211,13 +173,13 @@ export function AiOrganize() {
               applying.
             </p>
             <div className="flex gap-2">
-              <Button onClick={() => setPhase({ kind: 'ready' })}>Discard</Button>
+              <Button onClick={run.discard}>Discard</Button>
               <Button
                 variant="primary"
-                disabled={skipped.size === phase.groups.length}
-                onClick={() => void apply(phase.groups)}
+                disabled={run.skipped.size === phase.groups.length}
+                onClick={() => void run.apply()}
               >
-                Apply {phase.groups.length - skipped.size} folders
+                Apply {phase.groups.length - run.skipped.size} folders
               </Button>
             </div>
           </div>
@@ -231,24 +193,17 @@ export function AiOrganize() {
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    aria-label={`Include ${names[i] ?? g.name}`}
+                    aria-label={`Include ${run.names[i] ?? g.name}`}
                     className="accent-accent"
-                    checked={!skipped.has(i)}
-                    onChange={(e) =>
-                      setSkipped((s) => {
-                        const next = new Set(s);
-                        if (e.target.checked) next.delete(i);
-                        else next.add(i);
-                        return next;
-                      })
-                    }
+                    checked={!run.skipped.has(i)}
+                    onChange={(e) => run.setIncluded(i, e.target.checked)}
                   />
                   <input
                     aria-label="Folder name"
                     className={`${inputClass} h-8 flex-1 font-medium`}
-                    value={names[i] ?? g.name}
+                    value={run.names[i] ?? g.name}
                     maxLength={60}
-                    onChange={(e) => setNames((n) => ({ ...n, [i]: e.target.value }))}
+                    onChange={(e) => run.setName(i, e.target.value)}
                   />
                   <span className="text-ink-faint shrink-0 text-xs">
                     {g.ids.length} links
@@ -293,7 +248,7 @@ function RunProgress({
   phase,
   onCancel,
 }: {
-  phase: Extract<Phase, { kind: 'running' }>;
+  phase: Extract<AiPhase, { kind: 'running' }>;
   onCancel(): void;
 }) {
   const [now, setNow] = useState(() => Date.now());

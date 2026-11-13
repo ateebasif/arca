@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
+import { useAiRun } from '@/src/store/aiRun';
 import { useOverlays } from '@/src/store/overlays';
 import { GearIcon, KeyboardIcon, SidebarIcon, SparkleIcon } from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
@@ -40,7 +41,7 @@ export function Sidebar() {
           className="border-line text-ink-muted hover:bg-hover hover:text-ink flex h-9 w-full items-center gap-2 rounded-lg border px-2.5 text-[13px] transition-colors duration-150"
         >
           <SparkleIcon className="text-accent" /> Tidy up
-          <span className="text-ink-faint ml-auto text-[11px]">duplicates · sort</span>
+          <TidyStatus />
         </button>
       </div>
       <div className="border-line flex shrink-0 items-center justify-between gap-2 border-t px-2 py-2">
@@ -106,5 +107,28 @@ function Resizer() {
       onKeyDown={onKeyDown}
       className="hover:bg-accent/40 focus-visible:bg-accent/40 absolute inset-y-0 -right-1 w-2 cursor-col-resize transition-colors duration-150"
     />
+  );
+}
+
+/** "duplicates · sort", or the AI organize run's progress while it works. */
+function TidyStatus() {
+  const phase = useAiRun((s) => s.phase);
+  const text =
+    phase.kind === 'running'
+      ? `AI ${Math.round((phase.done / Math.max(1, phase.total)) * 100)}%`
+      : phase.kind === 'review'
+        ? 'AI ready to review'
+        : phase.kind === 'applying'
+          ? 'AI moving links'
+          : null;
+  if (!text)
+    return <span className="text-ink-faint ml-auto text-[11px]">duplicates · sort</span>;
+  return (
+    <span className="text-accent ml-auto flex items-center gap-1.5 text-[11px] tabular-nums">
+      {phase.kind !== 'review' && (
+        <span className="bg-accent size-1.5 animate-pulse rounded-full" aria-hidden />
+      )}
+      {text}
+    </span>
   );
 }
