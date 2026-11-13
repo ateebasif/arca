@@ -2,8 +2,6 @@
 
 ## In Progress
 
-- [ ] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · `feature/bookmarks-api-wrapper` → `feature/chrome-api-wrappers` · Phase 1
-
 ## Up Next
 
 - [ ] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · Phase 1 · P0
@@ -71,6 +69,7 @@
 
 ## Done
 
+- [x] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · `feature/bookmarks-api-wrapper` + `feature/chrome-api-wrappers` · 2026-11-13
 - [x] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · `chore/scaffold-wxt-react` · 2026-11-13
 - [x] ARC-001 · Repo + git setup, guides, CLAUDE.md, backlog · `main` (initial commit) · 2026-11-13
 
@@ -83,4 +82,5 @@
 - React + ReactDOM is ~220 KB of the 400 KB JS budget. Keep an eye on bundle size as features land.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. Fine for the wrapper; the store (ARC-004) should answer ancestry from its in-memory map.
+- `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - The in-memory bookmarks fake (`tests/fakes/bookmarks.ts`) copies Chromium's move-index quirk from source reading; double-check against a real browser during ARC-020 (drag & drop).

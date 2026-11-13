@@ -13,5 +13,6 @@ All notable changes to this project are documented here. The format follows
   background worker.
 - Tailwind CSS with system light/dark tokens and reduced-motion support.
 - ESLint, Prettier and Vitest + React Testing Library with a fake browser API.
-- `src/lib` bookmarks wrapper with root-folder and move-into-descendant guards.
+- `src/lib` wrappers for bookmarks, storage, tabs, top sites and favicons, with
+  root-folder and move-into-descendant guards.
 - In-memory bookmarks fake for tests that mirrors Chromium's behaviour.
