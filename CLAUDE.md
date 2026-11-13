@@ -82,6 +82,15 @@ docs/git/      branch, commit and PR guides (source of truth for git rules)
 - Lazy-load heavy views (duplicates, dead links, import/export, settings). Virtualize
   any list/grid over 200 items.
 
+## Feature notes
+
+- Undo (`src/features/undo`): record one action per user operation; resolve ids
+  with `resolveId` (restores create new ids); restore URLs with `restore: true`.
+- Drag & drop (`src/features/dnd`): folder drop zones win over sortable items;
+  check `isDragActive()` before item key handlers act.
+- Rarely used views are lazy (`src/components/overlays/lazyOverlays.ts`,
+  `ActivePreviews`); tests must `await findBy…` them.
+
 ## Security rules (see SECURITY.md)
 
 - Never use `eval`, `new Function`, `innerHTML`, `dangerouslySetInnerHTML`,
