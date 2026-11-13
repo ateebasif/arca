@@ -25,6 +25,21 @@ export function embeddingStore(): KeyValueStore<unknown> {
 }
 export function setEmbeddingStoreForTests(store: KeyValueStore<unknown> | null): void {
   shared = store;
+  memoryVectors.clear();
+}
+
+/**
+ * Normalized vectors already read this session, so repeat questions don't
+ * re-read thousands of IndexedDB entries. Cleared with the stored cache.
+ */
+export const memoryVectors = new Map<string, Float32Array>();
+const MEMORY_MAX = 20_000;
+export function rememberVector(key: string, vector: Float32Array): void {
+  if (memoryVectors.size >= MEMORY_MAX) {
+    const oldest = memoryVectors.keys().next().value;
+    if (oldest !== undefined) memoryVectors.delete(oldest);
+  }
+  memoryVectors.set(key, vector);
 }
 
 export const cacheKey = (model: string, text: string) => `${model}|${textHash(text)}`;
@@ -52,6 +67,7 @@ export async function writeCached(
 }
 
 export async function clearEmbeddings(): Promise<void> {
+  memoryVectors.clear();
   await embeddingStore()
     .clear()
     .catch(() => {});

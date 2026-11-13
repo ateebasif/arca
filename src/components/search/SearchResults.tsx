@@ -7,10 +7,12 @@ import {
   RESULTS_ID,
   useSearchResults,
 } from '@/src/features/search/useSearch';
+import { useOverlays } from '@/src/store/overlays';
+import { useSettings } from '@/src/store/settings';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { compactPath } from '@/src/features/tidy/normalize';
-import { FolderIcon } from '../icons';
+import { FolderIcon, SparkleIcon } from '../icons';
 import { Favicon } from '../main/Favicon';
 
 /** Results that replace the folder view while a query is active. */
@@ -25,6 +27,8 @@ export function SearchResults() {
   const results = useSearchResults();
   const listRef = useRef<HTMLUListElement>(null);
   const folderTitle = state.nodes.get(folderId)?.title || 'this folder';
+  const aiEnabled = useSettings((s) => s.aiEnabled);
+  const askArca = () => useOverlays.getState().openAsk(query.trim());
 
   useEffect(() => {
     listRef.current
@@ -45,6 +49,15 @@ export function SearchResults() {
         <Chip pressed={inFolder} onClick={() => setInFolder(true)}>
           In “{folderTitle}”
         </Chip>
+        {aiEnabled && (
+          <button
+            type="button"
+            onClick={askArca}
+            className="text-accent hover:bg-hover ml-2 flex items-center gap-1 rounded-full px-2.5 py-1"
+          >
+            <SparkleIcon /> Ask Arca
+          </button>
+        )}
         <span className="text-ink-faint ml-auto" aria-live="polite">
           {results.length === RESULT_LIMIT
             ? `Top ${RESULT_LIMIT} results`
@@ -60,6 +73,15 @@ export function SearchResults() {
           <p className="text-sm">
             {inFolder ? 'Try searching all bookmarks.' : 'Try fewer or different words.'}
           </p>
+          {aiEnabled && (
+            <button
+              type="button"
+              onClick={askArca}
+              className="bg-accent-strong mt-4 flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] text-white hover:opacity-90"
+            >
+              <SparkleIcon /> Ask Arca about “{query.trim()}”
+            </button>
+          )}
         </div>
       ) : (
         <ul

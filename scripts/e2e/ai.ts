@@ -210,6 +210,40 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       console.log(
         `  ✓ AI organize with real Ollama: ${groups.length} folders (${groups.join(', ')}); undo restored all`,
       );
+
+      // 3. Ask Arca: describe vaguely, get real bookmarks back.
+      await page.key('Escape');
+      await page.eval(
+        `[...document.querySelectorAll('aside button')].find((b) => b.textContent.includes('Ask Arca')).click()`,
+      );
+      await page.waitFor(
+        `document.querySelector('[role=dialog] input[aria-label="Ask Arca"]')`,
+      );
+      await page.eval(`(() => {
+        const input = document.querySelector('[role=dialog] input[aria-label="Ask Arca"]');
+        const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        set.call(input, 'I had some torrent sites saved but forgot where');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.form.requestSubmit();
+      })()`);
+      await page.waitFor(`document.querySelector('[data-ask-answer]')`, 120000);
+      const found = await page.eval<string[]>(
+        `[...document.querySelectorAll('[data-ask-result]')].map((a) => a.getAttribute('href'))`,
+      );
+      assert.ok(
+        found.some((h) => /torrent|rarbg|anirena/i.test(h)),
+        `Ask Arca found torrent sites: ${found.join(', ')}`,
+      );
+      assert.ok(
+        found.every((h) => /^https:/.test(h)),
+        'only real web links',
+      );
+      await sleep(300);
+      await page.screenshot(`${out}/ask-arca.png`);
+      console.log(
+        `  ✓ Ask Arca with real Ollama: ${found.length} results (${found.join(', ')})`,
+      );
+      await page.key('Escape');
       await page.eval(`chrome.bookmarks.removeTree('${folder}')`);
     } finally {
       browser.close();

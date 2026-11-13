@@ -1,9 +1,9 @@
 import * as bm from '@/src/lib/bookmarks';
-import { chatJson, embed } from '@/src/lib/ollama';
+import { chatJson } from '@/src/lib/ollama';
 import { mainDomain } from '@/src/lib/url';
 import * as undo from '../undo/undo';
-import { readCached, writeCached } from './embedCache';
-import { chooseK, groupMembers, kmeans, normalize } from './kmeans';
+import { embedTexts } from './embedTexts';
+import { chooseK, groupMembers, kmeans } from './kmeans';
 
 /**
  * "AI organize": groups bookmarks by meaning, entirely on this computer.
@@ -55,9 +55,6 @@ export interface PlanOptions {
   signal?: AbortSignal;
 }
 
-// Small enough that progress moves every few seconds even with larger models.
-const EMBED_BATCH = 32;
-
 /**
  * Text that gets embedded for a bookmark: title, site and its own folder
  * name. Folder names shared by most items carry no signal and are dropped
@@ -101,7 +98,7 @@ export function cleanFolderName(raw: unknown, fallback: string): string {
   return name.length >= 2 ? name : fallback;
 }
 
-function throwIfAborted(signal?: AbortSignal) {
+export function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
 }
 
@@ -122,31 +119,16 @@ async function embedAll(
   const texts = items.map(
     (it) => prefix + embeddingText(it, !common.has(lastFolder(it))),
   );
-  const vectors: (number[] | null)[] = await Promise.all(
-    texts.map((t) => readCached(opts.embedModel, t)),
-  );
-  const missing = vectors.flatMap((v, i) => (v ? [] : [i]));
-  const cached = items.length - missing.length;
-  let done = cached;
-  for (let start = 0; start < missing.length; start += EMBED_BATCH) {
-    throwIfAborted(opts.signal);
-    const batch = missing.slice(start, start + EMBED_BATCH);
-    const batchTexts = batch.map((i) => texts[i] ?? '');
-    opts.onProgress?.('embedding', done, items.length, {
-      cached,
-      titles: batch.map((i) => items[i]?.title ?? ''),
-    });
-    const result = await embed(opts.base, opts.embedModel, batchTexts);
-    batch.forEach((i, j) => {
-      const vector = result[j];
-      if (!vector) return;
-      vectors[i] = vector;
-      void writeCached(opts.embedModel, batchTexts[j] ?? '', vector);
-    });
-    done += batch.length;
-  }
-  opts.onProgress?.('embedding', done, items.length, { cached });
-  return vectors.map((v) => normalize(v ?? []));
+  return embedTexts(texts, {
+    base: opts.base,
+    model: opts.embedModel,
+    signal: opts.signal,
+    onProgress: ({ done, total, cached, batch }) =>
+      opts.onProgress?.('embedding', done, total, {
+        cached,
+        ...(batch && { titles: batch.map((i) => items[i]?.title ?? '') }),
+      }),
+  });
 }
 
 const NAME_SCHEMA = {

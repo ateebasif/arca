@@ -6,7 +6,7 @@
 
 ## Up Next
 
-- [ ] ARC-059 · AI search: meaning search in ⌘K using cached embeddings (embed query, cosine match, merged with keyword results); optional "Ask" chat via llama3.2 that only cites real bookmarks; include cached preview descriptions when available · needs ARC-058 · P2
+- [ ] ARC-062 · Meaning matches inline in search results (reuse Ask's cached embeddings, no chat model), merged under keyword results · P2
 - [ ] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, output in Other Bookmarks, Bookmarks Bar opt-in, higher folder cap (~40–60) · part of / follow-up to ARC-058 · P1
 
 ## Backlog
@@ -56,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-059 · Ask Arca: find bookmarks by description (local embeddings + chat model picks real bookmarks only), follow-ups, sidebar + search entry points · `feature/ask-arca` · 2026-11-14
 - [x] ARC-B02 · AI organize run lost when switching Tidy tabs or closing the panel; run state moved to a store, sidebar status · `fix/ai-run-persists` · 2026-11-14
 - [x] ARC-061 · AI organize live progress: elapsed/ETA, current links, cache count, model-start state; batches of 32 · `feature/ai-progress` · 2026-11-14
 - [x] ARC-B01 · Settings dialog clipped in short windows; Local AI showed Connected despite Ollama 403 on POST · `fix/settings-ollama-check` · 2026-11-14
