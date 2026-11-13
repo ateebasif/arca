@@ -2,30 +2,10 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { errorMessage } from '@/src/features/editing/actions';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import * as bm from '@/src/lib/bookmarks';
-import type { BookmarkSnapshot } from '@/src/store/bookmarkStore';
 import { useOverlays, type EditorState } from '@/src/store/overlays';
-import { isWithin } from '@/src/store/selectors';
+import { folderOptions } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { Button, Dialog, Field, inputClass } from './Dialog';
-
-interface FolderOption {
-  id: string;
-  label: string;
-}
-
-/** Every folder as an indented option, excluding `excludeId` and its subtree. */
-function folderOptions(state: BookmarkSnapshot, excludeId?: string): FolderOption[] {
-  const out: FolderOption[] = [];
-  const visit = (id: string, depth: number) => {
-    const node = state.nodes.get(id);
-    if (!node?.childIds) return;
-    if (excludeId && isWithin(state, id, excludeId)) return;
-    out.push({ id, label: `${' '.repeat(depth)}${node.title || 'Untitled'}` });
-    node.childIds.forEach((c) => visit(c, depth + 1));
-  };
-  state.rootIds.forEach((id) => visit(id, 0));
-  return out;
-}
 
 /** Create or edit a bookmark or folder: title, URL (bookmarks) and folder. */
 export function EditDialog({ editor }: { editor: EditorState }) {
