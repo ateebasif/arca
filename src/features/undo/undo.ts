@@ -67,6 +67,7 @@ export function undoDepth(): number {
 
 export function clearUndoForTests(): void {
   stack.length = 0;
+  renamedIds.clear();
   running = Promise.resolve();
 }
 
@@ -80,20 +81,52 @@ export function combine(label: string, actions: UndoAction[]): UndoAction {
   };
 }
 
+// -- id remapping ----------------------------------------------------------------
+//
+// Undoing a delete recreates bookmarks with NEW ids. Older undo entries still
+// hold the old ids, so every action resolves ids through this map at undo time.
+
+const renamedIds = new Map<string, string>();
+
+/** The current id for an id that may have been recreated by an undo. */
+export function resolveId(id: string): string {
+  let current = id;
+  for (let hops = 0; hops < 50; hops++) {
+    const next = renamedIds.get(current);
+    if (!next) return current;
+    current = next;
+  }
+  return current;
+}
+
 // -- action builders -----------------------------------------------------------
 
-/** Recreates a removed subtree at its old position. Returns old → new ids. */
+/**
+ * Recreates a removed subtree at its old position, recording old → new ids.
+ * A child that fails doesn't stop its siblings; failures are counted.
+ */
 export async function recreate(
   node: BookmarkNode,
   parentId: string,
   index?: number,
-  ids = new Map<string, string>(),
-): Promise<Map<string, string>> {
-  const created = await bm.create({ parentId, title: node.title, url: node.url, index });
-  ids.set(node.id, created.id);
-  for (const child of node.children ?? [])
-    await recreate(child, created.id, undefined, ids);
-  return ids;
+): Promise<{ failed: number }> {
+  const created = await bm.create({
+    parentId: resolveId(parentId),
+    title: node.title,
+    url: node.url,
+    index,
+    restore: true,
+  });
+  renamedIds.set(node.id, created.id);
+  let failed = 0;
+  for (const child of node.children ?? []) {
+    try {
+      failed += (await recreate(child, created.id)).failed;
+    } catch {
+      failed += 1;
+    }
+  }
+  return { failed };
 }
 
 export function deleted(removed: BookmarkNode): UndoAction {
@@ -103,7 +136,9 @@ export function deleted(removed: BookmarkNode): UndoAction {
     label: `Deleted “${removed.title || 'Untitled'}”`,
     async undo() {
       if (!parentId) throw new Error('Unknown original folder');
-      await recreate(removed, parentId, index);
+      const { failed } = await recreate(removed, parentId, index);
+      if (failed)
+        throw new Error(`${failed} item${failed === 1 ? '' : 's'} couldn't be restored`);
     },
   };
 }
@@ -112,7 +147,13 @@ export function created(node: BookmarkNode): UndoAction {
   return {
     label: `Added “${node.title || 'Untitled'}”`,
     async undo() {
-      await bm.remove(node.id);
+      const id = resolveId(node.id);
+      const now = await bm.getNode(id);
+      // Never delete things the user put into a folder after creating it.
+      if (now.url === undefined && (await bm.getChildren(id)).length > 0) {
+        throw new Error(`“${now.title}” isn't empty any more, so it was kept`);
+      }
+      await bm.remove(id);
     },
   };
 }
@@ -125,7 +166,12 @@ export function changed(
   return {
     label,
     async undo() {
-      await bm.update(id, { title: before.title, url: before.url });
+      const current = resolveId(id);
+      const now = await bm.getNode(current);
+      // Only send the URL when it actually changed (a rename leaves it alone).
+      const url =
+        before.url !== undefined && before.url !== now.url ? before.url : undefined;
+      await bm.update(current, { title: before.title, url }, { restore: true });
     },
   };
 }
@@ -139,13 +185,15 @@ export function moved(
   return {
     label,
     async undo() {
-      const now = await bm.getNode(id);
+      const current = resolveId(id);
+      const parentId = resolveId(from.parentId);
+      const now = await bm.getNode(current);
       // Chromium reads same-folder indexes before removal, so moving "down"
       // to the old slot needs +1.
-      const sameFolder = now.parentId === from.parentId;
+      const sameFolder = now.parentId === parentId;
       const index =
         sameFolder && (now.index ?? 0) < from.index ? from.index + 1 : from.index;
-      await bm.move(id, { parentId: from.parentId, index });
+      await bm.move(current, { parentId, index });
     },
   };
 }

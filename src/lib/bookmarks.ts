@@ -104,10 +104,16 @@ export interface CreateInput {
   /** Omit to create a folder. */
   url?: string;
   index?: number;
+  /**
+   * Re-creating a bookmark the browser already had (undo). Its URL came from
+   * the browser, so the "never save javascript:/data:" rule doesn't apply;
+   * Arca still never opens or links such URLs.
+   */
+  restore?: boolean;
 }
 
 export async function create(input: CreateInput): Promise<BookmarkNode> {
-  assertSafeUrl(input.url);
+  if (!input.restore) assertSafeUrl(input.url);
   const parent = await getFolder(input.parentId);
   if (parent.id === ROOT_ID) {
     throw new ArcaError('ROOT_FOLDER', 'Cannot add items to the top-level root');
@@ -128,8 +134,12 @@ export interface UpdateInput {
   url?: string;
 }
 
-export async function update(id: string, changes: UpdateInput): Promise<BookmarkNode> {
-  assertSafeUrl(changes.url);
+export async function update(
+  id: string,
+  changes: UpdateInput,
+  { restore = false }: { restore?: boolean } = {},
+): Promise<BookmarkNode> {
+  if (!restore) assertSafeUrl(changes.url);
   const node = await getMutable(id);
   if (changes.url !== undefined && isFolder(node)) {
     throw new ArcaError('NOT_A_FOLDER', 'Folders have no URL');
