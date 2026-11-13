@@ -37,6 +37,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Settings → "Open links in": same tab, new tab, new background tab, or a mini
+  window (small, toolbar-less). Applies to tiles, search, the popup and the
+  minimal New Tab. The item menu also offers "Open in mini window".
 - Back / forward through folders: buttons next to the breadcrumbs, `[` and `]`,
   ⌥↑ for the parent folder, and mouse side buttons. `?` shows all shortcuts.
 - "All links" view: every bookmark inside the open folder and its subfolders

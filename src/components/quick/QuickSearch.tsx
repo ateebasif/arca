@@ -1,7 +1,7 @@
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import { highlightParts, search, type SearchResult } from '@/src/features/search/search';
-import { openSafely } from '@/src/features/open';
+import { defaultDisposition, openSafely } from '@/src/features/open';
 import type { OpenDisposition } from '@/src/lib/tabs';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { FolderIcon, SearchIcon } from '../icons';
@@ -62,7 +62,7 @@ export function QuickSearch({
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const disposition: OpenDisposition =
-        e.metaKey || e.ctrlKey ? 'background' : 'current';
+        e.metaKey || e.ctrlKey ? 'background' : defaultDisposition();
       const result = results[active];
       if (result) await open(result, disposition);
       else if (typedUrl) {
@@ -115,7 +115,10 @@ export function QuickSearch({
                 aria-selected={index === active}
                 onMouseMove={() => setActive(index)}
                 onClick={(e) =>
-                  void open(result, e.metaKey || e.ctrlKey ? 'background' : 'current')
+                  void open(
+                    result,
+                    e.metaKey || e.ctrlKey ? 'background' : defaultDisposition(),
+                  )
                 }
                 className={`flex h-11 items-center gap-3 rounded-lg px-3 ${
                   index === active ? 'bg-surface-strong shadow-(--shadow-tile)' : ''

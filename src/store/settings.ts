@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
+import { OPEN_DISPOSITIONS, type OpenDisposition } from '@/src/lib/tabs';
 import { applyTheme, THEMES, type Theme } from '@/src/lib/theme';
 import { bool, isRecord, oneOf, str } from '@/src/lib/validate';
 
@@ -18,6 +19,8 @@ export interface Settings {
   theme: Theme;
   /** Opt-in: fetch and cache page previews (needs the site-access permission). */
   linkPreviews: boolean;
+  /** Where a plain click (or Enter) opens a bookmark. */
+  openIn: OpenDisposition;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,6 +30,7 @@ export const DEFAULT_SETTINGS: Settings = {
   // Arca is designed dark-first; System and Light are one click away.
   theme: 'dark',
   linkPreviews: false,
+  openIn: 'current',
 };
 
 export const SETTINGS_KEY = 'settings';
@@ -41,6 +45,7 @@ export function parseSettings(raw: unknown): Settings {
     saveFolderId: str(r.saveFolderId, d.saveFolderId, 64),
     theme: oneOf(r.theme, THEMES, d.theme),
     linkPreviews: bool(r.linkPreviews, d.linkPreviews),
+    openIn: oneOf(r.openIn, OPEN_DISPOSITIONS, d.openIn),
   };
 }
 

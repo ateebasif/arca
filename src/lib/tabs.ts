@@ -5,7 +5,24 @@ import { classifyUrl } from './url';
 export type Tab = Browser.tabs.Tab;
 
 /** Where to open a link: replace the current tab, focus a new tab, or open it behind. */
-export type OpenDisposition = 'current' | 'new-tab' | 'background';
+/**
+ * Where to open a link: replace the current tab, a new focused tab, a new tab
+ * behind, or a small toolbar-less window ("mini window").
+ */
+export type OpenDisposition = 'current' | 'new-tab' | 'background' | 'window';
+export const OPEN_DISPOSITIONS: readonly OpenDisposition[] = [
+  'current',
+  'new-tab',
+  'background',
+  'window',
+];
+
+/** Size of the mini window, kept inside the screen. */
+function miniWindowBounds() {
+  const width = Math.min(1100, (globalThis.screen?.availWidth ?? 1280) - 80);
+  const height = Math.min(780, (globalThis.screen?.availHeight ?? 900) - 80);
+  return { width: Math.round(width), height: Math.round(height) };
+}
 
 export function getCurrentWindowTabs(): Promise<Tab[]> {
   return callApi('tabs.query', () => browser.tabs.query({ currentWindow: true }));
@@ -31,6 +48,17 @@ export async function openUrl(
   assertOpenable(url);
   if (disposition === 'current') {
     await callApi('tabs.update', () => browser.tabs.update({ url }));
+    return;
+  }
+  if (disposition === 'window') {
+    await callApi('windows.create', () =>
+      browser.windows.create({
+        url,
+        type: 'popup',
+        focused: true,
+        ...miniWindowBounds(),
+      }),
+    );
     return;
   }
   await callApi('tabs.create', () =>
