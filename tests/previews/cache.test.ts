@@ -11,6 +11,8 @@ const ok = (title: string) => ({
   description: 'd',
   siteName: 's',
   image: 'data:image/webp;base64,AAAA',
+  excerpt: 'Some text',
+  headings: ['Intro'],
   finalUrl: 'https://a.dev/',
 });
 
@@ -105,7 +107,7 @@ describe('parseStored (tampered cache entries)', () => {
       'data:text/html;base64,PHNjcmlwdD4=',
     ]) {
       expect(
-        parseStored({ status: 'ok', fetchedAt: 1, title: 't', image }, 'u'),
+        parseStored({ status: 'ok', v: 2, fetchedAt: 1, title: 't', image }, 'u'),
       ).toMatchObject({
         image: '',
       });
@@ -114,9 +116,22 @@ describe('parseStored (tampered cache entries)', () => {
 
   it('re-cleans text and rejects malformed entries', () => {
     expect(
-      parseStored({ status: 'ok', fetchedAt: 1, title: 'a‮b', description: 7 }, 'u'),
+      parseStored(
+        { status: 'ok', v: 2, fetchedAt: 1, title: 'a\u202Eb', description: 7 },
+        'u',
+      ),
     ).toMatchObject({ title: 'a b', description: '' });
     expect(parseStored({ status: 'ok' }, 'u')).toBeUndefined();
+    // Entries from before excerpts/headings existed are treated as stale.
+    expect(
+      parseStored({ status: 'ok', fetchedAt: 1, title: 'old' }, 'u'),
+    ).toBeUndefined();
+    expect(
+      parseStored(
+        { status: 'ok', v: 2, fetchedAt: 1, headings: ['a', 5, 'b\u200b'] },
+        'u',
+      ),
+    ).toMatchObject({ headings: ['a', 'b'] });
     expect(parseStored('junk', 'u')).toBeUndefined();
     expect(parseStored({ status: 'pwned', fetchedAt: 1 }, 'u')).toBeUndefined();
   });

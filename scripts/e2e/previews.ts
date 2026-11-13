@@ -34,7 +34,15 @@ export async function runPreviewChecks(out: string): Promise<void> {
         <meta property="og:description" content="A page served by the e2e test server.">
         <meta property="og:site_name" content="Test Site">
         <meta property="og:image" content="/cover.png">
-      </head><body>hi</body></html>`);
+      </head><body>
+        <nav><p>Home · Blog · About · Contact · a navigation paragraph to ignore</p></nav>
+        <article>
+          <h1>Arca test article</h1>
+          <p>This article is served by the local e2e server to check that previews show a readable excerpt.</p>
+          <h2>Second section</h2>
+          <p>It has a second paragraph so the card has enough text to scroll through when it is small.</p>
+        </article>
+      </body></html>`);
     } else if (path === '/evil.html') {
       res.writeHead(200, { 'content-type': 'text/html' });
       res.end(`<!doctype html><html><head>
@@ -101,6 +109,20 @@ export async function runPreviewChecks(out: string): Promise<void> {
     );
     await page.eval('document.activeElement.blur()');
 
+    // 1b. Excerpt + headings, and the card stays open when the pointer moves into it.
+    const cardText = await page.eval<string>(
+      `document.querySelector('[data-testid=link-preview]').textContent`,
+    );
+    assert.match(cardText, /readable excerpt/);
+    assert.match(cardText, /Second section/);
+    assert.doesNotMatch(cardText, /navigation paragraph/);
+    await page.hover('[data-testid=link-preview] [data-preview-scroll]');
+    await sleep(500);
+    assert.ok(
+      await page.eval(`!!document.querySelector('[data-testid=link-preview]')`),
+      'card closed when moving into it',
+    );
+
     // 2. No cookies or referrer sent to the site.
     assert.equal(headers['/page.html']?.cookie, undefined, 'preview sent cookies');
     assert.equal(headers['/page.html']?.referer, undefined, 'preview sent a referrer');
@@ -131,7 +153,9 @@ export async function runPreviewChecks(out: string): Promise<void> {
     );
 
     // 4. Hostile page: markup stays text, scripts never run, SVG refused.
+    //    (Wait for the open card to close first; it can cover the next tile.)
     await page.hover(null);
+    await page.waitFor(`!document.querySelector('[data-testid=link-preview]')`);
     await page.hover(await selectorFor('Hostile page'));
     await page.waitFor(
       `document.querySelector('[data-testid=link-preview]')?.textContent.includes('<img src=x')`,

@@ -150,6 +150,8 @@ export async function fetchPreview(
     title: meta.title,
     description: meta.description,
     siteName: meta.siteName,
+    excerpt: meta.excerpt,
+    headings: meta.headings,
     image,
     finalUrl,
   };

@@ -16,6 +16,9 @@ export const ERROR_TTL_MS = 24 * 60 * 60 * 1000;
 export const MAX_ENTRIES = 2000;
 const MAX_PARALLEL = 3;
 
+/** Bump when the stored shape gains fields, so older entries refetch once. */
+export const PREVIEW_VERSION = 2;
+
 export type Preview =
   | ({ status: 'ok'; url: string; fetchedAt: number } & Omit<FetchedPreview, 'finalUrl'>)
   | { status: 'error'; url: string; fetchedAt: number };
@@ -25,7 +28,15 @@ export function parseStored(raw: unknown, url: string): Preview | undefined {
   if (!isRecord(raw) || typeof raw.fetchedAt !== 'number') return undefined;
   if (raw.status === 'error') return { status: 'error', url, fetchedAt: raw.fetchedAt };
   if (raw.status !== 'ok') return undefined;
+  if (raw.v !== PREVIEW_VERSION) return undefined; // older shape: refetch
   const image = str(raw.image, '', 400_000);
+  const headings = Array.isArray(raw.headings)
+    ? raw.headings
+        .filter((h): h is string => typeof h === 'string')
+        .map((h) => cleanText(h, LIMITS.heading))
+        .filter(Boolean)
+        .slice(0, LIMITS.headings)
+    : [];
   return {
     status: 'ok',
     url,
@@ -33,6 +44,8 @@ export function parseStored(raw: unknown, url: string): Preview | undefined {
     title: cleanText(str(raw.title, ''), LIMITS.title),
     description: cleanText(str(raw.description, ''), LIMITS.description),
     siteName: cleanText(str(raw.siteName, ''), LIMITS.siteName),
+    excerpt: cleanText(str(raw.excerpt, '', 4000), LIMITS.excerpt),
+    headings,
     // Only our own re-encoded thumbnails are ever stored.
     image: image.startsWith('data:image/webp;base64,') ? image : '',
   };
@@ -90,7 +103,7 @@ export class PreviewCache {
       if (cached) return cached;
       const preview = await this.limit(() => this.load(url));
       this.memory.set(url, preview);
-      await this.store.put(url, preview).catch(() => {});
+      await this.store.put(url, { ...preview, v: PREVIEW_VERSION }).catch(() => {});
       if (++this.writes % 50 === 0) void this.prune();
       return preview;
     })().finally(() => this.inflight.delete(url));
@@ -109,6 +122,8 @@ export class PreviewCache {
         title: result.title,
         description: result.description,
         siteName: result.siteName,
+        excerpt: result.excerpt,
+        headings: result.headings,
         image: result.image,
       };
     } catch {
