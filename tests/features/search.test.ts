@@ -96,3 +96,29 @@ describe('highlightParts', () => {
     ]);
   });
 });
+
+describe('duplicate folding', () => {
+  it('shows one result per page, counting the copies', async () => {
+    const copy = (n: number) => ({
+      title: `Trash ${n}`,
+      children: [
+        {
+          title: 'AniRena Torrent List',
+          url: `https://www.anirena.com/?utm_source=${n}`,
+        },
+      ],
+    });
+    const state = await load({
+      bar: [
+        { title: 'AniRena Torrent List', url: 'https://anirena.com/' },
+        { title: 'Imported', children: [copy(1), copy(2), copy(3)] },
+        { title: 'Thor Torrents', url: 'https://torrentfunk.dev/thor' },
+      ],
+    });
+    const results = search(state, 'torrent');
+    const byTitle = new Map(results.map((r) => [r.entry.title, r.copies.length]));
+    expect(results).toHaveLength(2);
+    expect(byTitle.get('AniRena Torrent List')).toBe(3);
+    expect(byTitle.get('Thor Torrents')).toBe(0);
+  });
+});

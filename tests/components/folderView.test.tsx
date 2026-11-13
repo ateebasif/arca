@@ -139,3 +139,28 @@ describe('virtualization', () => {
     expect(document.querySelector('[data-virtualized]')).toBeNull();
   });
 });
+
+describe('breadcrumb collapsing', () => {
+  it('collapses long paths to first › … › parent › current', async () => {
+    const deep = {
+      title: 'L4',
+      children: [{ title: 'L5', children: [{ title: 'x', url: 'https://x.dev/' }] }],
+    };
+    const { fake } = await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [
+        {
+          title: 'L1',
+          children: [{ title: 'L2', children: [{ title: 'L3', children: [deep] }] }],
+        },
+      ],
+    });
+    act(() => useUi.getState().openFolder(fake.findByTitle('L5')!.id));
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    const items = within(crumbs)
+      .getAllByRole('listitem')
+      .map((li) => li.textContent);
+    expect(items).toEqual(['Bookmarks bar', '…', 'L4', 'L5']);
+    await userEvent.click(within(crumbs).getByRole('button', { name: 'Open L3' }));
+    expect(useUi.getState().currentFolderId).toBe(fake.findByTitle('L3')!.id);
+  });
+});

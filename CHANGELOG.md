@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Search showed the same page many times when it was saved in several folders
+  (e.g. imported Trash copies). Copies now fold into one result marked
+  "in N folders", and long folder paths are shortened in the middle.
+- Long breadcrumbs no longer run into the search box; middle folders collapse
+  to "…".
 - Folder card bookmark counts no longer wrap onto two lines next to the favicon
   preview.
 

@@ -9,6 +9,7 @@ import {
 } from '@/src/features/search/useSearch';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { compactPath } from '@/src/features/tidy/normalize';
 import { FolderIcon } from '../icons';
 import { Favicon } from '../main/Favicon';
 
@@ -142,12 +143,20 @@ const ResultRow = memo(function ResultRow({
             ),
           )}
         </span>
-        <span className="text-ink-faint block truncate text-[11px]">
+        <span className="text-ink-faint block truncate text-[11px]" title={entry.path}>
           {entry.kind === 'folder'
-            ? entry.path
-            : `${entry.hostLc}${entry.path ? ` · ${entry.path}` : ''}`}
+            ? compactPath(entry.path)
+            : `${entry.hostLc}${entry.path ? ` · ${compactPath(entry.path)}` : ''}`}
         </span>
       </span>
+      {result.copies.length > 0 && (
+        <span
+          className="border-line text-ink-muted shrink-0 rounded-full border px-2 py-0.5 text-[11px]"
+          title={[entry, ...result.copies].map((c) => c.path).join('\n')}
+        >
+          in {result.copies.length + 1} folders
+        </span>
+      )}
     </li>
   );
 });

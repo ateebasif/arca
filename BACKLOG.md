@@ -55,6 +55,7 @@
 
 ## Done
 
+- [x] ARC-052 · Search folds duplicate copies ("in N folders"), compact paths, collapsing breadcrumbs · `fix/search-duplicates-paths` · 2026-11-13
 - [x] ARC-051 · Modern dark redesign: favicon-coloured tile covers, deeper dark palette, entrance/hover animations · `style/modern-dark-tiles` · 2026-11-13
 - [x] ARC-050 · "All links" view: every bookmark under a folder, flat, labelled with its folder · `feature/all-links-view` · 2026-11-13
 - [x] ARC-049 · Arca icon (strongbox with arched lid), tab favicons, in-app logo · `feature/arca-icon` · 2026-11-13
