@@ -51,6 +51,17 @@ export function Dashboard({ surface }: DashboardProps) {
     },
   });
 
+  // Deep links from the popup: #folder=<id> opens a folder, #tidy opens Tidy up.
+  useEffect(() => {
+    if (!state.ready) return;
+    const hash = new URLSearchParams(location.hash.slice(1));
+    const folder = hash.get('folder');
+    if (folder && state.nodes.get(folder)?.childIds)
+      useUi.getState().replaceFolder(folder);
+    if (hash.has('tidy')) useOverlays.getState().setTidyOpen(true);
+    if (location.hash) history.replaceState(null, '', location.pathname);
+  }, [state.ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Mouse side buttons (3 = back, 4 = forward) move through folder history.
   useEffect(() => {
     const onMouseUp = (e: MouseEvent) => {

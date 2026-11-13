@@ -572,6 +572,55 @@ check('drag & drop: move into folders, reorder, sidebar drop, undo', async (page
   })()`);
 });
 
+check('tidy up: finds and removes duplicates, with undo', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.setViewport(1280, 800, true);
+  const rootId = await page.eval<string>(`(async () => {
+    const bm = chrome.bookmarks;
+    const root = await bm.create({ parentId: '2', title: 'Tidy Lab' });
+    const trash = await bm.create({ parentId: root.id, title: 'Trash' });
+    await bm.create({ parentId: root.id, title: 'Dup page', url: 'https://dup.example.com/' });
+    await bm.create({ parentId: trash.id, title: 'Dup page', url: 'https://www.dup.example.com/?utm_source=a' });
+    await bm.create({ parentId: trash.id, title: 'Dup page (2)', url: 'https://dup.example.com#top' });
+    return root.id;
+  })()`);
+  const count = () =>
+    page.eval<number>(
+      `chrome.bookmarks.search({ query: 'dup.example.com' }).then((r) => r.length)`,
+    );
+  assert.equal(await count(), 3);
+  await page.eval(
+    `[...document.querySelectorAll('aside button')].find((b) => b.textContent.includes('Tidy up')).click()`,
+  );
+  await page.waitFor(
+    `document.querySelector('[role=dialog]')?.textContent.includes('extra')`,
+    8000,
+  );
+  await sleep(400);
+  await page.screenshot(`${OUT}/tidy.png`);
+  const clickByText = (text: string) =>
+    page.eval(
+      `[...document.querySelectorAll('[role=dialog] button')].find((b) => b.textContent.trim().startsWith(${JSON.stringify(text)})).click()`,
+    );
+  await clickByText('Remove');
+  await clickByText('Confirm');
+  await page.waitFor(
+    `document.querySelector('[role=dialog]')?.textContent.includes('No duplicates')`,
+    8000,
+  );
+  assert.equal(await count(), 1);
+  const kept = await page.eval<string>(
+    `chrome.bookmarks.search({ query: 'dup.example.com' }).then(async (r) => (await chrome.bookmarks.get(r[0].parentId))[0].title)`,
+  );
+  assert.equal(kept, 'Tidy Lab', 'kept the copy outside Trash');
+  await page.key('Escape');
+  await page.key('z', MOD.meta);
+  await page.waitFor(`true`);
+  await sleep(600);
+  assert.equal(await count(), 3);
+  await page.eval(`chrome.bookmarks.removeTree('${rootId}')`);
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);

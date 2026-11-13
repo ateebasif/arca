@@ -37,6 +37,7 @@ interface OverlayState {
   confirmDeleteId: string | null;
   settingsOpen: boolean;
   shortcutsOpen: boolean;
+  tidyOpen: boolean;
   toasts: Toast[];
   openEditor(editor: EditorState): void;
   closeEditor(): void;
@@ -49,6 +50,7 @@ interface OverlayState {
   openSettings(): void;
   closeSettings(): void;
   setShortcutsOpen(open: boolean): void;
+  setTidyOpen(open: boolean): void;
   toast(message: string, tone?: Toast['tone'], action?: ToastAction): void;
   dismissToast(id: number): void;
 }
@@ -63,6 +65,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   confirmDeleteId: null,
   settingsOpen: false,
   shortcutsOpen: false,
+  tidyOpen: false,
   toasts: [],
   openEditor: (editor) => set({ editor, menu: null }),
   closeEditor: () => set({ editor: null }),
@@ -75,6 +78,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   openSettings: () => set({ settingsOpen: true, menu: null }),
   closeSettings: () => set({ settingsOpen: false }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, menu: null }),
+  setTidyOpen: (tidyOpen) => set({ tidyOpen, menu: null }),
   toast: (message, tone = 'info', action) => {
     const id = nextToastId++;
     set((s) => ({ toasts: [...s.toasts.slice(-2), { id, message, tone, action }] }));
@@ -92,6 +96,7 @@ export function resetOverlaysForTests(): void {
     confirmDeleteId: null,
     settingsOpen: false,
     shortcutsOpen: false,
+    tidyOpen: false,
     toasts: [],
   });
 }
