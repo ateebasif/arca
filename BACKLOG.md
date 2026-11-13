@@ -47,6 +47,7 @@
 
 ### Tooling
 
+- [ ] ARC-048 · Theme setting: system / light / dark (split out of ARC-027) · P1
 - [ ] ARC-044 · Commit hooks: lefthook + commitlint (needs approval for deps) · P2
 
 ## Ideas (unscoped)
@@ -56,6 +57,7 @@
 
 ## Done
 
+- [x] ARC-047 · Security hardening: CSP, block external messaging, URL scheme allowlist, storage validation, security checks · `fix/security-hardening` · 2026-11-13
 - [x] ARC-046 · E2E no-network audit (PRD §15): fail on any request leaving the extension · `test/e2e-network-audit` · 2026-11-13
 - [x] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · `style/theme-contrast-polish` · 2026-11-13
 - [x] ARC-016 · Virtualize grid/list over 200 items · `perf/virtualize-grid-list` · 2026-11-13
@@ -92,3 +94,5 @@
 - ⌘N / ⇧⌘N (PRD §8.14) are reserved by Chrome (new window / incognito) and can't be captured by a page. Pick alternatives in ARC-028 (e.g. `N` / `⇧N` when not typing).
 - Deleting a single bookmark has no confirmation or undo until ARC-024 (undo) lands.
 - Sidebar tree and search results are not virtualized (tree shows only expanded folders; search caps at 50). Revisit if someone has thousands of folders.
+- `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
+- e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.

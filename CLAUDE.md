@@ -82,6 +82,20 @@ docs/git/      branch, commit and PR guides (source of truth for git rules)
 - Lazy-load heavy views (duplicates, dead links, import/export, settings). Virtualize
   any list/grid over 200 items.
 
+## Security rules (see SECURITY.md)
+
+- Never use `eval`, `new Function`, `innerHTML`, `dangerouslySetInnerHTML`,
+  `insertAdjacentHTML`, `document.write` or `executeScript` (ESLint enforces).
+- Never render a bookmark URL as `href` directly; use `bookmarkLinkProps` /
+  `safeHref`. Open URLs only through `openSafely` / `openUrl`, which block
+  `javascript:`, `data:` and other code-carrying schemes.
+- Validate anything read from storage (`src/lib/validate.ts`).
+- Don't add content scripts, web-accessible resources, host permissions or external
+  message listeners. If messaging between Arca's own pages is ever needed, check
+  `sender.id === browser.runtime.id`.
+- Network access only behind an optional permission the user grants in Settings.
+- Keep `bun run security` and the e2e security checks green.
+
 ## Git rules (full detail in `docs/git/`, which wins on any conflict)
 
 - **Gitflow.** `main` = releases, `develop` = integration. Never commit directly to
@@ -98,7 +112,7 @@ docs/git/      branch, commit and PR guides (source of truth for git rules)
 - **PRs:** title same format as commits (`[WIP] ` prefix for drafts). Body: What, Why,
   Changes (grouped by area), How to Test (numbered), Screenshots (UI only), Checklist.
   Aim < 200 lines; > 1000 must be split. Template: `.github/pull_request_template.md`.
-- **Before a PR:** lint, typecheck, tests and build pass; BACKLOG.md and CHANGELOG.md
+- **Before a PR:** lint, typecheck, tests, build, `bun run security` and `bun run e2e` pass; BACKLOG.md and CHANGELOG.md
   updated in the same PR.
 - **No remote yet:** never create a GitHub remote or push without asking. Until one
   exists, write the PR title + body in chat and merge locally with `git merge --no-ff`
