@@ -24,7 +24,8 @@ export const DEFAULT_SETTINGS: Settings = {
   newTabMode: 'dashboard',
   redirectUrl: '',
   saveFolderId: '1',
-  theme: 'system',
+  // Arca is designed dark-first; System and Light are one click away.
+  theme: 'dark',
   linkPreviews: false,
 };
 
