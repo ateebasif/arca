@@ -188,7 +188,9 @@ export class Page {
   async key(key: string, modifiers = 0): Promise<void> {
     const code = key.length === 1 && /[a-z]/i.test(key) ? `Key${key.toUpperCase()}` : key;
     const base = { key, code, modifiers, windowsVirtualKeyCode: keyCodeFor(key) };
-    const text = key.length === 1 && (modifiers & ~MOD.shift) === 0 ? { text: key } : {};
+    // Real Enter key presses carry "\r", which Chrome needs for implicit form submit.
+    const printable = key === 'Enter' ? '\r' : key.length === 1 ? key : '';
+    const text = printable && (modifiers & ~MOD.shift) === 0 ? { text: printable } : {};
     await this.send('Input.dispatchKeyEvent', { type: 'keyDown', ...base, ...text });
     await this.send('Input.dispatchKeyEvent', { type: 'keyUp', ...base });
   }

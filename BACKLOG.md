@@ -8,7 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · Phase 1 · P0
 - [ ] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · Phase 1 · P0
 - [ ] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · Phase 1 · P1
 - [ ] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · Phase 1 · P0
@@ -61,6 +60,7 @@
 
 ## Done
 
+- [x] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · `feature/bookmark-editing` · 2026-11-13
 - [x] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · `feature/global-search` · 2026-11-13
 - [x] ARC-009 · Sort: manual, title A–Z, date added, domain · `feature/list-view-sort` · 2026-11-13
 - [x] ARC-007 · List view with sortable columns + remembered grid/list toggle · `feature/list-view-sort` · 2026-11-13
@@ -87,3 +87,5 @@
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
 - Favicon placeholder detection fingerprints Chrome's generic globe per size. If Ardia or a Chrome update changes that image, detection silently stops and globes show again (cosmetic only).
+- ⌘N / ⇧⌘N (PRD §8.14) are reserved by Chrome (new window / incognito) and can't be captured by a page. Pick alternatives in ARC-028 (e.g. `N` / `⇧N` when not typing).
+- Deleting a single bookmark has no confirmation or undo until ARC-024 (undo) lands.
