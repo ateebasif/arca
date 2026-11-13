@@ -6,7 +6,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['.output', '.wxt', 'dist', 'coverage', 'node_modules'] },
+  { ignores: ['.output', '.wxt', '.e2e', 'dist', 'coverage', 'node_modules'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.strict, prettier],
@@ -30,12 +30,18 @@ export default tseslint.config(
   },
   {
     // The wrapper layer, background worker and tests may touch the API directly.
-    files: ['src/lib/**', 'entrypoints/background.ts', 'tests/**', '**/*.test.{ts,tsx}'],
+    files: [
+      'src/lib/**',
+      'entrypoints/background.ts',
+      'tests/**',
+      'scripts/**',
+      '**/*.test.{ts,tsx}',
+    ],
     rules: { 'no-restricted-globals': 'off' },
   },
   {
     // Test code and fakes may assert shapes they just built.
-    files: ['tests/**', '**/*.test.{ts,tsx}'],
+    files: ['tests/**', 'scripts/**', '**/*.test.{ts,tsx}'],
     rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
   },
 );
