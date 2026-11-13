@@ -1,9 +1,12 @@
 import { memo, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import type { BNode, BookmarkSnapshot } from '@/src/store/bookmarkStore';
+import { useOverlays } from '@/src/store/overlays';
 import { folderCounts, getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { BarIcon, ChevronRight, FolderIcon } from '../icons';
+import { InlineRename } from '../overlays/InlineRename';
 
 interface Row {
   node: BNode;
@@ -159,6 +162,8 @@ const TreeRow = memo(function TreeRow({
 }: TreeRowProps) {
   const { node, depth, hasChildFolders, expanded } = row;
   const Icon = node.isRoot && depth === 0 && node.id === '1' ? BarIcon : FolderIcon;
+  const renaming = useOverlays((s) => s.renamingId === node.id);
+  const handlers = itemHandlers(node);
   return (
     <li
       role="treeitem"
@@ -169,6 +174,9 @@ const TreeRow = memo(function TreeRow({
       tabIndex={tabbable ? 0 : -1}
       onFocus={(e) => e.target === e.currentTarget && onFocus(node.id)}
       onClick={() => onOpen(node.id)}
+      onDoubleClick={() => !node.isRoot && useOverlays.getState().startRename(node.id)}
+      onContextMenu={handlers.onContextMenu}
+      onKeyDown={handlers.onKeyDown}
       className={`group flex h-8 items-center gap-1.5 rounded-lg pr-2 text-[13px] outline-offset-[-2px] transition-colors duration-150 select-none ${
         selected
           ? 'bg-accent-soft text-ink font-medium'
@@ -190,7 +198,11 @@ const TreeRow = memo(function TreeRow({
         <ChevronRight width={12} height={12} />
       </span>
       <Icon className={`shrink-0 ${selected ? 'text-accent' : ''}`} />
-      <span className="min-w-0 flex-1 truncate">{node.title || 'Untitled'}</span>
+      {renaming ? (
+        <InlineRename id={node.id} initial={node.title} className="h-6" />
+      ) : (
+        <span className="min-w-0 flex-1 truncate">{node.title || 'Untitled'}</span>
+      )}
       <span className="text-ink-faint text-[11px] tabular-nums">{count || ''}</span>
     </li>
   );

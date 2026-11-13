@@ -7,6 +7,7 @@ import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { FolderView } from './main/FolderView';
 import { Toolbar } from './main/Toolbar';
+import { OverlayHost } from './overlays/OverlayHost';
 import { SearchBox } from './search/SearchBox';
 import { SearchResults } from './search/SearchResults';
 import { Sidebar } from './sidebar/Sidebar';
@@ -60,6 +61,7 @@ export function Dashboard({ surface }: DashboardProps) {
           {searching ? <SearchResults /> : <FolderView />}
         </section>
       </main>
+      <OverlayHost />
     </div>
   );
 }

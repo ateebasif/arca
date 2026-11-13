@@ -29,4 +29,8 @@ All notable changes to this project are documented here. The format follows
 - Global fuzzy search (⌘K or /) over titles, URLs and folder names, with
   keyboard navigation, ⌘Enter for a new tab, ⌥Enter to show in folder, and an
   "in this folder" filter.
+- Add bookmarks and folders, edit title/URL/folder, rename inline (F2, or
+  double-click in the sidebar), and delete (non-empty folders ask first).
+- Item menu from the ⋯ button, right-click or Shift+F10.
+- Root folders are read-only everywhere in the UI.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.

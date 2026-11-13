@@ -11,7 +11,7 @@ const folders = () => screen.getByRole('region', { name: 'Folders' });
 describe('folder view', () => {
   it('shows folder cards first, then bookmark tiles as real links', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    const card = within(folders()).getByRole('button', { name: /Dev/ });
+    const card = within(folders()).getByRole('button', { name: /^Dev/ });
     expect(card).toHaveTextContent('2 bookmarks');
     const links = within(bookmarks()).getAllByRole('link');
     expect(links.map((l) => l.textContent)).toEqual([
@@ -23,8 +23,8 @@ describe('folder view', () => {
 
   it('opens a folder from its card and updates breadcrumbs', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await userEvent.click(within(folders()).getByRole('button', { name: /Dev/ }));
-    await userEvent.click(within(folders()).getByRole('button', { name: /Nested/ }));
+    await userEvent.click(within(folders()).getByRole('button', { name: /^Dev/ }));
+    await userEvent.click(within(folders()).getByRole('button', { name: /^Nested/ }));
     const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
     expect(
       within(crumbs)
@@ -40,7 +40,7 @@ describe('folder view', () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, {
       bar: [{ title: 'Empty', children: [] }],
     });
-    await userEvent.click(screen.getByRole('button', { name: /Empty/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Empty/ }));
     expect(screen.getByText('This folder is empty')).toBeInTheDocument();
   });
 

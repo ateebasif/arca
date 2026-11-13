@@ -7,7 +7,7 @@
  */
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
-import { launch, MOD, type Page } from './cdp';
+import { launch, MOD, sleep, type Page } from './cdp';
 
 const OUT = '.e2e';
 mkdirSync(OUT, { recursive: true });
@@ -107,6 +107,71 @@ check('search over 5,000 real bookmarks stays under 50 ms', async (page) => {
     const [n] = await chrome.bookmarks.search({ title: 'arca-e2e-bulk' });
     await chrome.bookmarks.removeTree(n.id);
   })()`);
+});
+
+check('edits in Arca land in chrome.bookmarks immediately', async (page) => {
+  await page.waitFor('document.querySelector("[data-bookmark-id]")');
+  await page.setViewport(1280, 800);
+  const inChrome = (title: string) =>
+    page.eval<number>(
+      `chrome.bookmarks.search({ title: ${JSON.stringify(title)} }).then((r) => r.length)`,
+    );
+
+  // Create via the dialog.
+  await page.click('[aria-label="Add"]');
+  await page.click('[role=menuitem]');
+  await page.waitFor('document.querySelector("[role=dialog] input")');
+  await page.type('Arca e2e');
+  await page.key('Tab');
+  await page.type('arca.example.com');
+  await page.screenshot(`${OUT}/dialog-new.png`);
+  await page.key('Enter');
+  await page.waitFor('!document.querySelector("[role=dialog]")');
+  assert.equal(await inChrome('Arca e2e'), 1);
+
+  // Rename with F2.
+  await page.eval(
+    `[...document.querySelectorAll('[data-bookmark-id]')].find((a) => a.textContent.includes('Arca e2e')).focus()`,
+  );
+  await page.key('F2');
+  await page.waitFor('document.activeElement?.getAttribute("aria-label") === "Name"');
+  await page.key('a', MOD.meta);
+  await page.type('Arca renamed');
+  await page.key('Enter');
+  await page.waitFor(`document.body.textContent.includes('Arca renamed')`);
+  assert.equal(await inChrome('Arca renamed'), 1);
+
+  // Menu screenshot, then delete with the Delete key.
+  await page.eval(
+    `[...document.querySelectorAll('[data-bookmark-id]')].find((a) => a.textContent.includes('Arca renamed')).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 700, clientY: 300 }))`,
+  );
+  await page.waitFor('document.querySelector("[role=menu]")');
+  await page.screenshot(`${OUT}/item-menu.png`);
+  await page.key('Escape');
+  await page.eval(
+    `[...document.querySelectorAll('[data-bookmark-id]')].find((a) => a.textContent.includes('Arca renamed')).focus()`,
+  );
+  await page.key('Delete');
+  await page.waitFor(
+    `!document.querySelector('[data-bookmark-id]')?.closest('ul')?.textContent.includes('Arca renamed')`,
+  );
+  assert.equal(await inChrome('Arca renamed'), 0);
+});
+
+check('root folders cannot be renamed or deleted', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.eval(`document.querySelector('[role=treeitem]').focus()`);
+  await page.key('F2');
+  await page.key('Delete');
+  await sleep(200);
+  assert.equal(
+    await page.eval('!!document.querySelector("input[aria-label=Name]")'),
+    false,
+  );
+  const roots = await page.eval<string[]>(
+    `chrome.bookmarks.getTree().then((t) => t[0].children.map((c) => c.title))`,
+  );
+  assert.deepEqual(roots, ['Bookmarks bar', 'Other bookmarks']);
 });
 
 check('tree follows bookmark changes made outside Arca', async (page) => {
