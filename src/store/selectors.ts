@@ -137,3 +137,45 @@ export function folderOptions(
   state.rootIds.forEach((id) => visit(id, 0));
   return out;
 }
+
+export interface LinkInFolder {
+  node: BNode;
+  /** Folder the bookmark lives in. */
+  folderId: string;
+  /** Path of that folder relative to the base folder ("" when directly inside). */
+  folderLabel: string;
+}
+
+const linksCache = new WeakMap<BookmarkSnapshot, Map<string, LinkInFolder[]>>();
+
+/**
+ * Every bookmark inside `baseId` at any depth, in tree order, each with the
+ * folder it lives in. Cached per snapshot and base folder.
+ */
+export function linksWithin(state: BookmarkSnapshot, baseId: string): LinkInFolder[] {
+  let perBase = linksCache.get(state);
+  if (!perBase) {
+    perBase = new Map();
+    linksCache.set(state, perBase);
+  }
+  const cached = perBase.get(baseId);
+  if (cached) return cached;
+
+  const out: LinkInFolder[] = [];
+  const visit = (folderId: string, label: string) => {
+    const folder = state.nodes.get(folderId);
+    for (const childId of folder?.childIds ?? []) {
+      const child = state.nodes.get(childId);
+      if (!child) continue;
+      if (child.childIds) {
+        const name = child.title || 'Untitled';
+        visit(child.id, label ? `${label} / ${name}` : name);
+      } else {
+        out.push({ node: child, folderId, folderLabel: label });
+      }
+    }
+  };
+  visit(baseId, '');
+  perBase.set(baseId, out);
+  return out;
+}

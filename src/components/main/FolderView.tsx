@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { sortNodes } from '@/src/features/sort';
-import { folderCounts, folderPreview, getChildren, getPath } from '@/src/store/selectors';
+import {
+  folderCounts,
+  folderPreview,
+  getChildren,
+  getPath,
+  linksWithin,
+} from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { BookmarkRow, FolderRow, ListHeader } from './BookmarkList';
@@ -18,6 +24,7 @@ export function FolderView() {
   const sort = useUi((s) => s.sort);
   const direction = useUi((s) => s.sortDirection);
   const openFolder = useUi((s) => s.openFolder);
+  const scope = useUi((s) => s.scope);
 
   const { folders, bookmarks } = useMemo(() => {
     const children = getChildren(state, currentFolderId);
@@ -39,6 +46,8 @@ export function FolderView() {
   useRevealEffect();
 
   if (!state.ready) return null;
+
+  if (scope === 'all') return <AllLinksView />;
 
   if (folders.length === 0 && bookmarks.length === 0) {
     return (
@@ -107,8 +116,8 @@ export function FolderView() {
           {bookmarks.length > VIRTUALIZE_OVER ? (
             <VirtualRows
               items={bookmarks}
-              rowHeight={density === 'compact' ? 44 : 144}
-              minColumnWidth={density === 'compact' ? 220 : 132}
+              rowHeight={density === 'compact' ? 44 : TILE_ROW_HEIGHT}
+              minColumnWidth={density === 'compact' ? 220 : TILE_MIN_WIDTH}
               gap={density === 'compact' ? 4 : 12}
               getKey={(b) => b.id}
               render={(b) => <BookmarkTile bookmark={b} density={density} />}
@@ -117,13 +126,7 @@ export function FolderView() {
               }
             />
           ) : (
-            <ul
-              className={
-                density === 'compact'
-                  ? 'grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-1'
-                  : 'grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3'
-              }
-            >
+            <ul className={gridClass(density)}>
               {bookmarks.map((bookmark) => (
                 <li key={bookmark.id} className="@container min-w-0">
                   <BookmarkTile bookmark={bookmark} density={density} />
@@ -135,6 +138,116 @@ export function FolderView() {
       )}
     </div>
   );
+}
+
+/** Every link inside the open folder, flattened, each labelled with its folder. */
+function AllLinksView() {
+  const state = useBookmarks();
+  const currentFolderId = useUi((s) => s.currentFolderId);
+  const density = useUi((s) => s.density);
+  const view = useUi((s) => s.view);
+  const sort = useUi((s) => s.sort);
+  const direction = useUi((s) => s.sortDirection);
+  const revealId = useUi((s) => s.revealId);
+
+  const { items, labels, folderCount } = useMemo(() => {
+    const links = linksWithin(state, currentFolderId);
+    const labelById = new Map(links.map((l) => [l.node.id, l.folderLabel]));
+    const sorted = sortNodes(
+      links.map((l) => l.node),
+      sort,
+      direction,
+    );
+    return {
+      items: sorted,
+      labels: labelById,
+      folderCount: new Set(links.map((l) => l.folderId)).size,
+    };
+  }, [state, currentFolderId, sort, direction]);
+
+  const here = state.nodes.get(currentFolderId)?.title || 'this folder';
+  if (items.length === 0) {
+    return (
+      <div className="text-ink-muted flex flex-col items-center justify-center gap-1 py-24 text-center">
+        <p className="text-ink text-[15px] font-medium">No links in “{here}”</p>
+        <p className="text-sm">Its folders are empty too.</p>
+      </div>
+    );
+  }
+
+  const summary = (
+    <p className="text-ink-muted mb-3 text-xs" aria-live="polite">
+      {items.length.toLocaleString()} {items.length === 1 ? 'link' : 'links'}
+      {folderCount > 1 ? ` across ${folderCount.toLocaleString()} folders` : ''}
+    </p>
+  );
+  const labelFor = (id: string) => labels.get(id) || here;
+  const scrollTo = revealId ? items.findIndex((b) => b.id === revealId) : undefined;
+
+  if (view === 'list') {
+    return (
+      <div>
+        {summary}
+        <div role="table" aria-label="All links" className="flex flex-col">
+          <ListHeader />
+          <div role="rowgroup" className="flex flex-col gap-px">
+            {items.length > VIRTUALIZE_OVER ? (
+              <VirtualRows
+                items={items}
+                rowHeight={41}
+                minColumnWidth={0}
+                gap={1}
+                getKey={(n) => n.id}
+                render={(n) => <BookmarkRow bookmark={n} folderPath={labelFor(n.id)} />}
+                scrollToIndex={scrollTo}
+              />
+            ) : (
+              items.map((n) => (
+                <BookmarkRow key={n.id} bookmark={n} folderPath={labelFor(n.id)} />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const render = (b: (typeof items)[number]) => (
+    <BookmarkTile bookmark={b} density={density} folderLabel={labelFor(b.id)} />
+  );
+  return (
+    <section aria-label="All links">
+      {summary}
+      {items.length > VIRTUALIZE_OVER ? (
+        <VirtualRows
+          items={items}
+          rowHeight={density === 'compact' ? 44 : TILE_ROW_HEIGHT}
+          minColumnWidth={density === 'compact' ? 220 : TILE_MIN_WIDTH}
+          gap={density === 'compact' ? 4 : 12}
+          getKey={(b) => b.id}
+          render={render}
+          scrollToIndex={scrollTo}
+        />
+      ) : (
+        <ul className={gridClass(density)}>
+          {items.map((b) => (
+            <li key={b.id} className="@container min-w-0">
+              {render(b)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** Grid sizing shared by the folder view and the all-links view. */
+export const TILE_MIN_WIDTH = 132;
+export const TILE_ROW_HEIGHT = 156;
+function gridClass(density: 'comfortable' | 'compact'): string {
+  return density === 'compact'
+    ? 'grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-1'
+    : 'grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3';
 }
 
 /**

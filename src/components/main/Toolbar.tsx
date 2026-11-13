@@ -2,7 +2,15 @@ import { SORT_LABELS } from '@/src/features/sort';
 import { useUi, type SortMode } from '@/src/store/ui';
 import { IconButton } from '../IconButton';
 import { AddMenu } from './AddMenu';
-import { ChevronRight, DensityIcon, GridIcon, ListIcon, SortIcon } from '../icons';
+import {
+  ChevronRight,
+  DensityIcon,
+  FolderIcon,
+  GridIcon,
+  LinkIcon,
+  ListIcon,
+  SortIcon,
+} from '../icons';
 
 export function Toolbar() {
   const view = useUi((s) => s.view);
@@ -12,9 +20,44 @@ export function Toolbar() {
   const sort = useUi((s) => s.sort);
   const direction = useUi((s) => s.sortDirection);
   const setSort = useUi((s) => s.setSort);
+  const scope = useUi((s) => s.scope);
+  const setScope = useUi((s) => s.setScope);
 
   return (
     <div className="flex shrink-0 items-center gap-1">
+      <div
+        role="radiogroup"
+        aria-label="Show"
+        className="bg-hover mr-1 flex rounded-lg p-0.5 text-[12px]"
+      >
+        {(
+          [
+            ['folders', 'Folders', FolderIcon],
+            ['all', 'All links', LinkIcon],
+          ] as const
+        ).map(([value, label, Icon]) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={scope === value}
+            title={
+              value === 'all'
+                ? 'Every link in this folder and its subfolders'
+                : "This folder's items"
+            }
+            onClick={() => setScope(value)}
+            className={`flex h-7 items-center gap-1.5 rounded-md px-2.5 transition-colors duration-150 ${
+              scope === value
+                ? 'bg-surface-strong text-ink shadow-(--shadow-tile)'
+                : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            <Icon width={13} height={13} />
+            {label}
+          </button>
+        ))}
+      </div>
       <label className="text-ink-muted hover:bg-hover hover:text-ink relative flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[13px]">
         <SortIcon />
         <span className="sr-only">Sort by</span>

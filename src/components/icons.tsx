@@ -136,3 +136,10 @@ export const MonitorIcon = (p: IconProps) => (
     <path d="M5.5 13.5h5M8 11v2.5" />
   </Icon>
 );
+
+export const LinkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6.75 9.25a2.75 2.75 0 0 0 3.9 0l2-2a2.76 2.76 0 0 0-3.9-3.9l-.6.6" />
+    <path d="M9.25 6.75a2.75 2.75 0 0 0-3.9 0l-2 2a2.76 2.76 0 0 0 3.9 3.9l.6-.6" />
+  </Icon>
+);

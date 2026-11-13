@@ -8,6 +8,8 @@ export type ViewMode = 'grid' | 'list';
 export type Density = 'comfortable' | 'compact';
 export type SortMode = 'manual' | 'title' | 'date' | 'domain';
 export type SortDirection = 'asc' | 'desc';
+/** Folders = the open folder's own items; all = every link inside it, flattened. */
+export type Scope = 'folders' | 'all';
 
 /** Preferences remembered across sessions. */
 export interface UiPrefs {
@@ -15,6 +17,7 @@ export interface UiPrefs {
   density: Density;
   sort: SortMode;
   sortDirection: SortDirection;
+  scope: Scope;
   sidebarCollapsed: boolean;
   sidebarWidth: number;
   expanded: string[];
@@ -26,6 +29,7 @@ export const DEFAULT_PREFS: UiPrefs = {
   density: 'comfortable',
   sort: 'manual',
   sortDirection: 'asc',
+  scope: 'folders',
   sidebarCollapsed: false,
   sidebarWidth: 248,
   expanded: ['1'],
@@ -56,6 +60,7 @@ interface UiState extends UiPrefs {
   setView(view: ViewMode): void;
   setDensity(density: Density): void;
   setSort(sort: SortMode, direction?: SortDirection): void;
+  setScope(scope: Scope): void;
   toggleSidebar(): void;
   setSidebarWidth(width: number): void;
   setExpanded(id: string, expanded: boolean): void;
@@ -82,6 +87,7 @@ export const useUi = create<UiState>()((set) => ({
   setView: (view) => set({ view }),
   setDensity: (density) => set({ density }),
   setSort: (sort, sortDirection = 'asc') => set({ sort, sortDirection }),
+  setScope: (scope) => set({ scope }),
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   setSidebarWidth: (width) =>
     set({
@@ -104,6 +110,7 @@ function pickPrefs(state: UiPrefs): UiPrefs {
     density: state.density,
     sort: state.sort,
     sortDirection: state.sortDirection,
+    scope: state.scope,
     sidebarCollapsed: state.sidebarCollapsed,
     sidebarWidth: state.sidebarWidth,
     expanded: state.expanded,
@@ -123,6 +130,7 @@ export function parsePrefs(raw: unknown): UiPrefs {
     density: oneOf(r.density, ['comfortable', 'compact'], d.density),
     sort: oneOf(r.sort, ['manual', 'title', 'date', 'domain'], d.sort),
     sortDirection: oneOf(r.sortDirection, ['asc', 'desc'], d.sortDirection),
+    scope: oneOf(r.scope, ['folders', 'all'], d.scope),
     sidebarCollapsed: bool(r.sidebarCollapsed, d.sidebarCollapsed),
     sidebarWidth: num(r.sidebarWidth, d.sidebarWidth, SIDEBAR_MIN, SIDEBAR_MAX),
     expanded: idList(r.expanded, d.expanded),
