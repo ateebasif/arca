@@ -5,12 +5,14 @@ import {
   PointerSensor,
   closestCenter,
   pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
+  type UniqueIdentifier,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useRef, useState, type ReactNode } from 'react';
@@ -18,7 +20,7 @@ import { Favicon } from '@/src/components/main/Favicon';
 import { FolderIcon } from '@/src/components/icons';
 import { getBookmarkStore, useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
-import { DragStateContext, fromDropId, fromItemId } from './ids';
+import { DragStateContext, fromDropId, fromItemId, setDragActive } from './ids';
 import { dropProblem, moveIntoFolder, reorder } from './moves';
 
 export const AUTO_EXPAND_MS = 600;
@@ -28,15 +30,27 @@ export const AUTO_EXPAND_MS = 600;
  * so "drop onto a folder" and "reorder next to it" don't fight.
  */
 const collision: CollisionDetection = (args) => {
-  const within = pointerWithin(args);
-  const folder = within.find((c) => fromDropId(c.id) !== null);
-  if (folder) return [folder];
-  return closestCenter({
-    ...args,
-    droppableContainers: args.droppableContainers.filter(
-      (c) => fromItemId(c.id) !== null,
-    ),
-  });
+  const folderZones = args.droppableContainers.filter((c) => fromDropId(c.id) !== null);
+  const items = args.droppableContainers.filter((c) => fromItemId(c.id) !== null);
+  if (args.pointerCoordinates) {
+    const folder = pointerWithin(args).find((c) => fromDropId(c.id) !== null);
+    if (folder) return [folder];
+  } else {
+    // Keyboard drags have no pointer: use the dragged item's rectangle.
+    const [folder] = rectIntersection({ ...args, droppableContainers: folderZones });
+    if (folder) return [folder];
+  }
+  return closestCenter({ ...args, droppableContainers: items });
+};
+
+const nameOf = (nodeId: string | null) =>
+  (nodeId && getBookmarkStore().getSnapshot().nodes.get(nodeId)?.title) || 'item';
+const titleFor = (id: UniqueIdentifier) => `“${nameOf(fromItemId(id))}”`;
+const targetFor = (id: UniqueIdentifier) => {
+  const folder = fromDropId(id);
+  return folder
+    ? `folder “${nameOf(folder)}” (move into it)`
+    : `the position of “${nameOf(fromItemId(id))}”`;
 };
 
 /** Drag & drop for the whole dashboard: grid, list, sidebar tree and breadcrumbs. */
@@ -51,14 +65,17 @@ export function DndProvider({ children }: { children: ReactNode }) {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-      // Space only: Enter must keep opening links.
-      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space', 'Enter'] },
+      // Space only: Enter must keep opening links, never end a drag.
+      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
     }),
   );
 
   const clearExpand = () => clearTimeout(expandTimer.current);
 
-  const onDragStart = (e: DragStartEvent) => setActiveId(fromItemId(e.active.id));
+  const onDragStart = (e: DragStartEvent) => {
+    setDragActive(true);
+    setActiveId(fromItemId(e.active.id));
+  };
 
   const onDragOver = (e: DragOverEvent) => {
     const folderId = e.over ? fromDropId(e.over.id) : null;
@@ -74,6 +91,7 @@ export function DndProvider({ children }: { children: ReactNode }) {
   };
 
   const onDragEnd = (e: DragEndEvent) => {
+    setDragActive(false);
     clearExpand();
     setActiveId(null);
     setOverFolderId(null);
@@ -92,6 +110,7 @@ export function DndProvider({ children }: { children: ReactNode }) {
   };
 
   const onDragCancel = () => {
+    setDragActive(false);
     clearExpand();
     setActiveId(null);
     setOverFolderId(null);
@@ -113,6 +132,16 @@ export function DndProvider({ children }: { children: ReactNode }) {
         onDragEnd={onDragEnd}
         onDragCancel={onDragCancel}
         accessibility={{
+          announcements: {
+            onDragStart: ({ active }) => `Picked up ${titleFor(active.id)}.`,
+            onDragOver: ({ active, over }) =>
+              over ? `${titleFor(active.id)} is over ${targetFor(over.id)}.` : undefined,
+            onDragEnd: ({ active, over }) =>
+              over
+                ? `Dropped ${titleFor(active.id)} on ${targetFor(over.id)}.`
+                : `Dropped ${titleFor(active.id)}.`,
+            onDragCancel: ({ active }) => `Cancelled moving ${titleFor(active.id)}.`,
+          },
           screenReaderInstructions: {
             draggable:
               'To move, press Space. Use the arrow keys to move, Space to drop, Escape to cancel.',

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
+import { isDragActive } from '@/src/features/dnd/ids';
 import { useDragItem } from '@/src/features/dnd/hooks';
 import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost, mainDomain } from '@/src/lib/url';
@@ -55,6 +56,11 @@ export const BookmarkTile = memo(function BookmarkTile({
     onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
       dragKeyDown?.(e);
       if (e.defaultPrevented) return;
+      // Mid-drag, keys belong to the drag: also stop Enter following the link.
+      if (isDragActive()) {
+        if (e.key === 'Enter') e.preventDefault();
+        return;
+      }
       if (
         e.key === 'Enter' &&
         !renaming &&

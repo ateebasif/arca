@@ -29,3 +29,10 @@ export const DragStateContext = createContext<DragState>({
   overFolderId: null,
   blocked: false,
 });
+
+let dragActive = false;
+/** True while any drag is in progress (item key handlers stand down). */
+export const isDragActive = () => dragActive;
+export function setDragActive(active: boolean): void {
+  dragActive = active;
+}
