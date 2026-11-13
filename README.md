@@ -10,28 +10,37 @@ data stays on your machine.
 **Status:** Phase 1 (core) complete, pre-release. See [BACKLOG.md](BACKLOG.md) and
 [CHANGELOG.md](CHANGELOG.md).
 
-## What it does (Phase 1)
+## What it does
 
-- **Dashboard on New Tab**: sidebar folder tree with counts, folder cards, bookmark
-  tiles with brand-coloured covers (comfortable/compact) or a sortable list,
-  breadcrumbs.
+- **Dashboard**: sidebar folder tree, folder cards and bookmark tiles with
+  brand-coloured covers (or a sortable list), breadcrumbs, back/forward.
 - **All links view**: every link inside a folder and its subfolders in one grid,
   each labelled with its folder.
-- **Search**: ⌘K or `/`, fuzzy over titles, URLs and folder names. ↑↓ to move, Enter to
-  open, ⌘Enter for a new tab, ⌥Enter to show the bookmark in its folder.
-- **Editing**: add bookmarks and folders, edit, rename inline (F2), delete. Browser root
-  folders (Bookmarks bar, Other bookmarks, Mobile) are read-only.
-- **Live sync**: changes made in the browser's own bookmark manager show up instantly,
-  and vice versa.
-- **Toolbar popup** (⌥⇧B): quick search, "Bookmark this tab", open the dashboard.
-- **New Tab modes** (Settings): dashboard, minimal search page, or redirect to a URL.
-- **Dark mode**: System / Light / Dark switch in the sidebar footer and Settings.
-- **Link previews** (opt-in, Settings): hover a bookmark to see its title, description
-  and image. Fetched once without cookies, cached locally for a week.
+- **Search** (⌘K or `/`): fuzzy over titles, URLs and folders; copies of the same
+  page fold into one result ("in N folders").
+- **Editing**: add, edit, rename (F2), delete, all undoable (⌘Z or the toast's
+  Undo).
+- **Drag & drop**: reorder tiles, drop on a folder card's top band, a sidebar
+  folder or a breadcrumb to move. Keyboard: Space, arrows, Space.
+- **Tidy up**: remove duplicates (keeps the best copy), remove empty folders,
+  sort a folder for real, group links into per-site folders. Local and undoable.
+- **Open links in**: same tab, new tab, background tab or a mini window.
+- **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
+  excerpt, headings and quick-open buttons. Fetched once without cookies,
+  cached for a week.
+- **Popup** (⌥⇧B): search, bookmark this tab, most visited, recently added,
+  folder shortcuts, Tidy up.
+- **Dark-first design** with System / Light / Dark, subtle motion (off under
+  "Reduce motion").
 
 Private by design: no analytics, no accounts, no remote code, and no network requests
-unless you turn on link previews. Favicons come from the browser's own cache via the
-`_favicon` endpoint. See [SECURITY.md](SECURITY.md) for the security model.
+unless you turn on link previews. See [SECURITY.md](SECURITY.md).
+
+## Keyboard shortcuts
+
+Press `?` in the dashboard for the full list. Highlights: ⌘K search, `[` / `]`
+back/forward, ⌥↑ parent folder, F2 rename, Delete or ⌘⌫ delete, ⌘Z undo, ⌘\ sidebar.
+Arca avoids shortcuts browsers use (⌘N, ⌘T, ⌘[).
 
 ## Install (load unpacked)
 
