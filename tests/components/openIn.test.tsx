@@ -79,7 +79,10 @@ describe('open links setting', () => {
   it('is chosen in Settings and validated on load', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
     await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    await userEvent.selectOptions(screen.getByLabelText('Open links in'), 'window');
+    await userEvent.selectOptions(
+      await screen.findByLabelText('Open links in'),
+      'window',
+    );
     expect(useSettings.getState().openIn).toBe('window');
     expect(parseSettings({ openIn: 'everywhere' }).openIn).toBe('current');
   });

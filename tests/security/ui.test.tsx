@@ -81,7 +81,7 @@ describe('hostile bookmarks', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'New bookmark' }));
-    const dialog = screen.getByRole('dialog');
+    const dialog = await screen.findByRole('dialog');
     await userEvent.type(within(dialog).getByLabelText('URL'), 'javascript:alert(1)');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Enter a valid URL');

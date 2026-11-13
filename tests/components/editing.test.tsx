@@ -16,7 +16,7 @@ describe('editing', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'New bookmark' }));
-    const dialog = screen.getByRole('dialog', { name: 'New bookmark' });
+    const dialog = await screen.findByRole('dialog', { name: 'New bookmark' });
     await userEvent.type(within(dialog).getByLabelText('Name'), 'Arca');
     await userEvent.type(within(dialog).getByLabelText('URL'), 'nope');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
@@ -40,7 +40,7 @@ describe('editing', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'New folder' }));
-    expect(within(screen.getByRole('dialog')).queryByLabelText('URL')).toBeNull();
+    expect(within(await screen.findByRole('dialog')).queryByLabelText('URL')).toBeNull();
     await userEvent.keyboard('{Enter}');
     expect(fake.findByTitle('New folder')?.parentId).toBe('1');
   });
@@ -54,7 +54,7 @@ describe('editing', () => {
       screen.getByRole('button', { name: 'More actions for GitHub' }),
     );
     await userEvent.click(screen.getByRole('menuitem', { name: 'Edit…' }));
-    const dialog = screen.getByRole('dialog', { name: 'Edit bookmark' });
+    const dialog = await screen.findByRole('dialog', { name: 'Edit bookmark' });
     const name = within(dialog).getByLabelText('Name');
     await userEvent.clear(name);
     await userEvent.type(name, 'GH');
@@ -77,7 +77,7 @@ describe('editing', () => {
         .getState()
         .openEditor({ mode: 'edit', id: fake.findByTitle('Dev')!.id }),
     );
-    const options = within(screen.getByLabelText('Folder'))
+    const options = within(await screen.findByLabelText('Folder'))
       .getAllByRole('option')
       .map((o) => o.textContent?.trim());
     expect(options).not.toContain('Dev');
@@ -127,7 +127,7 @@ describe('editing', () => {
 
     fireEvent.contextMenu(screen.getByRole('button', { name: /^Dev/ }));
     await userEvent.click(screen.getByRole('menuitem', { name: /Delete/ }));
-    const confirm = screen.getByRole('alertdialog', { name: 'Delete “Dev”?' });
+    const confirm = await screen.findByRole('alertdialog', { name: 'Delete “Dev”?' });
     expect(confirm).toHaveTextContent('2 bookmarks and 1 folder');
     await userEvent.click(within(confirm).getByRole('button', { name: 'Cancel' }));
     expect(fake.findByTitle('Dev')).toBeDefined();

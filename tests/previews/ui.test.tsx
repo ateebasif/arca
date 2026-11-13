@@ -45,6 +45,13 @@ const tile = (title: string) =>
     el.textContent?.includes(title),
   )!;
 
+/** Turns previews on and waits for their lazily loaded code. */
+async function enablePreviews() {
+  await act(() => useSettings.getState().update({ linkPreviews: true }));
+  await act(() => import('@/src/components/preview/ActivePreviews'));
+  await act(() => new Promise((r) => setTimeout(r, 20)));
+}
+
 async function hover(el: HTMLElement) {
   await userEvent.hover(el);
   await act(() => new Promise((r) => setTimeout(r, HOVER_DELAY_MS + 50)));
@@ -61,7 +68,7 @@ describe('link previews', () => {
   it('turning on asks for site access; declining changes nothing', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
     await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    const toggle = screen.getByRole('switch', { name: 'Link previews' });
+    const toggle = await screen.findByRole('switch', { name: 'Link previews' });
     await userEvent.click(toggle);
     expect(fakeBrowser.permissions.request).toHaveBeenCalledWith({
       origins: ['<all_urls>'],
@@ -81,9 +88,9 @@ describe('link previews', () => {
 
   it('shows a cached preview on hover, fetching each page only once', async () => {
     granted = true;
-    await useSettings.getState().update({ linkPreviews: true });
+    await enablePreviews();
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await useSettings.getState().update({ linkPreviews: true });
+    await enablePreviews();
 
     await hover(tile('GitHub'));
     const card = await screen.findByTestId('link-preview');
@@ -108,7 +115,7 @@ describe('link previews', () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, {
       bar: [{ title: 'Evil', url: 'javascript:alert(1)' }],
     });
-    await useSettings.getState().update({ linkPreviews: true });
+    await enablePreviews();
     await hover(tile('Evil'));
     expect(screen.queryByTestId('link-preview')).toBeNull();
     expect(fetcher).not.toHaveBeenCalled();
@@ -119,7 +126,7 @@ describe('preview card stability', () => {
   it('stays open when focus changes elsewhere on the page', async () => {
     granted = true;
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await useSettings.getState().update({ linkPreviews: true });
+    await enablePreviews();
     await hover(tile('GitHub'));
     await screen.findByTestId('link-preview');
     const search = screen.getByRole('combobox', { name: 'Search bookmarks' });
@@ -136,7 +143,7 @@ describe('interactive preview card', () => {
     granted = true;
     const create = vi.spyOn(fakeBrowser.windows, 'create').mockResolvedValue({} as never);
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await useSettings.getState().update({ linkPreviews: true });
+    await enablePreviews();
     await hover(tile('GitHub'));
     const card = await screen.findByTestId('link-preview');
 
@@ -159,7 +166,7 @@ describe('interactive preview card', () => {
   it('closes when scrolling the page or pressing Escape', async () => {
     granted = true;
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
-    await useSettings.getState().update({ linkPreviews: true });
+    await enablePreviews();
     await hover(tile('GitHub'));
     await screen.findByTestId('link-preview');
     fireEvent.scroll(document.querySelector('[aria-label="Folder contents"]')!);

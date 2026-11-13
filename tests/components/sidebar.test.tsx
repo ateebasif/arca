@@ -144,7 +144,7 @@ describe('folder history', () => {
     input.blur();
     fireEvent.keyDown(window, { key: '?', shiftKey: true });
     expect(
-      screen.getByRole('dialog', { name: 'Keyboard shortcuts' }),
+      await screen.findByRole('dialog', { name: 'Keyboard shortcuts' }),
     ).toBeInTheDocument();
   });
 

@@ -10,7 +10,7 @@ describe('settings dialog', () => {
   it('switches New Tab mode and validates the redirect URL', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
     await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
     await userEvent.click(
       within(dialog).getByRole('radio', { name: /Redirect to a URL/ }),
     );
