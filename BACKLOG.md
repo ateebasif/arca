@@ -55,6 +55,7 @@
 
 ## Done
 
+- [x] ARC-054 · "Open links in" setting: same tab / new tab / background / mini window · `feature/open-links-setting` · 2026-11-13
 - [x] ARC-053 · Back/forward folder history: buttons, [ ], ⌥↑, mouse side buttons, ? shortcuts sheet · `feature/folder-history-nav` · 2026-11-13
 - [x] ARC-052 · Search folds duplicate copies ("in N folders"), compact paths, collapsing breadcrumbs · `fix/search-duplicates-paths` · 2026-11-13
 - [x] ARC-051 · Modern dark redesign: favicon-coloured tile covers, deeper dark palette, entrance/hover animations · `style/modern-dark-tiles` · 2026-11-13

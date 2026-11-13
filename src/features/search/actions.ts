@@ -1,4 +1,4 @@
-import { openSafely } from '../open';
+import { defaultDisposition, openSafely } from '../open';
 import { useUi } from '@/src/store/ui';
 import type { SearchResult } from './search';
 
@@ -18,5 +18,5 @@ export function openResult(result: SearchResult, mode: OpenMode): void {
     return;
   }
   if (!node.url) return;
-  void openSafely(node.url, mode === 'new-tab' ? 'background' : 'current');
+  void openSafely(node.url, mode === 'new-tab' ? 'background' : defaultDisposition());
 }

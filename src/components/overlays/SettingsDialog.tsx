@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import { useOverlays } from '@/src/store/overlays';
+import type { OpenDisposition } from '@/src/lib/tabs';
 import { useSettings, type NewTabMode } from '@/src/store/settings';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { Button, Dialog, Field, inputClass } from './Dialog';
@@ -50,6 +51,7 @@ export function SettingsDialog() {
         <p className="text-ink-muted mb-2 text-xs font-medium">Appearance</p>
         <ThemeSwitch showLabels />
       </div>
+      <OpenInSetting />
       <fieldset>
         <legend className="text-ink-muted mb-2 text-xs font-medium">New Tab</legend>
         <div className="flex flex-col gap-1.5">
@@ -98,5 +100,38 @@ export function SettingsDialog() {
         browser's own New Tab back, disable Arca in the extensions page.
       </p>
     </Dialog>
+  );
+}
+
+const OPEN_IN: Array<{ value: OpenDisposition; label: string }> = [
+  { value: 'current', label: 'Same tab' },
+  { value: 'new-tab', label: 'New tab' },
+  { value: 'background', label: 'New tab in background' },
+  { value: 'window', label: 'Mini window' },
+];
+
+/** Where a plain click opens a bookmark. Saved immediately. */
+function OpenInSetting() {
+  const openIn = useSettings((s) => s.openIn);
+  const update = useSettings((s) => s.update);
+  return (
+    <div className="mb-4">
+      <Field label="Open links in">
+        <select
+          className={inputClass}
+          value={openIn}
+          onChange={(e) => void update({ openIn: e.target.value as OpenDisposition })}
+        >
+          {OPEN_IN.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <p className="text-ink-faint -mt-1.5 text-[11px]">
+        ⌘-click or middle-click always opens a new background tab.
+      </p>
+    </div>
   );
 }
