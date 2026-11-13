@@ -32,8 +32,17 @@ export async function removeAll(
   return steps.length;
 }
 
-/** Moves children into `order` (ids, first to last) with as few moves as possible. */
-async function applyOrder(folderId: string, order: readonly string[]): Promise<void> {
+/**
+ * Moves children into `order` (ids, first to last) with as few moves as
+ * possible. Ids no longer in the folder (moved or deleted since) are skipped.
+ */
+async function applyOrder(
+  rawFolderId: string,
+  rawOrder: readonly string[],
+): Promise<void> {
+  const folderId = undo.resolveId(rawFolderId);
+  const live = new Set((await bm.getChildren(folderId)).map((c) => c.id));
+  const order = rawOrder.map(undo.resolveId).filter((id) => live.has(id));
   for (let i = 0; i < order.length; i++) {
     const id = order[i];
     if (!id) continue;
@@ -67,26 +76,37 @@ export async function groupBySite(
   const steps: undo.UndoAction[] = [];
   const total = groups.reduce((n, g) => n + g.items.length, 0);
   let done = 0;
-  for (const group of groups) {
-    const folder = await bm.create({ parentId: folderId, title: group.domain, index: 0 });
-    steps.push(undo.created(folder));
-    for (const item of group.items) {
-      const from = await bm.getNode(item.id).catch(() => null);
-      if (!from?.parentId) continue;
-      await bm.move(item.id, { parentId: folder.id });
-      steps.push(
-        undo.moved(item.id, { parentId: from.parentId, index: from.index ?? 0 }, ''),
-      );
-      onProgress?.(++done, total);
+  let made = 0;
+  try {
+    for (const group of groups) {
+      const folder = await bm.create({
+        parentId: folderId,
+        title: group.domain,
+        index: 0,
+      });
+      steps.push(undo.created(folder));
+      made++;
+      for (const item of group.items) {
+        const from = await bm.getNode(item.id).catch(() => null);
+        // Skip links that were moved or deleted since the panel was opened.
+        if (from?.parentId !== folderId) continue;
+        await bm.move(item.id, { parentId: folder.id });
+        steps.push(
+          undo.moved(item.id, { parentId: folderId, index: from.index ?? 0 }, ''),
+        );
+        onProgress?.(++done, total);
+      }
     }
-  }
-  if (steps.length) {
-    undo.record(
-      undo.combine(
-        `Grouped ${total} links into ${groups.length} ${groups.length === 1 ? 'folder' : 'folders'}`,
-        steps,
-      ),
-    );
+  } finally {
+    // Even if something failed half-way, what was done can be undone.
+    if (steps.length) {
+      undo.record(
+        undo.combine(
+          `Grouped ${done} links into ${made} ${made === 1 ? 'folder' : 'folders'}`,
+          steps,
+        ),
+      );
+    }
   }
   return groups.length;
 }
