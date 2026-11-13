@@ -8,7 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-005 · Sidebar folder tree: collapsible, item counts, resizable, ⌘\ toggle · Phase 1 · P0
 - [ ] ARC-006 · Main area: folder cards + grid view (comfortable / compact) · Phase 1 · P0
 - [ ] ARC-007 · List view with sortable columns + remembered grid/list toggle · Phase 1 · P1
 - [ ] ARC-008 · Breadcrumbs for the current folder path · Phase 1 · P1
@@ -67,6 +66,7 @@
 
 ## Done
 
+- [x] ARC-005 · Sidebar folder tree: collapsible, item counts, resizable, ⌘\ toggle · `feature/folder-tree-sidebar` · 2026-11-13
 - [x] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · `feature/bookmark-store-sync` · 2026-11-13
 - [x] ARC-045 · E2E smoke harness: real Chrome via DevTools pipe + `Extensions.loadUnpacked` · `test/e2e-harness` · 2026-11-13
 - [x] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · `feature/bookmarks-api-wrapper` + `feature/chrome-api-wrappers` · 2026-11-13

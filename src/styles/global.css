@@ -1,57 +1,103 @@
 @import 'tailwindcss';
 
-/* Light/dark follows the system by default. A `data-theme` attribute on <html>
-   will override it once the theme setting lands (ARC-027). */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
+/*
+ * Design tokens. Utilities like `bg-surface` and `text-ink-muted` read these
+ * variables, so switching light/dark only means redefining them below.
+ * Light/dark follows the system; `data-theme` on <html> overrides it (ARC-027).
+ */
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+
   --radius-tile: 14px;
-  --color-surface: rgb(255 255 255 / 0.72);
-  --color-ink: #1c1c1e;
-  --color-ink-muted: #6e6e73;
-  --color-accent: #6b5cff;
-  --color-backdrop-from: #f4f1ff;
-  --color-backdrop-to: #eaf3ff;
+  --radius-panel: 16px;
+
+  --color-canvas-from: #f3efff;
+  --color-canvas-to: #e9f2ff;
+  --color-surface: rgb(255 255 255 / 0.66);
+  --color-surface-strong: rgb(255 255 255 / 0.9);
+  --color-hover: rgb(20 20 40 / 0.05);
+  --color-line: rgb(20 20 40 / 0.08);
+  --color-ink: #1d1d22;
+  --color-ink-muted: #6b6b76;
+  --color-ink-faint: #9a9aa5;
+  --color-accent: #6656f0;
+  --color-accent-soft: rgb(102 86 240 / 0.12);
+  --color-danger: #d93a3a;
+
+  --shadow-tile: 0 1px 2px rgb(20 20 40 / 0.06), 0 2px 8px rgb(20 20 40 / 0.04);
+  --shadow-pop: 0 8px 30px rgb(20 20 40 / 0.14), 0 1px 3px rgb(20 20 40 / 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --color-surface: rgb(36 36 40 / 0.72);
-    --color-ink: #f2f2f7;
-    --color-ink-muted: #a1a1aa;
-    --color-backdrop-from: #17151f;
-    --color-backdrop-to: #0f1720;
+@layer base {
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --color-canvas-from: #15131d;
+      --color-canvas-to: #0e1520;
+      --color-surface: rgb(38 38 46 / 0.6);
+      --color-surface-strong: rgb(44 44 54 / 0.92);
+      --color-hover: rgb(255 255 255 / 0.06);
+      --color-line: rgb(255 255 255 / 0.08);
+      --color-ink: #f1f1f5;
+      --color-ink-muted: #a3a3ae;
+      --color-ink-faint: #74747f;
+      --color-accent: #8f83ff;
+      --color-accent-soft: rgb(143 131 255 / 0.16);
+      --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.3);
+      --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme='dark'] {
+    --color-canvas-from: #15131d;
+    --color-canvas-to: #0e1520;
+    --color-surface: rgb(38 38 46 / 0.6);
+    --color-surface-strong: rgb(44 44 54 / 0.92);
+    --color-hover: rgb(255 255 255 / 0.06);
+    --color-line: rgb(255 255 255 / 0.08);
+    --color-ink: #f1f1f5;
+    --color-ink-muted: #a3a3ae;
+    --color-ink-faint: #74747f;
+    --color-accent: #8f83ff;
+    --color-accent-soft: rgb(143 131 255 / 0.16);
+    --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
     color-scheme: dark;
   }
-}
 
-:root[data-theme='dark'] {
-  --color-surface: rgb(36 36 40 / 0.72);
-  --color-ink: #f2f2f7;
-  --color-ink-muted: #a1a1aa;
-  --color-backdrop-from: #17151f;
-  --color-backdrop-to: #0f1720;
-  color-scheme: dark;
-}
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
 
-html,
-body,
-#root {
-  height: 100%;
-}
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-ink);
+    background-color: var(--color-canvas-to);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E"),
+      radial-gradient(
+        1200px 700px at 10% -10%,
+        var(--color-canvas-from),
+        transparent 70%
+      ),
+      linear-gradient(135deg, var(--color-canvas-from), var(--color-canvas-to));
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
 
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  color: var(--color-ink);
-  background: linear-gradient(
-    135deg,
-    var(--color-backdrop-from),
-    var(--color-backdrop-to)
-  );
-  -webkit-font-smoothing: antialiased;
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  button {
+    cursor: default;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

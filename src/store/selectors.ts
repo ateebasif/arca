@@ -80,3 +80,27 @@ export function recentlyAdded(state: BookmarkSnapshot, count: number): BNode[] {
     .sort((a, b) => b.dateAdded - a.dateAdded)
     .slice(0, count);
 }
+
+const countsCache = new WeakMap<BookmarkSnapshot, Map<string, number>>();
+
+/**
+ * Bookmark count (any depth) for every folder, computed in one pass and
+ * cached per snapshot.
+ */
+export function folderCounts(state: BookmarkSnapshot): ReadonlyMap<string, number> {
+  const cached = countsCache.get(state);
+  if (cached) return cached;
+  const counts = new Map<string, number>();
+  const visit = (id: string): number => {
+    const node = state.nodes.get(id);
+    if (!node) return 0;
+    if (!node.childIds) return 1;
+    let total = 0;
+    for (const childId of node.childIds) total += visit(childId);
+    counts.set(id, total);
+    return total;
+  };
+  state.rootIds.forEach(visit);
+  countsCache.set(state, counts);
+  return counts;
+}
