@@ -22,9 +22,13 @@ data stays on your machine.
   and vice versa.
 - **Toolbar popup** (⌥⇧B): quick search, "Bookmark this tab", open the dashboard.
 - **New Tab modes** (Settings): dashboard, minimal search page, or redirect to a URL.
+- **Dark mode**: System / Light / Dark switch in the sidebar footer and Settings.
+- **Link previews** (opt-in, Settings): hover a bookmark to see its title, description
+  and image. Fetched once without cookies, cached locally for a week.
 
-Private by design: no analytics, no accounts, no remote code, no network requests.
-Favicons come from the browser's own cache via the `_favicon` endpoint.
+Private by design: no analytics, no accounts, no remote code, and no network requests
+unless you turn on link previews. Favicons come from the browser's own cache via the
+`_favicon` endpoint. See [SECURITY.md](SECURITY.md) for the security model.
 
 ## Install (load unpacked)
 
@@ -79,7 +83,8 @@ bun run zip        # packaged zip
 bun run test       # unit + component tests (Vitest, fake browser APIs)
 bun run lint       # ESLint
 bun run typecheck  # tsc
-bun run e2e        # real-Chrome smoke checks (after `bun run build`)
+bun run e2e        # real-Chrome smoke + security checks (after `bun run build`)
+bun run security   # static checks on the built manifest, CSP and bundle
 ```
 
 `bun run e2e` loads the built extension into headless Google Chrome with a throwaway

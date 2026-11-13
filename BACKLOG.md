@@ -41,7 +41,6 @@
 
 ### Phase 4 – Later
 
-- [ ] ARC-041 · Page preview thumbnails · Phase 4 · P3
 - [ ] ARC-042 · Saved searches · Phase 4 · P3
 - [ ] ARC-043 · Custom folder icons · Phase 4 · P3
 
@@ -56,6 +55,7 @@
 
 ## Done
 
+- [x] ARC-041 · Link previews (title, description, image) on hover, opt-in, cached locally (pulled forward from Phase 4; metadata cards, not screenshots) · `feature/link-previews` · 2026-11-13
 - [x] ARC-048 · Theme setting: system / light / dark (split out of ARC-027) · `feature/theme-setting` · 2026-11-13
 - [x] ARC-047 · Security hardening: CSP, block external messaging, URL scheme allowlist, storage validation, security checks · `fix/security-hardening` · 2026-11-13
 - [x] ARC-046 · E2E no-network audit (PRD §15): fail on any request leaving the extension · `test/e2e-network-audit` · 2026-11-13

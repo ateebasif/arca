@@ -56,6 +56,9 @@ All notable changes to this project are documented here. The format follows
   still unverified in Ardia.
 - Theme switch (System / Light / Dark) in the sidebar and Settings. The choice
   applies before first paint and syncs across open Arca tabs and the popup.
+- Opt-in link previews: hover or focus a bookmark to see its title, description and
+  image. Requires site access granted in Settings; each page is fetched once
+  without cookies and cached locally for a week.
 - `bun run e2e`: smoke checks against real Chrome with the built extension,
   including performance budgets and an audit that no request leaves the
   extension.
