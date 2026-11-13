@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { rgbToHsl, type CoverTone } from './color';
 import { displayHost } from './url';
 
 export type FaviconSize = 16 | 32 | 64;
@@ -93,4 +94,68 @@ export async function isDefaultFavicon(img: HTMLImageElement): Promise<boolean> 
   const reference = await loadDefaultSignature(size);
   if (!reference || !img.complete || img.naturalWidth === 0) return false;
   return signatureOf(img) === reference;
+}
+
+// -- brand colour ---------------------------------------------------------------
+
+const toneCache = new Map<string, Promise<CoverTone>>();
+
+/** Stable fallback hue for sites without a usable favicon (matches the letter tile). */
+export function fallbackTone(title: string, url: string): CoverTone {
+  return { hue: letterTile(title, url).hue, saturation: 62 };
+}
+
+/**
+ * The favicon's dominant hue, read from the browser's favicon cache (no
+ * network). Monochrome icons give `hue: null`; placeholders and failures give
+ * the fallback hue. Cached per host.
+ */
+export function faviconTone(url: string, title: string): Promise<CoverTone> {
+  const host = displayHost(url) || url;
+  let pending = toneCache.get(host);
+  if (pending) return pending;
+  pending = new Promise<CoverTone>((resolve) => {
+    const fallback = fallbackTone(title, url);
+    if (typeof Image === 'undefined') return resolve(fallback);
+    const img = new Image();
+    img.onerror = () => resolve(fallback);
+    img.onload = async () => {
+      if (await isDefaultFavicon(img)) return resolve(fallback);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 16;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return resolve(fallback);
+        ctx.drawImage(img, 0, 0, 16, 16);
+        const { data } = ctx.getImageData(0, 0, 16, 16);
+        let x = 0;
+        let y = 0;
+        let weight = 0;
+        let sat = 0;
+        let opaque = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if ((data[i + 3] ?? 0) < 128) continue;
+          opaque++;
+          const { h, s, l } = rgbToHsl(data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0);
+          if (s < 25 || l < 12 || l > 92) continue;
+          const w = s / 100;
+          x += Math.cos((h * Math.PI) / 180) * w;
+          y += Math.sin((h * Math.PI) / 180) * w;
+          sat += s * w;
+          weight += w;
+        }
+        // Mostly black/white/grey pixels: a monochrome brand.
+        if (opaque === 0 || weight < opaque * 0.08) {
+          return resolve({ hue: null, saturation: 0 });
+        }
+        const hue = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+        resolve({ hue, saturation: sat / weight });
+      } catch {
+        resolve(fallback);
+      }
+    };
+    img.src = faviconUrl(url, 32);
+  });
+  toneCache.set(host, pending);
+  return pending;
 }
