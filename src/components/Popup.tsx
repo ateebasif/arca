@@ -2,31 +2,30 @@ import { Toaster } from './overlays/OverlayHost';
 import { useEffect, useMemo, useState } from 'react';
 import { errorMessage } from '@/src/features/editing/actions';
 import * as bm from '@/src/lib/bookmarks';
-import { getActiveTab, openExtensionPage, type Tab } from '@/src/lib/tabs';
+import { getActiveTab, type Tab } from '@/src/lib/tabs';
 import { displayHost } from '@/src/lib/url';
 import { useSettings } from '@/src/store/settings';
 import { folderOptions, getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
-import { GridIcon } from './icons';
 import { Favicon } from './main/Favicon';
 import { inputClass } from './overlays/Dialog';
+import { PopupHome } from './PopupHome';
 import { QuickSearch } from './quick/QuickSearch';
 
 const closePopup = () => window.close();
 
 /** Toolbar popup: quick search, bookmark the current tab, open the dashboard. */
 export function Popup() {
+  const [searching, setSearching] = useState(false);
   return (
     <main className="flex w-[380px] flex-col gap-3 p-3">
-      <QuickSearch limit={8} onOpened={closePopup} />
-      <CurrentTab />
-      <button
-        type="button"
-        onClick={() => void openExtensionPage('dashboard.html').then(closePopup)}
-        className="text-ink-muted hover:bg-hover hover:text-ink flex h-9 items-center justify-center gap-2 rounded-lg text-[13px]"
-      >
-        <GridIcon /> Open dashboard
-      </button>
+      <QuickSearch limit={8} onOpened={closePopup} onSearchingChange={setSearching} />
+      {!searching && (
+        <>
+          <CurrentTab />
+          <PopupHome />
+        </>
+      )}
       <Toaster />
     </main>
   );

@@ -14,6 +14,8 @@ interface QuickSearchProps {
   onOpened?(): void;
   /** Called for folder results; omit to hide folders. */
   onOpenFolder?(id: string): void;
+  /** Reports whether a query is typed (the popup hides its sections then). */
+  onSearchingChange?(searching: boolean): void;
   className?: string;
 }
 
@@ -27,6 +29,7 @@ export function QuickSearch({
   placeholder = 'Search bookmarks',
   onOpened,
   onOpenFolder,
+  onSearchingChange,
   className = '',
 }: QuickSearchProps) {
   const state = useBookmarks();
@@ -93,6 +96,7 @@ export function QuickSearch({
           onChange={(e) => {
             setQuery(e.target.value);
             setActive(0);
+            onSearchingChange?.(e.target.value.trim().length > 0);
           }}
           onKeyDown={(e) => void onKeyDown(e)}
           className="placeholder:text-ink-faint min-w-0 flex-1 bg-transparent text-sm outline-none"

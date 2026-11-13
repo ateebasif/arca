@@ -51,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-055 · Popup home: most visited, recently added, folder shortcuts, Tidy up link · `feature/popup-home` · 2026-11-14
 - [x] ARC-036 · Tidy up: duplicates (keep one, undo), empty folders, permanent sort, group by site · `feature/tidy-up` · 2026-11-13
 - [x] ARC-021 · Drag & drop into folder cards / tree nodes, descendant guard, 600 ms auto-expand · `feature/drag-drop` · 2026-11-13
 - [x] ARC-020 · Drag & drop reorder within a folder · `feature/drag-drop` · 2026-11-13
