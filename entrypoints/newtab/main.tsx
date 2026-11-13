@@ -1,3 +1,4 @@
+import '@/src/boot';
 import { Dashboard } from '@/src/components/Dashboard';
 import { MinimalNewTab } from '@/src/components/MinimalNewTab';
 import { mount } from '@/src/lib/mount';

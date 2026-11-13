@@ -3,7 +3,7 @@
 /*
  * Design tokens. Utilities like `bg-surface` and `text-ink-muted` read these
  * variables, so switching light/dark only means redefining them below.
- * Light/dark follows the system; `data-theme` on <html> overrides it (ARC-027).
+ * Light/dark follows the system; `data-theme` on <html> overrides it (src/lib/theme.ts).
  */
 @theme {
   --font-sans:
@@ -52,6 +52,10 @@
       --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
       color-scheme: dark;
     }
+  }
+
+  :root[data-theme='light'] {
+    color-scheme: light;
   }
 
   :root[data-theme='dark'] {

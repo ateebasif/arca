@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
+import { applyTheme, THEMES, type Theme } from '@/src/lib/theme';
 import { isRecord, oneOf, str } from '@/src/lib/validate';
 
 /**
@@ -14,12 +15,14 @@ export interface Settings {
   redirectUrl: string;
   /** Folder the popup's "Bookmark this tab" saves into. */
   saveFolderId: string;
+  theme: Theme;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   newTabMode: 'dashboard',
   redirectUrl: '',
   saveFolderId: '1',
+  theme: 'system',
 };
 
 export const SETTINGS_KEY = 'settings';
@@ -32,6 +35,7 @@ export function parseSettings(raw: unknown): Settings {
     newTabMode: oneOf(r.newTabMode, ['dashboard', 'minimal', 'redirect'], d.newTabMode),
     redirectUrl: str(r.redirectUrl, d.redirectUrl),
     saveFolderId: str(r.saveFolderId, d.saveFolderId, 64),
+    theme: oneOf(r.theme, THEMES, d.theme),
   };
 }
 
@@ -49,8 +53,9 @@ export const useSettings = create<SettingsState>()((set, get) => ({
   loaded: false,
   update: async (patch) => {
     set(patch);
-    const { newTabMode, redirectUrl, saveFolderId } = { ...get(), ...patch };
-    await storageSet<Settings>(SETTINGS_KEY, { newTabMode, redirectUrl, saveFolderId });
+    const next = parseSettings({ ...get(), ...patch });
+    if (patch.theme) applyTheme(next.theme);
+    await storageSet<Settings>(SETTINGS_KEY, next);
   },
 }));
 
@@ -60,9 +65,12 @@ let unsubscribe: (() => void) | undefined;
 export async function hydrateSettings(): Promise<Settings> {
   const settings = await loadSettings();
   useSettings.setState({ ...settings, loaded: true });
-  unsubscribe ??= onStorageChange<unknown>(SETTINGS_KEY, (next) =>
-    useSettings.setState(parseSettings(next)),
-  );
+  applyTheme(settings.theme);
+  unsubscribe ??= onStorageChange<unknown>(SETTINGS_KEY, (raw) => {
+    const next = parseSettings(raw);
+    useSettings.setState(next);
+    applyTheme(next.theme);
+  });
   return settings;
 }
 

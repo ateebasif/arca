@@ -2,6 +2,7 @@ import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
 import { useOverlays } from '@/src/store/overlays';
 import { GearIcon, SidebarIcon } from '../icons';
+import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
 
 export function Sidebar() {
@@ -29,7 +30,7 @@ export function Sidebar() {
       <nav className="min-h-0 flex-1 overflow-y-auto">
         <FolderTree />
       </nav>
-      <div className="border-line flex shrink-0 items-center border-t px-2 py-2">
+      <div className="border-line flex shrink-0 items-center justify-between gap-2 border-t px-2 py-2">
         <button
           type="button"
           onClick={() => useOverlays.getState().openSettings()}
@@ -37,6 +38,7 @@ export function Sidebar() {
         >
           <GearIcon /> Settings
         </button>
+        <ThemeSwitch />
       </div>
       <Resizer />
     </aside>

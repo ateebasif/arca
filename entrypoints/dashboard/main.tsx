@@ -1,3 +1,4 @@
+import '@/src/boot';
 import { Dashboard } from '@/src/components/Dashboard';
 import { mount } from '@/src/lib/mount';
 import { hydrateSettings } from '@/src/store/settings';
