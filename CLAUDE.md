@@ -18,8 +18,7 @@ fast, visual, editable dashboard (Opera GX speed-dial style). Primary target: **
 
 ## Project location
 
-- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/` (the PRD's §4 path
-  `claude-code-directory/arca` is outdated; this folder is the real root).
+- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/`.
 - Keep every project file inside this folder. Never write to the parent directory.
 
 ## Stack
@@ -28,24 +27,28 @@ WXT (MV3) · React + TypeScript (strict) · Tailwind CSS · dnd-kit · TanStack 
 Zustand (UI state only) · Vitest + React Testing Library (mock `chrome.*`) · ESLint +
 Prettier. Package manager: **bun** (fall back to pnpm only if WXT breaks; document why).
 
+- TypeScript is pinned to **5.9.x**: typescript-eslint supports `<6.1` and WXT's template
+  targets 5.x, so TS 7 waits until the tooling catches up.
+- Path alias `@/` = project root, so app code imports as `@/src/lib/...`.
+- Tests use WXT's `fakeBrowser` (in-memory `browser.*`), reset after each test in
+  `tests/setup.ts`. ESLint blocks the `chrome` global outside `src/lib`, background and tests.
+
 - No Next.js, no server, no remote scripts, no inline scripts (MV3 CSP).
 - Ask before adding any dependency not listed here or deviating from the stack.
 - Use current stable versions; check docs instead of guessing APIs.
 
 ## Commands
 
-_Fill in / correct once the scaffold (ARC-002) lands._
-
-| Task      | Command             |
-| --------- | ------------------- |
-| Install   | `bun install`       |
-| Dev (HMR) | `bun run dev`       |
-| Build     | `bun run build`     |
-| Zip       | `bun run zip`       |
-| Test      | `bun run test`      |
-| Lint      | `bun run lint`      |
-| Typecheck | `bun run typecheck` |
-| Format    | `bun run format`    |
+| Task      | Command                                 |
+| --------- | --------------------------------------- |
+| Install   | `bun install`                           |
+| Dev (HMR) | `bun run dev`                           |
+| Build     | `bun run build`                         |
+| Zip       | `bun run zip`                           |
+| Test      | `bun run test`                          |
+| Lint      | `bun run lint`                          |
+| Typecheck | `bun run typecheck`                     |
+| Format    | `bun run format` (`format:check` in CI) |
 
 ## Structure
 

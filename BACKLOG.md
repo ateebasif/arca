@@ -2,9 +2,9 @@
 
 ## In Progress
 
+
 ## Up Next
 
-- [ ] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · Phase 1 · P0
 - [ ] ARC-003 · `src/lib` chrome API wrappers (bookmarks, storage, tabs, favicon) + tests · Phase 1 · P0
 - [ ] ARC-004 · Normalized bookmark store + live sync from bookmark events (§8.12) · Phase 1 · P0
 
@@ -71,6 +71,7 @@
 
 ## Done
 
+- [x] ARC-002 · Scaffold WXT + React + TS + Tailwind, ESLint/Prettier, Vitest · `chore/scaffold-wxt-react` · 2026-11-13
 - [x] ARC-001 · Repo + git setup, guides, CLAUDE.md, backlog · `main` (initial commit) · 2026-11-13
 
 ## Known Issues / Bugs
@@ -78,5 +79,7 @@
 ## Tech Debt / Risks to Verify
 
 - Ardia: confirm unpacked loading via `chrome://extensions` and that the New Tab override applies (PRD §16.1–16.2). Track under ARC-018.
-- TypeScript 7.0 (native port) is now latest stable; confirm WXT and typescript-eslint support it during ARC-002, else pin 5.x and note why.
-- `@types/chrome` vs WXT's built-in `browser` types: pick one during ARC-003.
+- TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
+- React + ReactDOM is ~220 KB of the 400 KB JS budget. Keep an eye on bundle size as features land.
+- New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
+- Use WXT's built-in `browser` types (`@wxt-dev/browser`) instead of adding `@types/chrome`; confirm `favicon`/`topSites` typing during ARC-003.

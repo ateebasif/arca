@@ -9,3 +9,7 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - Repository setup: git guides, CLAUDE.md, backlog, PR template.
+- WXT + React + TypeScript scaffold with New Tab, dashboard and popup pages and a
+  background worker.
+- Tailwind CSS with system light/dark tokens and reduced-motion support.
+- ESLint, Prettier and Vitest + React Testing Library with a fake browser API.

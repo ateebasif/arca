@@ -1,0 +1,8 @@
+.output
+.wxt
+dist
+coverage
+node_modules
+bun.lock
+arca-prd.md
+docs/git

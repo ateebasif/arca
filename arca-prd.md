@@ -27,7 +27,7 @@ also work in any Chromium browser (Chrome, Dia, Brave, Edge).
 
 ## 4. Project location
 
-- Root: `/Users/ateebasif/Downloads/ProjectsLocal/claude-code-directory/arca/`
+- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/`
 - Keep every project file inside this folder. Never write files to the parent directory.
 
 ## 5. Tech stack
@@ -234,8 +234,7 @@ arca/
 ### 12.2 Git guides
 
 - Copy the user's existing guides into `docs/git/` if they exist at:
-  `/Users/ateebasif/Downloads/ProjectsLocal/claude-code-directory/git-commit-guide/`
-  (`branch-naming-guide.md`, `commit-style-guide.md`, `pr-style-guide.md`).
+  `~/.claude/skills/` (`branch-naming-guide`, `git-commit-style`, `pull-request-style-guide`).
 - If they are missing, write them in `docs/git/` from the rules below.
 - These guides are the source of truth; the summaries below must not contradict them.
 
