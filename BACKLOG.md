@@ -8,7 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-016 · Virtualize grid/list over 200 items · Phase 1 · P1
 - [ ] ARC-017 · Ardia-like theme: tokens, light/dark, grain gradient, reduced motion · Phase 1 · P1
 - [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · Phase 1 · P0
 - [ ] ARC-019 · Release v0.1.0 · Phase 1 · P0
@@ -57,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-016 · Virtualize grid/list over 200 items · `perf/virtualize-grid-list` · 2026-11-13
 - [x] ARC-015 · Toolbar popup: search top 8, bookmark this tab, open dashboard · `feature/popup-quick-search` · 2026-11-13
 - [x] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · `feature/popup-quick-search` · 2026-11-13
 - [x] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · `feature/newtab-modes` · 2026-11-13
@@ -80,7 +80,7 @@
 
 - Ardia: confirm unpacked loading via `chrome://extensions` and that the New Tab override applies (PRD §16.1–16.2). Track under ARC-018.
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
-- React + ReactDOM is ~220 KB of the 400 KB JS budget. Keep an eye on bundle size as features land.
+- JS is 320 KB raw / 99 KB gzip at end of Phase 1 (budget 400 KB raw); React is ~220 KB of that. Lazy-load Phase 3 views (§10).
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. UI code should use the store's `isWithin`/`getPath` instead.
 - Store copies the id→node Map on every event (~5k entries, < 1 ms). Fine for v1; revisit if profiles show it during bulk ops (ARC-023).
@@ -89,3 +89,4 @@
 - Favicon placeholder detection fingerprints Chrome's generic globe per size. If Ardia or a Chrome update changes that image, detection silently stops and globes show again (cosmetic only).
 - ⌘N / ⇧⌘N (PRD §8.14) are reserved by Chrome (new window / incognito) and can't be captured by a page. Pick alternatives in ARC-028 (e.g. `N` / `⇧N` when not typing).
 - Deleting a single bookmark has no confirmation or undo until ARC-024 (undo) lands.
+- Sidebar tree and search results are not virtualized (tree shows only expanded folders; search caps at 50). Revisit if someone has thousands of folders.
