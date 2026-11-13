@@ -6,7 +6,7 @@ import { useUi } from '@/src/store/ui';
 import { renderWithBookmarks, SAMPLE_SEED } from '../helpers/render';
 
 const tile = (title: string) =>
-  screen.getAllByRole('link').find((l) => l.textContent?.startsWith(title))!;
+  screen.getAllByRole('link').find((l) => l.textContent?.includes(title))!;
 
 describe('editing', () => {
   it('adds a bookmark to the open folder, normalizing the URL', async () => {

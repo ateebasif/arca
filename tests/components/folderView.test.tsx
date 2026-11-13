@@ -12,12 +12,13 @@ describe('folder view', () => {
   it('shows folder cards first, then bookmark tiles as real links', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
     const card = within(folders()).getByRole('button', { name: /^Dev/ });
-    expect(card).toHaveTextContent('2 bookmarks');
+    expect(card).toHaveTextContent('2 links · 1 folder');
     const links = within(bookmarks()).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual([
-      'GitHubgithub.com',
-      'Newsnews.ycombinator.com',
+    expect(links.map((l) => l.querySelector('.line-clamp-2')?.textContent)).toEqual([
+      'GitHub',
+      'News',
     ]);
+    expect(links[0]).toHaveTextContent('github.com');
     expect(links[0]).toHaveAttribute('href', 'https://github.com/');
   });
 

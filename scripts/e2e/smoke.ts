@@ -425,6 +425,8 @@ check('theme: dark mode overrides a light system and sticks', async (page) => {
   await page.setViewport(1280, 800, false); // system says light
   const bodyBg = () =>
     page.eval<string>('getComputedStyle(document.body).backgroundColor');
+  await page.click('[role=radiogroup] [aria-label="Light"]');
+  await page.waitFor('document.documentElement.dataset.theme === "light"');
   const lightBg = await bodyBg();
   await page.click('[role=radiogroup] [aria-label="Dark"]');
   await page.waitFor('document.documentElement.dataset.theme === "dark"');
@@ -447,6 +449,47 @@ check('theme: dark mode overrides a light system and sticks', async (page) => {
   await page.waitFor('document.querySelector("[role=radiogroup]")');
   await page.click('[role=radiogroup] [aria-label="Match system"]');
   await page.waitFor('document.documentElement.dataset.theme === undefined');
+});
+
+check('all links: flattens a big nested library with folder labels', async (page) => {
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  await page.eval(`(async () => {
+    const root = await chrome.bookmarks.create({ parentId: '1', title: 'Imported From Elsewhere' });
+    const names = ['Mac Things', 'Android Apps', 'React Projects', 'Interview Prep', 'Jobs', 'Notes'];
+    for (const [f, name] of names.entries()) {
+      const folder = await chrome.bookmarks.create({ parentId: root.id, title: name });
+      const sub = await chrome.bookmarks.create({ parentId: folder.id, title: name + ' archive' });
+      await Promise.all(Array.from({ length: 100 }, (_, i) =>
+        chrome.bookmarks.create({ parentId: i % 2 ? folder.id : sub.id, title: name + ' link ' + i, url: 'https://site' + ((f * 7 + i) % 23) + '.example.com/' + i })));
+    }
+    window.__importId = root.id;
+  })()`);
+  await page.setViewport(1440, 900, true);
+  await page.eval(
+    `document.querySelector('[role=radio][aria-checked]') && [...document.querySelectorAll('[role=radio]')].find((b) => b.textContent.trim() === 'Folders')?.click()`,
+  );
+  await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+  await page.waitFor('document.querySelector("[data-folder-card]")');
+  await page.eval(
+    `document.querySelector('[data-folder-card="' + window.__importId + '"]').click()`,
+  );
+  await page.waitFor('document.querySelector("[data-folder-card]")');
+  await sleep(1000); // let the entrance animation finish
+  await page.screenshot(`${OUT}/redesign-folders.png`);
+  await page.eval(
+    `[...document.querySelectorAll('[role=radio]')].find((b) => b.textContent.trim() === 'All links').click()`,
+  );
+  await page.waitFor(`document.body.textContent.includes('600 links across 12 folders')`);
+  const sample = await page.eval<string>(
+    `document.querySelector('[data-bookmark-id]').textContent`,
+  );
+  assert.match(sample, /Mac Things|archive/);
+  await sleep(1000);
+  await page.screenshot(`${OUT}/redesign-all-links.png`);
+  await page.eval(
+    `[...document.querySelectorAll('[role=radio]')].find((b) => b.textContent.trim() === 'Folders').click()`,
+  );
+  await page.eval(`chrome.bookmarks.removeTree(window.__importId)`);
 });
 
 check('tree follows bookmark changes made outside Arca', async (page) => {

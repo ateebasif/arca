@@ -6,7 +6,8 @@ import { IconButton } from './IconButton';
 import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { FolderView } from './main/FolderView';
-import { Toolbar } from './main/Toolbar';
+import { AddMenu } from './main/AddMenu';
+import { ScopeSwitch, Toolbar } from './main/Toolbar';
 import { ScrollParentContext } from './main/scrollParent';
 import { OverlayHost } from './overlays/OverlayHost';
 import { PreviewController } from './preview/PreviewController';
@@ -48,21 +49,27 @@ export function Dashboard({ surface }: DashboardProps) {
     <div className="flex h-full" data-surface={surface}>
       {!collapsed && <Sidebar />}
       <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-2 px-5">
-          {collapsed && (
-            <IconButton label="Show sidebar (⌘\)" onClick={toggleSidebar}>
-              <SidebarIcon />
-            </IconButton>
+        <header className="flex shrink-0 flex-col px-5">
+          <div className="flex h-14 items-center gap-3">
+            {collapsed && (
+              <IconButton label="Show sidebar (⌘\)" onClick={toggleSidebar}>
+                <SidebarIcon />
+              </IconButton>
+            )}
+            <div className="min-w-0 flex-1">
+              <Breadcrumbs />
+            </div>
+            <div className="flex w-[min(34rem,48%)] shrink-0">
+              <SearchBox />
+            </div>
+            <AddMenu />
+          </div>
+          {!searching && (
+            <div className="flex h-10 items-center justify-between gap-3">
+              <ScopeSwitch />
+              <Toolbar />
+            </div>
           )}
-          <div className="min-w-0 flex-1">
-            <Breadcrumbs />
-          </div>
-          <div className="flex w-[min(30rem,42%)] shrink-0 justify-center">
-            <SearchBox />
-          </div>
-          <div className="flex flex-1 justify-end">
-            <Toolbar />
-          </div>
         </header>
         <section
           ref={setScrollParent}

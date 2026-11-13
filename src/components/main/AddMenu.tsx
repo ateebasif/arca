@@ -62,7 +62,7 @@ export function AddMenu() {
               ]?.focus();
             }
           }}
-          className="border-line bg-surface-strong absolute top-10 right-0 z-30 min-w-44 rounded-xl border p-1 shadow-(--shadow-pop) backdrop-blur-xl"
+          className="animate-pop border-line bg-surface-strong absolute top-10 right-0 z-30 min-w-44 rounded-xl border p-1 shadow-(--shadow-pop) backdrop-blur-xl"
         >
           <MenuItem onClick={() => create('bookmark')} icon={<PlusIcon />}>
             New bookmark

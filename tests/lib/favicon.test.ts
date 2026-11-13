@@ -41,3 +41,17 @@ describe('displayHost', () => {
     expect(displayHost('not a url')).toBe('');
   });
 });
+
+import { mainDomain } from '@/src/lib/url';
+
+describe('mainDomain', () => {
+  it.each([
+    ['https://docs.github.com/en', 'github.com'],
+    ['https://www.example.com/', 'example.com'],
+    ['https://shop.example.co.uk/x', 'example.co.uk'],
+    ['https://a.b.daraz.com.pk/', 'daraz.com.pk'],
+    ['http://127.0.0.1:4747/', '127.0.0.1'],
+    ['http://localhost:3000/', 'localhost'],
+    ['not a url', ''],
+  ])('%s → %s', (url, domain) => expect(mainDomain(url)).toBe(domain));
+});

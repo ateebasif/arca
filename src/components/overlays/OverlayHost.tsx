@@ -80,7 +80,7 @@ export function Toaster() {
         <div
           key={t.id}
           role={t.tone === 'error' ? 'alert' : 'status'}
-          className={`border-line bg-surface-strong pointer-events-auto flex items-center gap-3 rounded-xl border px-4 py-2.5 text-[13px] shadow-(--shadow-pop) backdrop-blur-xl ${
+          className={`animate-rise border-line bg-surface-strong pointer-events-auto flex items-center gap-3 rounded-xl border px-4 py-2.5 text-[13px] shadow-(--shadow-pop) backdrop-blur-xl ${
             t.tone === 'error' ? 'text-danger' : ''
           }`}
         >

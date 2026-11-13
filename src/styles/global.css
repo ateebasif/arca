@@ -31,24 +31,59 @@
 
   --shadow-tile: 0 1px 2px rgb(20 20 40 / 0.06), 0 2px 8px rgb(20 20 40 / 0.04);
   --shadow-pop: 0 8px 30px rgb(20 20 40 / 0.14), 0 1px 3px rgb(20 20 40 / 0.08);
+
+  /* Motion. Everything is disabled under prefers-reduced-motion (below). */
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-rise: arca-rise 340ms var(--ease-out-soft) both;
+  --animate-pop: arca-pop 170ms var(--ease-out-soft) both;
+  --animate-fade: arca-fade 220ms ease-out both;
+
+  @keyframes arca-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes arca-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(-2px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes arca-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
-      --color-canvas-from: #15131d;
-      --color-canvas-to: #0e1520;
-      --color-surface: rgb(38 38 46 / 0.6);
-      --color-surface-strong: rgb(44 44 54 / 0.92);
+      --color-canvas-from: #13111d;
+      --color-canvas-to: #090b11;
+      --color-surface: rgb(255 255 255 / 0.035);
+      --color-surface-strong: rgb(30 31 42 / 0.94);
       --color-hover: rgb(255 255 255 / 0.06);
-      --color-line: rgb(255 255 255 / 0.08);
+      --color-line: rgb(255 255 255 / 0.075);
       --color-ink: #f1f1f5;
       --color-ink-muted: #b4b4be;
       --color-ink-faint: #9b9ba6;
       --color-accent: #9d93ff;
       --color-accent-soft: rgb(157 147 255 / 0.16);
       --color-danger: #ff7070;
-      --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.3);
+      --shadow-tile: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 10px rgb(0 0 0 / 0.35);
       --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
       color-scheme: dark;
     }
@@ -59,19 +94,19 @@
   }
 
   :root[data-theme='dark'] {
-    --color-canvas-from: #15131d;
-    --color-canvas-to: #0e1520;
-    --color-surface: rgb(38 38 46 / 0.6);
-    --color-surface-strong: rgb(44 44 54 / 0.92);
+    --color-canvas-from: #13111d;
+    --color-canvas-to: #090b11;
+    --color-surface: rgb(255 255 255 / 0.035);
+    --color-surface-strong: rgb(30 31 42 / 0.94);
     --color-hover: rgb(255 255 255 / 0.06);
-    --color-line: rgb(255 255 255 / 0.08);
+    --color-line: rgb(255 255 255 / 0.075);
     --color-ink: #f1f1f5;
     --color-ink-muted: #b4b4be;
     --color-ink-faint: #9b9ba6;
     --color-accent: #9d93ff;
     --color-accent-soft: rgb(157 147 255 / 0.16);
     --color-danger: #ff7070;
-    --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-tile: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 10px rgb(0 0 0 / 0.35);
     --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.45);
     color-scheme: dark;
   }
@@ -102,6 +137,7 @@
         var(--color-canvas-from),
         transparent 70%
       ),
+      radial-gradient(900px 520px at 92% -12%, var(--color-accent-soft), transparent 70%),
       linear-gradient(135deg, var(--color-canvas-from), var(--color-canvas-to));
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
@@ -115,6 +151,12 @@
   button {
     cursor: default;
   }
+}
+
+/* Tiles rise in, slightly staggered, right after a folder opens. */
+.arca-entering [data-tile] {
+  animation: var(--animate-rise);
+  animation-delay: calc(var(--i, 0) * 18ms);
 }
 
 @media (prefers-reduced-motion: reduce) {

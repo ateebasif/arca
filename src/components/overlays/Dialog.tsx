@@ -65,7 +65,7 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/20 p-4 backdrop-blur-[2px]"
+      className="animate-fade fixed inset-0 z-50 grid place-items-center bg-black/30 p-4 backdrop-blur-[2px]"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -74,7 +74,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={titleId}
         onKeyDown={onKeyDown}
-        className="border-line bg-surface-strong w-full max-w-md rounded-(--radius-panel) border p-5 shadow-(--shadow-pop) backdrop-blur-xl"
+        className="animate-pop border-line bg-surface-strong w-full max-w-md rounded-(--radius-panel) border p-5 shadow-(--shadow-pop) backdrop-blur-xl"
       >
         <h2 id={titleId} className="mb-4 text-[15px] font-semibold">
           {title}

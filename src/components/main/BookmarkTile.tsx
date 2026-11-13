@@ -1,13 +1,15 @@
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { bookmarkLinkProps } from '@/src/features/open';
-import { displayHost } from '@/src/lib/url';
+import { displayHost, mainDomain } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
 import type { Density } from '@/src/store/ui';
 import { InlineRename } from '../overlays/InlineRename';
+import { FolderIcon } from '../icons';
 import { Favicon } from './Favicon';
 import { MoreButton } from './MoreButton';
+import { useCover } from './useCoverTone';
 
 interface BookmarkTileProps {
   bookmark: BNode;
@@ -85,29 +87,95 @@ export const BookmarkTile = memo(function BookmarkTile({
   }
 
   return (
+    <CoverTile
+      {...{
+        url,
+        host,
+        title,
+        linkProps,
+        label,
+        folderLabel,
+        bookmark,
+        blocked: link.blocked,
+      }}
+    />
+  );
+});
+
+interface CoverTileProps {
+  url: string;
+  host: string;
+  title: string;
+  linkProps: React.AnchorHTMLAttributes<HTMLAnchorElement> & Record<string, unknown>;
+  label: React.ReactNode;
+  folderLabel?: string;
+  bookmark: BNode;
+  blocked: boolean;
+}
+
+/** Comfortable grid tile: brand-coloured cover with the site, then title and folder. */
+function CoverTile({
+  url,
+  host,
+  title,
+  linkProps,
+  label,
+  folderLabel,
+  bookmark,
+  blocked,
+}: CoverTileProps) {
+  const cover = useCover(url, title);
+  return (
     <div className="group relative">
       <a
         {...linkProps}
-        className="border-line bg-surface hover:bg-surface-strong flex h-[132px] flex-col items-center justify-center gap-2.5 rounded-(--radius-tile) border px-3 text-center shadow-(--shadow-tile) backdrop-blur-md transition-[background-color,transform] duration-150 hover:-translate-y-px"
+        style={{ '--glow': cover.glow } as React.CSSProperties}
+        className="border-line bg-surface flex h-[144px] flex-col overflow-hidden rounded-(--radius-tile) border shadow-(--shadow-tile) backdrop-blur-md transition-[transform,box-shadow,border-color] duration-200 ease-(--ease-out-soft) hover:-translate-y-0.5 hover:border-white/15 hover:shadow-[0_16px_36px_-14px_var(--glow)] focus-visible:-translate-y-0.5"
       >
-        <span className="bg-surface-strong ring-line grid size-12 place-items-center rounded-2xl ring-1">
-          <Favicon url={url} title={title} size={24} />
+        <span
+          aria-hidden="true"
+          className="relative flex h-[64px] shrink-0 items-center gap-2.5 px-3"
+          style={{
+            background: blocked
+              ? 'linear-gradient(135deg, hsl(0 60% 36%), hsl(350 60% 24%))'
+              : cover.background,
+          }}
+        >
+          <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_0%_0%,rgb(255_255_255/0.2),transparent_60%)]" />
+          <span className="relative grid size-9 shrink-0 place-items-center rounded-[10px] bg-white/95 shadow-sm transition-transform duration-200 ease-(--ease-out-soft) group-hover:scale-105">
+            <Favicon url={url} title={title} size={20} />
+          </span>
+          <span className="relative min-w-0 truncate text-[13px] font-semibold tracking-tight text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.25)]">
+            {blocked ? 'Blocked link' : mainDomain(url) || title}
+          </span>
         </span>
-        <span className="w-full min-w-0">
+        <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3">
           {label ?? (
             <span className="line-clamp-2 text-[13px] leading-snug font-medium break-words">
               {title}
             </span>
           )}
           <span
-            className={`mt-0.5 block truncate text-[11px] ${link.blocked ? 'text-danger' : 'text-ink-faint'}`}
+            className={`flex min-w-0 items-center gap-1 text-[11px] ${blocked ? 'text-danger' : 'text-ink-faint'}`}
             title={folderLabel}
           >
-            {link.blocked ? 'Blocked link' : folderLabel ? `📁 ${folderLabel}` : host}
+            {folderLabel && !blocked && (
+              <FolderIcon width={11} height={11} className="shrink-0" />
+            )}
+            <span className="truncate">
+              {blocked
+                ? "Arca won't open this"
+                : folderLabel?.split(' / ').at(-1) || host}
+            </span>
           </span>
         </span>
       </a>
-      <MoreButton id={bookmark.id} title={title} className="absolute top-1.5 right-1.5" />
+      <MoreButton
+        id={bookmark.id}
+        title={title}
+        onCover
+        className="absolute top-2 right-2"
+      />
     </div>
   );
-});
+}
