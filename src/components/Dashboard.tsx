@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useHotkeys } from '@/src/lib/hotkeys';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
@@ -7,6 +7,7 @@ import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { FolderView } from './main/FolderView';
 import { Toolbar } from './main/Toolbar';
+import { ScrollParentContext } from './main/scrollParent';
 import { OverlayHost } from './overlays/OverlayHost';
 import { SearchBox } from './search/SearchBox';
 import { SearchResults } from './search/SearchResults';
@@ -24,6 +25,7 @@ export function Dashboard({ surface }: DashboardProps) {
   const currentFolderId = useUi((s) => s.currentFolderId);
   const openFolder = useUi((s) => s.openFolder);
   const searching = useUi((s) => s.query.trim().length > 0);
+  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
 
   useHotkeys({ 'mod+\\': () => toggleSidebar() });
 
@@ -55,10 +57,13 @@ export function Dashboard({ surface }: DashboardProps) {
           </div>
         </header>
         <section
+          ref={setScrollParent}
           aria-label="Folder contents"
-          className="min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
+          className="relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
         >
-          {searching ? <SearchResults /> : <FolderView />}
+          <ScrollParentContext.Provider value={scrollParent}>
+            {searching ? <SearchResults /> : <FolderView />}
+          </ScrollParentContext.Provider>
         </section>
       </main>
       <OverlayHost />

@@ -118,3 +118,23 @@ describe('list view and sorting', () => {
     ]);
   });
 });
+
+describe('virtualization', () => {
+  it('virtualizes folders with more than 200 bookmarks in grid and list', async () => {
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: Array.from({ length: 300 }, (_, i) => ({
+        title: `B${i}`,
+        url: `https://b${i}.dev/`,
+      })),
+    });
+    expect(document.querySelector('[data-virtualized]')).not.toBeNull();
+    expect(screen.queryAllByRole('link').length).toBeLessThan(300);
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(document.querySelector('[data-virtualized]')).not.toBeNull();
+  });
+
+  it('renders small folders without virtualization', async () => {
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    expect(document.querySelector('[data-virtualized]')).toBeNull();
+  });
+});
