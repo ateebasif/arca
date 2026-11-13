@@ -2,7 +2,7 @@
 
 ## In Progress
 
-- [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · `docs/readme-load-unpacked` · Phase 1 · README done; waiting on a manual Ardia check
+- [ ] ARC-018 · README: load unpacked in Ardia + Chrome; verify §16 Ardia risks · `docs/readme-load-unpacked` · Phase 1 · Ardia: loads unpacked, dashboard works with ~4k bookmarks; ⌘T opens Ardia's command bar (no New Tab override); popup still to check
 
 ## Up Next
 
@@ -50,6 +50,7 @@
 
 ## Ideas (unscoped)
 
+- Real Arca icon (toolbar and extension page still show the template puzzle piece).
 - Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
@@ -82,7 +83,7 @@
 
 ## Tech Debt / Risks to Verify
 
-- Ardia (0.2.46, Chromium 157) disables DevTools automation (`DevToolsAcceptDebuggingConnections`), so it can't run `bun run e2e`. Unpacked loading and the New Tab override need a manual check (PRD §16.1–16.2, ARC-018).
+- Ardia (0.2.46, Chromium 157) disables DevTools automation, so it can't run `bun run e2e`; Ardia checks are manual. Verified 2026-11-13: unpacked loading works; ⌘T opens Ardia's command bar instead of the New Tab override (PRD §16.2), so the sidebar/popup are the entry points there.
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
 - JS is 320 KB raw / 99 KB gzip at end of Phase 1 (budget 400 KB raw); React is ~220 KB of that. Lazy-load Phase 3 views (§10).
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.

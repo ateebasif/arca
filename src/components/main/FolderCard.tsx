@@ -38,7 +38,7 @@ export const FolderCard = memo(function FolderCard({
         ) : (
           <span className="block truncate font-medium">{title}</span>
         )}
-        <span className="text-ink-muted block text-xs">
+        <span className="text-ink-muted block truncate text-xs whitespace-nowrap">
           {count === 1 ? '1 bookmark' : `${count} bookmarks`}
         </span>
       </span>
