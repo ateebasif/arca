@@ -26,4 +26,7 @@ All notable changes to this project are documented here. The format follows
   only has its generic placeholder.
 - List view with title, URL, folder and date columns; click a column to sort.
 - Sort by manual order, title, date added or domain, in either direction.
+- Global fuzzy search (⌘K or /) over titles, URLs and folder names, with
+  keyboard navigation, ⌘Enter for a new tab, ⌥Enter to show in folder, and an
+  "in this folder" filter.
 - `bun run e2e`: smoke checks against real Chrome with the built extension.

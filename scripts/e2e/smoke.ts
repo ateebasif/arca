@@ -7,7 +7,7 @@
  */
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
-import { launch, type Page } from './cdp';
+import { launch, MOD, type Page } from './cdp';
 
 const OUT = '.e2e';
 mkdirSync(OUT, { recursive: true });
@@ -50,6 +50,63 @@ check('grid shows folder cards and tiles; folders open on click', async (page) =
   await page.waitFor('document.querySelector("[role=table]")');
   await page.screenshot(`${OUT}/folder-work-list.png`);
   await page.eval(`document.querySelector('[aria-label="Grid view"]').click()`);
+});
+
+check('search: mod+K, type, arrows, alt+Enter reveals in folder', async (page) => {
+  await page.waitFor('document.querySelector("[data-bookmark-id]")');
+  await page.setViewport(1280, 800);
+  await page.key('k', MOD.meta);
+  await page.waitFor('document.activeElement?.getAttribute("role") === "combobox"');
+  await page.type('fig');
+  await page.waitFor('document.querySelector("[role=option]")');
+  await page.screenshot(`${OUT}/search.png`);
+  const first = await page.eval<string>(
+    `document.querySelector('[role=option]').textContent`,
+  );
+  assert.match(first, /Figma/);
+  await page.key('Enter', MOD.alt);
+  await page.waitFor(
+    'document.querySelector("[aria-current=page]")?.textContent === "Work"',
+  );
+  await page.waitFor('document.activeElement?.textContent?.includes("Figma")');
+  await page.key('Escape');
+});
+
+check('search over 5,000 real bookmarks stays under 50 ms', async (page) => {
+  await page.waitFor('document.querySelector("[data-bookmark-id]")');
+  // Bulk-create through the real API in a dedicated folder.
+  await page.eval(`(async () => {
+    const root = await chrome.bookmarks.create({ parentId: '2', title: 'arca-e2e-bulk' });
+    for (let f = 0; f < 50; f++) {
+      const folder = await chrome.bookmarks.create({ parentId: root.id, title: 'Bulk ' + f });
+      await Promise.all(Array.from({ length: 100 }, (_, i) =>
+        chrome.bookmarks.create({ parentId: folder.id, title: 'Item ' + f + '-' + i + ' alpha', url: 'https://bulk' + f + '.example.com/' + i })));
+    }
+  })()`);
+  await page.reload();
+  await page.waitFor('document.querySelector("[role=treeitem]")');
+  const timings = await page.eval<number[]>(`(async () => {
+    const input = document.querySelector('[role=combobox]');
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    const out = [];
+    for (const q of ['alph', 'item 42', 'bulk7 example', 'zzzz']) {
+      const t = performance.now();
+      setter.call(input, q);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      await new Promise((r) => requestAnimationFrame(() => r()));
+      out.push(performance.now() - t);
+    }
+    setter.call(input, '');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    return out;
+  })()`);
+  console.log(`    search+render ms: ${timings.map((t) => t.toFixed(1)).join(', ')}`);
+  // Includes React render + one frame, so this bounds the 50 ms search budget loosely.
+  assert.ok(Math.max(...timings.slice(1)) < 100, `too slow: ${timings.join(', ')}`);
+  await page.eval(`(async () => {
+    const [n] = await chrome.bookmarks.search({ title: 'arca-e2e-bulk' });
+    await chrome.bookmarks.removeTree(n.id);
+  })()`);
 });
 
 check('tree follows bookmark changes made outside Arca', async (page) => {

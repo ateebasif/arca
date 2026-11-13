@@ -8,7 +8,6 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · Phase 1 · P0
 - [ ] ARC-012 · Add / edit / delete bookmarks & folders, inline rename, root-folder guard · Phase 1 · P0
 - [ ] ARC-013 · New Tab override + New Tab mode (dashboard / minimal search / redirect) · Phase 1 · P0
 - [ ] ARC-014 · Dashboard page entrypoint (same UI in a normal tab) · Phase 1 · P1
@@ -57,10 +56,12 @@
 
 ## Ideas (unscoped)
 
+- Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
 
+- [x] ARC-011 · Global fuzzy search: index, ⌘K / `/`, ↑↓ Enter ⌘Enter ⌥Enter, folder filter · `feature/global-search` · 2026-11-13
 - [x] ARC-009 · Sort: manual, title A–Z, date added, domain · `feature/list-view-sort` · 2026-11-13
 - [x] ARC-007 · List view with sortable columns + remembered grid/list toggle · `feature/list-view-sort` · 2026-11-13
 - [x] ARC-010 · Favicons via `_favicon` endpoint with lettered fallback tile · `feature/bookmark-grid` · 2026-11-13
