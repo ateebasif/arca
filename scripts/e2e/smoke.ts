@@ -31,6 +31,23 @@ check('new tab renders the folder tree without errors', async (page) => {
   await page.screenshot(`${OUT}/newtab-dark.png`);
 });
 
+check('grid shows folder cards and tiles; folders open on click', async (page) => {
+  await page.waitFor('document.querySelector("[data-bookmark-id]")');
+  // Fresh profile: no favicons cached, so tiles should show letters, not globes.
+  await page.waitFor(
+    'document.querySelectorAll("[data-testid=letter-tile]").length >= 2',
+  );
+  await page.click('[data-folder-card]');
+  await page.waitFor(
+    'document.querySelector("[aria-current=page]")?.textContent === "Work"',
+  );
+  await page.setViewport(1280, 800);
+  await page.screenshot(`${OUT}/folder-work.png`);
+  await page.eval(`document.querySelector('[aria-label="Compact density"]').click()`);
+  await page.screenshot(`${OUT}/folder-work-compact.png`);
+  await page.eval(`document.querySelector('[aria-label="Comfortable density"]').click()`);
+});
+
 check('tree follows bookmark changes made outside Arca', async (page) => {
   await page.waitFor('document.querySelector("[role=treeitem]")');
   await page.eval(`chrome.bookmarks.create({ parentId: '1', title: 'Made elsewhere' })`);
