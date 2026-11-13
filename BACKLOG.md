@@ -83,4 +83,5 @@
 - React + ReactDOM is ~220 KB of the 400 KB JS budget. Keep an eye on bundle size as features land.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. Fine for the wrapper; the store (ARC-004) should answer ancestry from its in-memory map.
+- `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - The in-memory bookmarks fake (`tests/fakes/bookmarks.ts`) copies Chromium's move-index quirk from source reading; double-check against a real browser during ARC-020 (drag & drop).
