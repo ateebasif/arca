@@ -71,10 +71,10 @@ export interface PlanOptions {
 export const DEFAULT_ORGANIZE_RULES =
   'Name each folder by what the links are about, not by the website. ' +
   'Short and specific: 1 to 3 words, Title Case. Prefer common names ' +
-  '(e.g. "React", "Torrents", "Mac Apps") over vague ones like "Misc" or "Resources".';
+  '(e.g. "React", "Recipes", "Mac Apps") over vague ones like "Misc" or "Resources".';
 
 export const DEFAULT_TAG_RULES =
-  '1 to 2 lowercase tags per folder. First the topic (e.g. "react", "torrents"), ' +
+  '1 to 2 lowercase tags per folder. First the topic (e.g. "react", "recipes"), ' +
   'then the kind of page if it is clear (e.g. "tutorial", "tool", "docs"). ' +
   'Reuse an existing tag when one fits.';
 
