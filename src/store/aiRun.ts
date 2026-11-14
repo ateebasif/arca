@@ -34,6 +34,9 @@ export interface RunOptions {
   embedModel: string;
   chatModel: string;
   groups?: number | 'ai';
+  organizeRules?: string;
+  tagRules?: string;
+  knownTags?: readonly string[];
 }
 
 interface AiRunState {
@@ -47,6 +50,9 @@ interface AiRunState {
   tagWithFolder: boolean;
   setTagWithFolder(on: boolean): void;
   names: Record<number, string>;
+  /** Tags you edited for a group (otherwise its suggested ones). */
+  groupTags: Record<number, string[]>;
+  setGroupTags(index: number, tags: string[]): void;
   skipped: Set<number>;
   setGroupsWanted(n: number): void;
   setName(index: number, name: string): void;
@@ -68,6 +74,7 @@ const initial = {
   folderId: null,
   folderTitle: '',
   names: {},
+  groupTags: {},
   skipped: new Set<number>(),
 };
 
@@ -79,6 +86,8 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
   setGroupsWanted: (groupsWanted) => set({ groupsWanted }),
   setTagWithFolder: (tagWithFolder) => set({ tagWithFolder }),
   setName: (index, name) => set((s) => ({ names: { ...s.names, [index]: name } })),
+  setGroupTags: (index, tags) =>
+    set((s) => ({ groupTags: { ...s.groupTags, [index]: tags } })),
   setIncluded: (index, included) =>
     set((s) => {
       const skipped = new Set(s.skipped);
@@ -96,6 +105,7 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
       folderId: folder.id,
       folderTitle: folder.title,
       names: {},
+      groupTags: {},
       skipped: new Set(),
       phase: {
         kind: 'running',
@@ -153,10 +163,14 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
   discard: () => set({ ...initial, skipped: new Set() }),
 
   async apply() {
-    const { phase, names, skipped, folderId, tagWithFolder } = get();
+    const { phase, names, groupTags, skipped, folderId, tagWithFolder } = get();
     if (phase.kind !== 'review' || !folderId) return;
     const chosen = phase.groups
-      .map((g, i) => ({ ...g, name: (names[i] ?? g.name).trim() || g.name }))
+      .map((g, i) => ({
+        ...g,
+        name: (names[i] ?? g.name).trim() || g.name,
+        tags: groupTags[i] ?? g.tags,
+      }))
       .filter((_, i) => !skipped.has(i));
     const total = chosen.reduce((n, g) => n + g.ids.length, 0);
     set({ phase: { kind: 'applying', done: 0, total } });

@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { chooseK } from '@/src/features/ai/kmeans';
 import {
+  DEFAULT_ORGANIZE_RULES,
+  DEFAULT_TAG_RULES,
   estimateSeconds,
-  groupTag,
+  tagsForGroup,
   type OrganizeItem,
   type Stage,
 } from '@/src/features/ai/organize';
+import { getMetaStore, useMeta } from '@/src/store/useMeta';
+import { TagInput } from '../tags/TagInput';
+import { RULES_MAX } from '@/src/store/settings';
 import { useAiRun, type AiPhase } from '@/src/store/aiRun';
 import { useOverlays } from '@/src/store/overlays';
 import { linksWithin } from '@/src/store/selectors';
@@ -51,6 +56,15 @@ export function AiOrganize() {
     [state, currentId],
   );
   const auto = chooseK(items.length);
+  const meta = useMeta();
+  const known = useMemo(
+    () =>
+      getMetaStore()
+        .allTags()
+        .map((t) => t.tag),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meta.version],
+  );
 
   if (!settings.aiEnabled && idle) {
     return (
@@ -78,6 +92,11 @@ export function AiOrganize() {
         embedModel: settings.embedModel,
         chatModel: settings.chatModel,
         groups: run.groupsWanted === -1 ? 'ai' : run.groupsWanted || undefined,
+        organizeRules: settings.organizeRules,
+        tagRules: settings.tagRules,
+        knownTags: getMetaStore()
+          .allTags()
+          .map((t) => t.tag),
       },
     );
 
@@ -156,6 +175,8 @@ export function AiOrganize() {
         </div>
       )}
 
+      {idle && <OrganizeRules />}
+
       {phase.kind === 'error' && <OllamaHelp error={phase.error} />}
 
       {phase.kind === 'running' && <RunProgress phase={phase} onCancel={run.cancel} />}
@@ -194,11 +215,10 @@ export function AiOrganize() {
               checked={run.tagWithFolder}
               onChange={(e) => run.setTagWithFolder(e.target.checked)}
             />
-            Also tag links with their folder name
+            Also tag the links
             <span className="text-ink-faint">
-              (e.g. #
-              {groupTag(run.names[0] ?? phase.groups[0]?.name ?? 'Topic') || 'topic'};
-              kept if you move them later)
+              (suggested per folder below, following your tag rules; edit them freely;
+              tags stay if you move links later)
             </span>
           </label>
           <ul className="flex flex-col gap-2">
@@ -233,6 +253,18 @@ export function AiOrganize() {
                 >
                   {g.samples.join(' · ')}
                 </p>
+                {run.tagWithFolder && !run.skipped.has(i) && (
+                  <div className="mt-2 pl-6" data-ai-group-tags>
+                    <TagInput
+                      value={
+                        run.groupTags[i] ??
+                        tagsForGroup({ name: run.names[i] ?? g.name, tags: g.tags })
+                      }
+                      onChange={(tags) => run.setGroupTags(i, tags)}
+                      suggestions={known}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -312,5 +344,79 @@ function RunProgress({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Optional instructions for AI organize: how to name folders and how to tag.
+ * Empty boxes use Arca's defaults, shown as the placeholder text.
+ */
+function OrganizeRules() {
+  const settings = useSettings();
+  const [folders, setFolders] = useState(settings.organizeRules);
+  const [tags, setTags] = useState(settings.tagRules);
+  const custom = !!(settings.organizeRules || settings.tagRules);
+  const save = (patch: { organizeRules?: string; tagRules?: string }) =>
+    void settings.update(patch);
+  const box = (
+    label: string,
+    value: string,
+    set: (v: string) => void,
+    key: 'organizeRules' | 'tagRules',
+    placeholder: string,
+  ) => (
+    <label className="flex flex-col gap-1">
+      <span className="text-ink flex items-center justify-between font-medium">
+        {label}
+        {value && (
+          <button
+            type="button"
+            className="text-ink-faint hover:text-ink font-normal"
+            onClick={() => {
+              set('');
+              save({ [key]: '' });
+            }}
+          >
+            Use default
+          </button>
+        )}
+      </span>
+      <textarea
+        aria-label={label}
+        rows={3}
+        maxLength={RULES_MAX}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => set(e.target.value)}
+        onBlur={() => value !== settings[key] && save({ [key]: value.trim() })}
+        onKeyDown={(e) => e.stopPropagation()}
+        className={`${inputClass} placeholder:text-ink-faint min-h-16 resize-y py-2 leading-relaxed`}
+      />
+    </label>
+  );
+  return (
+    <details className="border-line bg-surface rounded-xl border text-xs" open={custom}>
+      <summary className="text-ink-muted hover:text-ink cursor-pointer px-3 py-2.5 select-none">
+        Instructions for the AI{' '}
+        <span className="text-ink-faint">
+          (optional{custom ? ', using yours' : ', using defaults'})
+        </span>
+      </summary>
+      <div className="flex flex-col gap-3 px-3 pb-3">
+        <p className="text-ink-faint leading-relaxed">
+          These shape folder names and tags. Which links go together comes from what
+          they're about, so the folders themselves are found the same way. Leave a box
+          empty to use the default shown in it.
+        </p>
+        {box(
+          'Folder names',
+          folders,
+          setFolders,
+          'organizeRules',
+          DEFAULT_ORGANIZE_RULES,
+        )}
+        {box('Tags', tags, setTags, 'tagRules', DEFAULT_TAG_RULES)}
+      </div>
+    </details>
   );
 }

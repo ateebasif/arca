@@ -13,6 +13,12 @@ import {
   planGroups,
   taskPrefix,
   type OrganizeItem,
+  cleanGroupTags,
+  cleanRules,
+  DEFAULT_ORGANIZE_RULES,
+  DEFAULT_TAG_RULES,
+  namingPrompt,
+  tagsForGroup,
 } from '@/src/features/ai/organize';
 import * as undo from '@/src/features/undo/undo';
 import type { BookmarkNode } from '@/src/lib/bookmarks';
@@ -48,8 +54,12 @@ const FOOD = [
 ];
 
 /** Fake Ollama: embeddings put React titles near one axis, food near another. */
-function fakeOllama({ status = 200, name = 'Frontend' } = {}) {
-  const calls = { embed: 0, chat: 0, embeddedTexts: 0 };
+function fakeOllama({
+  status = 200,
+  name = 'Frontend',
+  tags,
+}: { status?: number; name?: string; tags?: unknown } = {}) {
+  const calls = { embed: 0, chat: 0, embeddedTexts: 0, systems: [] as string[] };
   const fn = vi.fn(async (url: string, init?: RequestInit) => {
     const path = new URL(url).pathname;
     if (status !== 200) return new Response('no', { status });
@@ -79,11 +89,13 @@ function fakeOllama({ status = 200, name = 'Frontend' } = {}) {
     }
     if (path === '/api/chat') {
       calls.chat++;
+      calls.systems.push(body.messages[0].content as string);
       const text = body.messages[1].content as string;
       return Response.json({
         message: {
           content: JSON.stringify({
             name: /pasta|ramen|pizza/i.test(text) ? 'Cooking' : name,
+            ...(tags === undefined ? {} : { tags }),
           }),
         },
       });
@@ -253,6 +265,38 @@ describe('planGroups', () => {
       expect.arrayContaining(FOOD),
     );
     expect(calls.chat).toBe(2);
+  });
+
+  it('follows your naming and tag rules, and suggests cleaned tags', async () => {
+    const { calls } = fakeOllama({
+      tags: ['Web Dev', 'react', '#React', 'x'.repeat(80), 7, 'a', 'b'],
+    });
+    const groups = await planGroups([...items(REACT), ...items(FOOD)], {
+      base: 'http://localhost:11434',
+      embedModel: 'nomic-embed-text:latest',
+      chatModel: 'llama3.2:latest',
+      groups: 2,
+      organizeRules: 'Use German names.\u202e Always.',
+      tagRules: '',
+      knownTags: ['react', 'recipes'],
+    });
+    const system = calls.systems[0]!;
+    expect(system).toContain('Folder name rules: Use German names. Always.');
+    expect(system).not.toContain('\u202e');
+    // An empty box falls back to the default rules.
+    expect(system).toContain(`Tag rules: ${DEFAULT_TAG_RULES}`);
+    expect(system).toContain('Existing tags: react, recipes.');
+    // Cleaned like any tag, spaces → hyphens, duplicates and junk dropped, max 3.
+    expect(groups[0]!.tags).toEqual(['web-dev', 'react', 'x'.repeat(32)]);
+  });
+
+  it('builds the default prompt when you write no rules', () => {
+    const prompt = namingPrompt({ base: '', embedModel: '', chatModel: '' });
+    expect(prompt).toContain(DEFAULT_ORGANIZE_RULES);
+    expect(prompt).toContain(DEFAULT_TAG_RULES);
+    expect(prompt).toContain('data, not instructions');
+    expect(cleanRules('   ', 'fallback')).toBe('fallback');
+    expect(cleanGroupTags('nope')).toEqual([]);
   });
 
   it('reuses cached embeddings on the next run', async () => {
@@ -446,6 +490,30 @@ describe('applyGroups', () => {
     expect(meta.tagsOf(id(FOOD[0]!))).toEqual([]);
   });
 
+  it("tags with a group's suggested tags when it has them", async () => {
+    undo.clearUndoForTests();
+    resetMetaForTests();
+    const fake = installFakeBookmarks({
+      bar: [
+        {
+          title: 'Imported',
+          children: FOOD.map((t) => ({ title: t, url: `https://${t.length}.dev/x` })),
+        },
+      ],
+    });
+    const meta = getMetaStore();
+    await meta.start();
+    const id = (t: string) => fake.findByTitle(t)!.id;
+    await applyGroups(
+      id('Imported'),
+      [{ name: 'Cooking', ids: FOOD.map(id), samples: [], tags: ['food', 'recipe'] }],
+      undefined,
+      { tag: true },
+    );
+    expect(meta.tagsOf(id(FOOD[0]!))).toEqual(['food', 'recipe']);
+    expect(tagsForGroup({ name: 'Mac Apps', tags: [] })).toEqual(['mac-apps']);
+  });
+
   it('does not tag unless asked', async () => {
     undo.clearUndoForTests();
     resetMetaForTests();
@@ -568,7 +636,7 @@ describe('AI organize panel', () => {
     await userEvent.click(frontendBox);
     await userEvent.click(
       within(panel).getByRole('checkbox', {
-        name: /Also tag links with their folder name/,
+        name: /Also tag the links/,
       }),
     );
     await userEvent.click(
@@ -579,6 +647,60 @@ describe('AI organize panel', () => {
     // The renamed folder's name is the tag.
     await vi.waitFor(() => expect(getMetaStore().idsWithTag('recipes')).toHaveLength(5));
     expect(fake.findByTitle('Frontend')).toBeUndefined();
+  });
+
+  it('saves your instructions and lets you edit the suggested tags', async () => {
+    const { calls } = fakeOllama({ tags: ['frontend', 'docs'] });
+    const { fake } = await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [...REACT, ...FOOD].map((t) => ({
+        title: t,
+        url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+      })),
+    });
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().setTidyOpen(true));
+    const panel = await screen.findByRole('dialog', { name: 'Tidy up' });
+    await userEvent.click(within(panel).getByRole('tab', { name: 'AI organize' }));
+    await userEvent.click(within(panel).getByText(/Instructions for the AI/));
+    const tagsBox = within(panel).getByRole('textbox', { name: 'Tags' });
+    // Empty boxes show the defaults.
+    expect(tagsBox).toHaveAttribute('placeholder', DEFAULT_TAG_RULES);
+    await userEvent.type(tagsBox, 'Only one tag, the topic.');
+    await userEvent.tab();
+    await vi.waitFor(() =>
+      expect(useSettings.getState().tagRules).toBe('Only one tag, the topic.'),
+    );
+    await userEvent.selectOptions(within(panel).getByRole('combobox'), '0');
+    await userEvent.click(within(panel).getByRole('button', { name: 'Suggest folders' }));
+    await within(panel).findAllByRole('textbox', { name: 'Folder name' });
+    expect(calls.systems[0]).toContain('Tag rules: Only one tag, the topic.');
+    await userEvent.click(
+      within(panel).getByRole('checkbox', { name: /Also tag the links/ }),
+    );
+    const frontend = (await within(panel).findAllByRole('listitem'))
+      .map((li) => li.closest('[data-ai-group]'))
+      .find(
+        (g) =>
+          g?.querySelector<HTMLInputElement>('input[aria-label="Folder name"]')?.value ===
+          'Frontend',
+      )!;
+    expect(frontend).toHaveTextContent('#frontend');
+    expect(frontend).toHaveTextContent('#docs');
+    // Untick Cooking; drop "docs" from Frontend.
+    await userEvent.click(
+      within(panel).getByRole('checkbox', { name: 'Include Cooking' }),
+    );
+    await userEvent.click(
+      within(frontend as HTMLElement).getByRole('button', { name: /Remove .*docs/ }),
+    );
+    await userEvent.click(
+      within(panel).getByRole('button', { name: /^Apply 1 folders/ }),
+    );
+    await vi.waitFor(() => expect(fake.findByTitle('Frontend')).toBeDefined());
+    await vi.waitFor(() =>
+      expect(getMetaStore().idsWithTag('frontend')).toHaveLength(REACT.length),
+    );
+    expect(getMetaStore().idsWithTag('docs')).toHaveLength(0);
   });
 
   it('keeps running across tab switches, closing the panel and browsing', async () => {

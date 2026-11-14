@@ -64,6 +64,9 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   folder-name replies are treated as untrusted: control, zero-width, bidi and path
   characters are stripped, length is capped, and the bookmark text is marked as data in
   the prompt. Every suggestion is shown for review, and one Undo reverses the move.
+- Your own organize instructions (folder-name and tag rules) are the only text
+  treated as instructions; they're stripped of control/bidi characters and capped
+  at 600 characters. Suggested tags are cleaned like any tag (max 3 per folder).
 - Ask Arca: the chat model only sees a short list of candidate bookmarks (title,
   site, folder, date) and can only answer with their numbers; numbers outside the
   list are dropped, so every result shown is a real bookmark, opened through the

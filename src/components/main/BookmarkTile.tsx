@@ -205,20 +205,27 @@ function CoverTile({
               {title}
             </span>
           )}
-          <span
-            className={`flex min-w-0 items-center gap-1 text-[11px] ${blocked ? 'text-danger' : 'text-ink-faint'}`}
-            title={folderLabel}
-          >
-            {folderLabel && !blocked && (
-              <FolderIcon width={11} height={11} className="shrink-0" />
-            )}
-            <span className="truncate">
-              {blocked
-                ? "Arca won't open this"
-                : folderLabel?.split(' / ').at(-1) || host}
+          {/* Folder and tags share one line so a two-line title always fits. */}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className={`flex min-w-0 flex-1 items-center gap-1 text-[11px] ${blocked ? 'text-danger' : 'text-ink-faint'}`}
+              title={folderLabel}
+            >
+              {folderLabel && !blocked && (
+                <FolderIcon width={11} height={11} className="shrink-0" />
+              )}
+              <span className="truncate">
+                {blocked
+                  ? "Arca won't open this"
+                  : folderLabel?.split(' / ').at(-1) || host}
+              </span>
             </span>
+            <TagChips
+              tags={tags}
+              max={1}
+              className="max-w-[60%] shrink-0 flex-nowrap overflow-hidden"
+            />
           </span>
-          <TagChips tags={tags} max={2} className="flex-nowrap overflow-hidden" />
         </span>
       </a>
       <MoreButton

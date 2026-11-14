@@ -15,18 +15,22 @@ export function TagChips({
   if (tags.length === 0) return null;
   const shown = tags.slice(0, max);
   return (
-    <span className={`flex min-w-0 flex-wrap items-center gap-1 ${className}`} data-tags>
+    <span
+      className={`flex min-w-0 flex-wrap items-center gap-1 ${className}`}
+      data-tags
+      title={tags.map((t) => `#${t}`).join(' ')}
+    >
       {shown.map((tag) => (
         <span
           key={tag}
           style={tagStyle(tag, colors)}
-          className="max-w-32 truncate rounded-full px-1.5 py-px text-[10px] leading-4 font-medium"
+          className="max-w-32 min-w-0 truncate rounded-full px-1.5 py-px text-[10px] leading-4 font-medium"
         >
           #{tag}
         </span>
       ))}
       {tags.length > max && (
-        <span className="text-ink-faint text-[10px]">+{tags.length - max}</span>
+        <span className="text-ink-faint shrink-0 text-[10px]">+{tags.length - max}</span>
       )}
     </span>
   );
