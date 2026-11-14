@@ -144,6 +144,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Import** (Settings → Backup): bookmarks exported from any browser (HTML) or an
+  Arca backup (JSON) go into a new folder after a preview; duplicates are skipped
+  by default, tags are kept, and one Undo removes the whole import.
 - AI organize can work on **all bookmarks** at once (not just the open folder):
   results go into Other bookmarks / Organized by Arca; the Bookmarks bar is left
   alone unless you include it.

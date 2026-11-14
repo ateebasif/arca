@@ -120,6 +120,16 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   in local storage, validates it again when the popup reads it, and never opens
   or saves non-web URLs.
 
+### Import
+
+- Files are read locally (nothing is uploaded) and capped at 20 MB and 25,000 items.
+  HTML is parsed with `DOMParser` into an inert document and only `<H3>`/`<A>` text
+  and `HREF`/`TAGS` attributes are read; markup in titles stays text. JSON must be an
+  Arca backup and is shape-checked. Titles are stripped of control/bidi characters,
+  tags are cleaned like any tag, and `javascript:`/`data:` links are left out (the
+  preview says how many).
+- Everything goes into one new folder; one Undo removes it.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.

@@ -86,6 +86,21 @@ export class BookmarkStore {
     this.unsubscribe = null;
   }
 
+  /**
+   * Arca's own big imports: ignore the flood of events (like a browser
+   * import) and load the finished tree once at the end.
+   */
+  async bulk<T>(task: () => Promise<T>): Promise<T> {
+    this.importing = true;
+    try {
+      return await task();
+    } finally {
+      this.importing = false;
+      this.pending = null;
+      void this.reload();
+    }
+  }
+
   /** Reloads the whole tree. Concurrent calls coalesce into one extra reload. */
   reload(): Promise<void> {
     if (this.loading) {
