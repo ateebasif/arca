@@ -176,7 +176,7 @@ function CoverTile({
       data-selected={selected || undefined}
     >
       {/* Top-right corner, clear of the site icon; the ⋯ button sits just left of it. */}
-      <SelectBox id={bookmark.id} title={title} className="absolute top-[22px] right-3" />
+      <SelectBox id={bookmark.id} title={title} className="absolute top-[23px] right-3" />
       <a
         {...linkProps}
         style={{ '--glow': cover.glow } as React.CSSProperties}

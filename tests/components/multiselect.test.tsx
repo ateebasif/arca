@@ -146,4 +146,55 @@ describe('multi-select', () => {
     await act(async () => void (await undo.undoLast()));
     expect(strip((await fake.getTree())[0]!)).toEqual(before);
   });
+
+  it('"Select all" selects everything in the folder once one item is picked', async () => {
+    await setup();
+    await userEvent.click(box('Beta'));
+    await screen.findByRole('region', { name: 'Selection' });
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Select all 5' }));
+    expect(within(bar()).getByText('5 items selected')).toBeVisible();
+    expect(within(bar()).queryByRole('button', { name: /Select all/ })).toBeNull();
+  });
+
+  it('ungroups several selected folders at once, in one undo', async () => {
+    const r = await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [
+        { title: 'Keep', url: 'https://keep.dev/' },
+        {
+          title: 'G1',
+          children: [
+            { title: 'a', url: 'https://a.dev/' },
+            { title: 'b', url: 'https://b.dev/' },
+          ],
+        },
+        { title: 'G2', children: [{ title: 'c', url: 'https://c.dev/' }] },
+      ],
+    });
+    act(() => useUi.getState().openFolder('1'));
+    await screen.findByRole('checkbox', { name: 'Select G1' });
+    undo.clearUndoForTests();
+    const strip = (n: BookmarkNode): unknown => ({
+      t: n.title,
+      c: n.children?.map(strip),
+    });
+    const before = strip((await r.fake.getTree())[0]!);
+    await userEvent.click(box('G1'));
+    await userEvent.click(box('G2'));
+    await userEvent.click(box('Keep'));
+    await screen.findByRole('region', { name: 'Selection' });
+    await userEvent.click(within(bar()).getByRole('button', { name: 'Ungroup…' }));
+    await userEvent.click(
+      within(bar()).getByRole('button', { name: 'Ungroup 2 folders' }),
+    );
+    await vi.waitFor(() =>
+      expect(r.fake.childIds('1').map((id) => r.fake.findById(id)!.title)).toEqual([
+        'Keep',
+        'a',
+        'b',
+        'c',
+      ]),
+    );
+    await act(async () => void (await undo.undoLast()));
+    expect(strip((await r.fake.getTree())[0]!)).toEqual(before);
+  });
 });

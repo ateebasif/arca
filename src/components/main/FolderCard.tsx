@@ -122,7 +122,7 @@ export const FolderCard = memo(function FolderCard({
       data-select-id={folder.id}
       data-selected={selected || undefined}
     >
-      <SelectBox id={folder.id} title={title} className="absolute top-[22px] right-3" />
+      <SelectBox id={folder.id} title={title} className="absolute top-[23px] right-3" />
       {renaming ? (
         <div className={className}>{body}</div>
       ) : (

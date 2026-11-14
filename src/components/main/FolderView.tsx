@@ -1,3 +1,4 @@
+import { useViewIds } from '@/src/store/selection';
 import { useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import {
@@ -79,6 +80,10 @@ function FolderContents() {
   const counts = folderCounts(state);
   const revealId = useUi((s) => s.revealId);
   useRevealEffect();
+  useViewIds(
+    [...folders, ...bookmarks].map((n) => n.id),
+    scope !== 'all',
+  );
 
   if (!state.ready) return null;
 
@@ -223,6 +228,7 @@ function AllLinksView() {
     };
   }, [state, currentFolderId, sort, direction]);
 
+  useViewIds(items.map((n) => n.id));
   const here = state.nodes.get(currentFolderId)?.title || 'this folder';
   if (items.length === 0) {
     return (

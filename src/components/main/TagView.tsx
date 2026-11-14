@@ -1,3 +1,4 @@
+import { useViewIds } from '@/src/store/selection';
 import { useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useMemo } from 'react';
 import { tagStyle } from '@/src/features/tags/style';
@@ -74,6 +75,7 @@ export function TagView({ tag }: { tag: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, tag, meta.version]);
   const counts = folderCounts(state);
+  useViewIds([...folders, ...links].map((n) => n.id));
   if (!state.ready) return null;
 
   const total = folders.length + links.length;

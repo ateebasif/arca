@@ -79,6 +79,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Selection checkboxes are rounded squares instead of circles.
 - Choosing a folder (popup "Bookmark this tab", Edit dialog, bulk Move) uses a
   searchable folder picker instead of a long system dropdown: type to filter
   (with each folder's path), recently used folders first, then the indented
@@ -109,6 +110,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Selection bar: **Select all** (everything in the folder or view, including rows
+  not yet scrolled into view) once one item is picked, and **Ungroup** for the
+  selected folders (several at once, asks first; one undo).
 - Create a folder right from the folder picker (popup save, Edit, bulk Move):
   "New folder in …" at the bottom, or type a name that doesn't exist yet and pick
   "Create …". It goes inside the chosen folder, is selected straight away, and
