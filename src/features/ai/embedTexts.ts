@@ -2,7 +2,7 @@ import { embed } from '@/src/lib/ollama';
 import {
   cacheKey,
   memoryVectors,
-  readCached,
+  readManyCached,
   rememberVector,
   writeCached,
 } from './embedCache';
@@ -29,6 +29,11 @@ export interface EmbedTextsOptions {
   model: string;
   signal?: AbortSignal;
   onProgress?(p: EmbedProgress): void;
+  /**
+   * Save new vectors in IndexedDB (default). Off for search queries and
+   * questions: what you typed is kept in memory only, never on disk.
+   */
+  persist?: boolean;
 }
 
 function throwIfAborted(signal?: AbortSignal) {
@@ -40,19 +45,11 @@ export async function embedTexts(
   texts: string[],
   opts: EmbedTextsOptions,
 ): Promise<Float32Array[]> {
-  const { base, model } = opts;
-  const out: (Float32Array | null)[] = await Promise.all(
-    texts.map(async (t) => {
-      const key = cacheKey(model, t);
-      const hit = memoryVectors.get(key);
-      if (hit) return hit;
-      const stored = await readCached(model, t);
-      if (!stored) return null;
-      const v = normalize(stored);
-      rememberVector(key, v);
-      return v;
-    }),
-  );
+  const { base, model, persist = true } = opts;
+  const out: (Float32Array | null)[] = persist
+    ? await readManyCached(model, texts, normalize)
+    : // Memory only: a repeat query this session is free, nothing touches disk.
+      texts.map((t) => memoryVectors.get(cacheKey(model, t)) ?? null);
   const missing = out.flatMap((v, i) => (v ? [] : [i]));
   const cached = texts.length - missing.length;
   let done = cached;
@@ -61,7 +58,7 @@ export async function embedTexts(
     const batch = missing.slice(start, start + EMBED_BATCH);
     opts.onProgress?.({ done, total: texts.length, cached, batch });
     const batchTexts = batch.map((i) => texts[i] ?? '');
-    const result = await embed(base, model, batchTexts);
+    const result = await embed(base, model, batchTexts, opts.signal);
     batch.forEach((i, j) => {
       const raw = result[j];
       if (!raw) return;
@@ -69,7 +66,7 @@ export async function embedTexts(
       const v = normalize(raw);
       out[i] = v;
       rememberVector(cacheKey(model, text), v);
-      void writeCached(model, text, raw);
+      if (persist) void writeCached(model, text, raw);
     });
     done += batch.length;
   }

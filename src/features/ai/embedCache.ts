@@ -25,7 +25,7 @@ export function embeddingStore(): KeyValueStore<unknown> {
 }
 export function setEmbeddingStoreForTests(store: KeyValueStore<unknown> | null): void {
   shared = store;
-  memoryVectors.clear();
+  forgetMemoryVectors();
 }
 
 /**
@@ -33,22 +33,46 @@ export function setEmbeddingStoreForTests(store: KeyValueStore<unknown> | null):
  * re-read thousands of IndexedDB entries. Cleared with the stored cache.
  */
 export const memoryVectors = new Map<string, Float32Array>();
-const MEMORY_MAX = 20_000;
+/** Cap by size, not count: big models have 2,560 numbers per vector. */
+const MEMORY_MAX_BYTES = 96 * 1024 * 1024;
+let memoryBytes = 0;
 export function rememberVector(key: string, vector: Float32Array): void {
-  if (memoryVectors.size >= MEMORY_MAX) {
-    const oldest = memoryVectors.keys().next().value;
-    if (oldest !== undefined) memoryVectors.delete(oldest);
+  const old = memoryVectors.get(key);
+  if (old) {
+    memoryBytes -= old.byteLength;
+    memoryVectors.delete(key);
+  }
+  while (memoryBytes + vector.byteLength > MEMORY_MAX_BYTES && memoryVectors.size) {
+    const [oldestKey, oldest] = memoryVectors.entries().next().value as [
+      string,
+      Float32Array,
+    ];
+    memoryVectors.delete(oldestKey);
+    memoryBytes -= oldest.byteLength;
   }
   memoryVectors.set(key, vector);
+  memoryBytes += vector.byteLength;
+}
+
+/** Drops every vector held in memory (AI turned off, cache cleared). */
+export function forgetMemoryVectors(): void {
+  memoryVectors.clear();
+  memoryBytes = 0;
+  knownMissing.clear();
 }
 
 export const cacheKey = (model: string, text: string) => `${model}|${textHash(text)}`;
 
-/** Reads a cached vector, validating that it's a non-empty number array. */
-export async function readCached(model: string, text: string): Promise<number[] | null> {
-  const raw = await embeddingStore()
-    .get(cacheKey(model, text))
-    .catch(() => undefined);
+/**
+ * Keys known to be absent from IndexedDB this session, so a library that
+ * hasn't been read yet isn't re-scanned on every search keystroke.
+ */
+const knownMissing = new Set<string>();
+// Another Arca tab may save readings meanwhile; re-check after a minute.
+let missingSince = 0;
+const MISSING_TTL_MS = 60_000;
+
+function validVector(raw: unknown): number[] | null {
   if (raw instanceof Float32Array) return Array.from(raw);
   if (Array.isArray(raw) && raw.length > 0 && raw.every((x) => typeof x === 'number')) {
     return raw as number[];
@@ -56,18 +80,61 @@ export async function readCached(model: string, text: string): Promise<number[] 
   return null;
 }
 
+/**
+ * Vectors for many texts: memory first, then one IndexedDB transaction for
+ * the rest. Returns unit vectors (or null where nothing is cached).
+ */
+export async function readManyCached(
+  model: string,
+  texts: readonly string[],
+  normalizeVector: (v: number[]) => Float32Array,
+): Promise<(Float32Array | null)[]> {
+  if (Date.now() - missingSince > MISSING_TTL_MS) {
+    knownMissing.clear();
+    missingSince = Date.now();
+  }
+  const keys = texts.map((t) => cacheKey(model, t));
+  const out: (Float32Array | null)[] = keys.map((k) => memoryVectors.get(k) ?? null);
+  const todo = keys.flatMap((k, i) => (out[i] || knownMissing.has(k) ? [] : [i]));
+  const raws = await embeddingStore()
+    .getMany(todo.map((i) => keys[i] ?? ''))
+    .catch(() => todo.map(() => undefined));
+  todo.forEach((i, j) => {
+    const key = keys[i] ?? '';
+    const stored = validVector(raws[j]);
+    if (!stored) {
+      knownMissing.add(key);
+      return;
+    }
+    const v = normalizeVector(stored);
+    rememberVector(key, v);
+    out[i] = v;
+  });
+  return out;
+}
+
+/** Reads a cached vector, validating that it's a non-empty number array. */
+export async function readCached(model: string, text: string): Promise<number[] | null> {
+  const raw = await embeddingStore()
+    .get(cacheKey(model, text))
+    .catch(() => undefined);
+  return validVector(raw);
+}
+
 export async function writeCached(
   model: string,
   text: string,
   vector: number[],
 ): Promise<void> {
+  const key = cacheKey(model, text);
+  knownMissing.delete(key);
   await embeddingStore()
-    .put(cacheKey(model, text), Float32Array.from(vector))
+    .put(key, Float32Array.from(vector))
     .catch(() => {});
 }
 
 export async function clearEmbeddings(): Promise<void> {
-  memoryVectors.clear();
+  forgetMemoryVectors();
   await embeddingStore()
     .clear()
     .catch(() => {});

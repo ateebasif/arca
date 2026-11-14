@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { CheckItem, LinkResult } from '@/src/features/deadlinks/check';
+import { hasSiteAccess } from '@/src/lib/permissions';
 
 /**
  * Dead-link check state: results by bookmark id and progress. Lives outside
@@ -11,6 +12,8 @@ interface LinkCheckState {
   error: string | null;
   start(items: CheckItem[], fresh?: boolean): Promise<void>;
   cancel(): void;
+  /** Deletes every stored result (the list of checked addresses). */
+  forget(): Promise<void>;
 }
 
 let controller: AbortController | null = null;
@@ -39,6 +42,11 @@ export const useLinkCheck = create<LinkCheckState>()((set, get) => ({
       }));
     };
     try {
+      // Without site access every request fails and would look "broken".
+      if (!(await hasSiteAccess())) {
+        set({ error: 'Arca no longer has permission to contact sites.' });
+        return;
+      }
       const { checkAll } = await import('@/src/features/deadlinks/check');
       await checkAll(items, {
         fresh,
@@ -56,13 +64,20 @@ export const useLinkCheck = create<LinkCheckState>()((set, get) => ({
       if (timer) clearTimeout(timer);
       flush();
       if (!signal.aborted) set({ progress: null });
-      controller = null;
+      // A run cancelled and restarted quickly must not clear the new run's controller.
+      if (controller?.signal === signal) controller = null;
     }
   },
   cancel() {
     controller?.abort();
     controller = null;
     set({ progress: null });
+  },
+  async forget() {
+    get().cancel();
+    const { clearLinkResults } = await import('@/src/features/deadlinks/check');
+    await clearLinkResults();
+    set({ results: new Map(), error: null });
   },
 }));
 

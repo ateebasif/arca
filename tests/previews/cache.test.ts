@@ -30,6 +30,29 @@ describe('PreviewCache', () => {
     expect(a).toMatchObject({ status: 'ok', title: 'A' });
   });
 
+  it('drops queued fetches nobody is waiting for any more', async () => {
+    let release = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    const fetcher = vi.fn(async (url: string) => {
+      await gate;
+      return ok(url);
+    });
+    const cache = new PreviewCache({ store: memoryStore(), fetcher });
+    // Three run at once; the rest wait their turn.
+    const busy = ['1', '2', '3'].map((n) => cache.get(`https://${n}.dev/`));
+    const ctrl = new AbortController();
+    const gone = cache.get('https://gone.dev/', { signal: ctrl.signal });
+    ctrl.abort();
+    const later = cache.get('https://later.dev/');
+    await new Promise((r) => setTimeout(r, 0));
+    release();
+    await Promise.all(busy);
+    await expect(gone).rejects.toThrow();
+    await later;
+    expect(fetcher.mock.calls.map(([u]) => u)).not.toContain('https://gone.dev/');
+    expect(fetcher.mock.calls.map(([u]) => u)).toContain('https://later.dev/');
+  });
+
   it('survives a reload via the persistent store', async () => {
     const store = memoryStore<unknown>();
     const fetcher = vi.fn(async () => ok('A'));

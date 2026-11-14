@@ -80,10 +80,11 @@ function FolderContents() {
   const counts = folderCounts(state);
   const revealId = useUi((s) => s.revealId);
   useRevealEffect();
-  useViewIds(
-    [...folders, ...bookmarks].map((n) => n.id),
-    scope !== 'all',
+  const viewIds = useMemo(
+    () => [...folders, ...bookmarks].map((n) => n.id),
+    [folders, bookmarks],
   );
+  useViewIds(viewIds, scope !== 'all');
 
   if (!state.ready) return null;
 
@@ -229,7 +230,8 @@ function AllLinksView() {
     };
   }, [state, currentFolderId, sort, direction]);
 
-  useViewIds(items.map((n) => n.id));
+  const viewIds = useMemo(() => items.map((n) => n.id), [items]);
+  useViewIds(viewIds);
   const here = state.nodes.get(currentFolderId)?.title || 'this folder';
   if (items.length === 0) {
     return (

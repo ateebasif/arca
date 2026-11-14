@@ -21,7 +21,7 @@ export function LinkCheck({
   links: Array<{ id: string; url: string; node: BNode }>;
 }) {
   const { granted, refresh } = useSiteAccess();
-  const { results, progress, error, start, cancel } = useLinkCheck();
+  const { results, progress, error, start, cancel, forget } = useLinkCheck();
   const [asked, setAsked] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -84,6 +84,16 @@ export function LinkCheck({
               </>
             )}
           </span>
+          {checked.length > 0 && (
+            <button
+              type="button"
+              title="Delete the saved results (which addresses were checked)"
+              onClick={() => void forget()}
+              className="text-ink-faint hover:text-ink"
+            >
+              Forget results
+            </button>
+          )}
           <Button onClick={() => void run(checked.length > 0)}>
             {checked.length
               ? 'Check again'

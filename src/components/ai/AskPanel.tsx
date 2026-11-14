@@ -56,7 +56,9 @@ export default function AskPanel() {
   // Start reading bookmarks as soon as the panel opens (first time only), so
   // it's well under way, or done, by the time a question is typed.
   useEffect(() => {
-    if (settings.aiEnabled) warm(items, opts);
+    if (!settings.aiEnabled) return;
+    warm(items, opts);
+    return () => useAskChat.getState().stopWarming();
     // Re-run when the library or models change, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.aiEnabled, settings.embedModel, settings.ollamaUrl, items.length]);

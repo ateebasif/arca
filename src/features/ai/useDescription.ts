@@ -12,13 +12,30 @@ const known = new Map<string, string>();
 const queued = new Map<string, { title: string; url: string }>();
 const inFlight = new Set<string>();
 const listeners = new Set<() => void>();
-let version = 0;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let running = false;
 
-const emit = () => {
-  version++;
-  listeners.forEach((l) => l());
+const emit = () => listeners.forEach((l) => l());
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => void listeners.delete(l);
+};
+
+/** Descriptions kept in memory; the oldest go first (they're cached on disk). */
+const KNOWN_MAX = 2000;
+function remember(key: string, text: string) {
+  known.delete(key);
+  known.set(key, text);
+  while (known.size > KNOWN_MAX) {
+    const oldest = known.keys().next().value;
+    if (oldest === undefined) break;
+    known.delete(oldest);
+  }
+}
+
+const enabled = () => {
+  const s = useSettings.getState();
+  return s.aiEnabled && s.aiDescriptions;
 };
 
 export const descKey = (id: string, title: string, url: string) =>
@@ -27,6 +44,11 @@ export const descKey = (id: string, title: string, url: string) =>
 async function flush() {
   timer = null;
   if (running || queued.size === 0) return;
+  // Turned off meanwhile: drop the queue rather than keep calling the model.
+  if (!enabled()) {
+    queued.clear();
+    return;
+  }
   running = true;
   try {
     const s = useSettings.getState();
@@ -49,7 +71,7 @@ async function flush() {
       // rather than showing a loading placeholder forever.
     }
     for (const r of requests) {
-      known.set(r.key, result.get(r.key) ?? '');
+      remember(r.key, result.get(r.key) ?? '');
       inFlight.delete(r.key);
     }
     emit();
@@ -80,17 +102,15 @@ export function useDescription(
 ): string | undefined {
   const on = useDescriptionsOn();
   const key = descKey(id, title, url);
-  useSyncExternalStore(
-    (l) => {
-      listeners.add(l);
-      return () => listeners.delete(l);
-    },
-    () => version,
-  );
+  // Re-render only when this row's own description arrives.
+  const text = useSyncExternalStore(subscribe, () => known.get(key));
   useEffect(() => {
-    if (on && /^https?:/i.test(url)) request(key, title, url);
+    if (!on || !/^https?:/i.test(url)) return;
+    request(key, title, url);
+    // Scrolled away or unmounted before its turn: don't ask the model for it.
+    return () => void queued.delete(key);
   }, [on, key, title, url]);
-  return on ? known.get(key) : undefined;
+  return on ? text : undefined;
 }
 
 /** After "Clear cached AI data". */

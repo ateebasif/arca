@@ -26,6 +26,11 @@ Off by default. Turning them on shows the browser's permission prompt; turning t
 removes the permission again. When on:
 
 - Only `http(s)` pages are fetched, only on hover/focus, never in bulk or in the background.
+  A request still waiting its turn is dropped when its card goes away.
+- **No local-network requests on a page's behalf.** A public page can't point its
+  preview image at `localhost`, `*.local`, private / loopback / link-local / CGNAT IPv4
+  or local IPv6 addresses, and a preview that redirects to one is discarded. Only a
+  bookmark that is itself on your network (a NAS, a router page) previews from there.
 - Requests send **no cookies, no credentials and no referrer**, with an 8 s timeout. At most
   768 KB of HTML and 3 MB of image data are read.
 - HTML is parsed with `DOMParser`, which builds an inert document: scripts, event handlers
@@ -33,7 +38,8 @@ removes the permission again. When on:
 - Only the title, description, site name and image URL are kept. Text is stripped of
   control, zero-width and bidi-override characters and length-capped, then rendered as
   plain text by React.
-- Images: raster formats only (no SVG). They are decoded and re-encoded to a small WebP
+- Images: raster formats only (no SVG). They are decoded straight to thumbnail size
+  (a small file can't expand into a huge bitmap) and re-encoded to a small WebP
   thumbnail, so only plain pixels are stored and shown, as `data:` URLs (no request
   to the site when the card is displayed).
 - The cache (IndexedDB, private to Arca) is re-validated on read. Tampered entries are
@@ -49,7 +55,10 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
 - The Ollama URL must be a loopback host (`localhost`, `127.0.0.1`, `[::1]`) with no
   credentials; anything else is rejected before a request is made, including values
   tampered into storage.
-- Requests send no cookies or referrer and have timeouts. Responses are shape-checked.
+- Requests send no cookies or referrer, never follow redirects (something else on the
+  port can't bounce bookmark titles elsewhere), have timeouts, and can be cancelled:
+  Stop/Cancel aborts the request so Ollama stops working. Replies are capped at 64 MB
+  and shape-checked.
 - Only bookmark titles, sites and folder names are sent, and only to that local server.
 - The model never chooses which bookmarks move; local k-means clustering does. Its
   folder-name replies are treated as untrusted: control, zero-width, bidi and path
@@ -63,18 +72,26 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   restores it), validated on read, and dropped when the tab closes.
 - List descriptions are written from the title and address only (nothing is
   fetched for them), cleaned like other model text, and cached in IndexedDB.
-- Embeddings are cached in IndexedDB (private to Arca) and can be cleared in Settings.
+- Bookmark embeddings are cached in IndexedDB (private to Arca) and can be cleared in
+  Settings. What you type (search text, Ask questions) is embedded in memory only and
+  never written to disk. Turning AI off frees the in-memory vectors (capped at 96 MB)
+  and stops any background reading.
 
 ### Mini windows
 
 - Arca remembers the ids of the windows it opened as mini windows and only ever
-  acts on those; other popups are never touched.
+  acts on those; other popups are never touched. The ids live in session storage,
+  which the browser clears on quit (window ids restart after a relaunch), and before
+  acting Arca checks the window is still a one-tab popup, so a normal window that
+  reused an old id is never moved or closed.
 - "Open in main window" re-checks the page's URL with the same rules as any link
   before reopening it as a tab. The right-click item is only shown while an Arca
   mini window is focused. No content scripts or host permissions are involved.
 
 ### Tags
 
+- Edits from several Arca pages at once merge per item (each write re-reads storage
+  and changes only its own items), and bulk tagging is one write.
 - Stored in `chrome.storage.local` under `meta`, validated on every read: ids must
   look like bookmark ids, tags are lowercased, stripped of control/zero-width/bidi
   characters, capped at 32 characters and 20 per item. Rendered as plain text.
@@ -85,7 +102,9 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   start a check, never runs on its own.
 - HEAD (GET only if refused) with no cookies, no credentials, no referrer and an
   8 s timeout; the response body is cancelled unread. Only the status code and
-  final address are kept, in IndexedDB, for two weeks.
+  final address are kept, in IndexedDB, for two weeks; older results are deleted
+  at the next check, and "Forget results" deletes them all at once. A check refuses
+  to run if site access was removed (otherwise everything would look broken).
 - At most 6 requests at once and 2 per site.
 
 - Tag colours (`tagColors`) are validated the same way: known tags only, slots 0–7.
@@ -118,6 +137,17 @@ bun run e2e        # real-Chrome attacks: hostile extension, hostile website, pl
 All five must pass before a merge (see CLAUDE.md).
 
 ## Known, accepted issues
+
+- **HTML export keeps bookmarklets.** `javascript:` bookmarks are written to the
+  Netscape HTML export as they are (escaped), because browsers import them that way
+  and dropping them would lose data. Clicking one in the exported file runs it on a
+  `file://` page, as it would in the browser. Arca itself never opens them.
+- **Site access stays after a link check.** The optional `<all_urls>` permission is
+  shared with link previews; Arca doesn't remove it when a check ends. Turning link
+  previews off in Settings removes it.
+- **Preview redirects to a local address.** The redirect is followed by the browser
+  before Arca can see it (extensions can't read `Location` headers), so the request
+  is sent, without cookies; Arca then drops the response and shows nothing from it.
 
 - `bun audit` reports `minimatch` (moderate, ReDoS) and `deepmerge` (low) in dev tooling
   (`eslint`, `typescript-eslint`, `web-ext`). They only process this repo's own files at

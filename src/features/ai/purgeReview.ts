@@ -130,6 +130,7 @@ export async function reviewForPurge(
         list,
         SCHEMA,
         900,
+        opts.signal,
       )) as {
         items?: unknown;
       } | null;

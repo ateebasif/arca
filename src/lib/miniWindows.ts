@@ -19,19 +19,26 @@ export interface MiniWindow {
   title: string;
 }
 
+// Window ids are reused after a browser restart, so they're kept in session
+// storage (cleared on quit) and every window is re-checked before Arca acts.
+const AREA = 'session';
+
 async function trackedIds(): Promise<number[]> {
-  const raw = await storageGet<unknown>(KEY, []);
+  const raw = await storageGet<unknown>(KEY, [], AREA);
   return Array.isArray(raw) ? raw.filter((n): n is number => Number.isInteger(n)) : [];
 }
 
-/** The page shown in a window (mini windows have exactly one tab). */
-async function firstTab(windowId: number) {
-  const [tab] = await browser.tabs.query({ windowId }).catch(() => []);
-  return tab;
+async function setTracked(ids: number[]): Promise<void> {
+  await storageSet(KEY, [...new Set(ids)].slice(-20), AREA);
 }
 
-async function setTracked(ids: number[]): Promise<void> {
-  await storageSet(KEY, [...new Set(ids)].slice(-20));
+/** A tracked id that is still a one-tab popup window, or nothing. */
+async function miniWindowTab(windowId: number) {
+  if (!(await trackedIds()).includes(windowId)) return undefined;
+  const win = await browser.windows.get(windowId).catch(() => null);
+  if (!win || win.type !== 'popup') return undefined;
+  const tabs = await browser.tabs.query({ windowId }).catch(() => []);
+  return tabs.length === 1 ? tabs[0] : undefined;
 }
 
 /** Size and place of a mini window: a peek over the right side of the screen. */
@@ -63,9 +70,8 @@ export async function listMiniWindows(): Promise<MiniWindow[]> {
   const ids = await trackedIds();
   const open: MiniWindow[] = [];
   for (const windowId of ids) {
-    const win = await browser.windows.get(windowId).catch(() => null);
-    const tab = win ? await firstTab(windowId) : undefined;
-    if (win && tab?.id !== undefined) {
+    const tab = await miniWindowTab(windowId);
+    if (tab?.id !== undefined) {
       open.push({ windowId, tabId: tab.id, url: tab.url ?? '', title: tab.title ?? '' });
     }
   }
@@ -74,7 +80,7 @@ export async function listMiniWindows(): Promise<MiniWindow[]> {
 }
 
 export async function isMiniWindow(windowId: number): Promise<boolean> {
-  return (await trackedIds()).includes(windowId);
+  return (await miniWindowTab(windowId)) !== undefined;
 }
 
 /**
@@ -85,8 +91,9 @@ export async function promoteMiniWindow(
   windowId: number,
   targetWindowId?: number,
 ): Promise<void> {
-  if (!(await isMiniWindow(windowId))) return;
-  const url = (await firstTab(windowId))?.url ?? '';
+  const tab = await miniWindowTab(windowId);
+  if (!tab) return;
+  const url = tab.url ?? '';
   // Pages reached inside the mini window are re-checked before reopening.
   if (url && classifyUrl(url) !== 'blocked') {
     const target =
@@ -112,7 +119,8 @@ export async function promoteMiniWindow(
 }
 
 export async function closeMiniWindow(windowId: number): Promise<void> {
-  await browser.windows.remove(windowId).catch(() => {});
+  if (await miniWindowTab(windowId))
+    await browser.windows.remove(windowId).catch(() => {});
   await setTracked((await trackedIds()).filter((id) => id !== windowId));
 }
 
@@ -125,7 +133,7 @@ export async function currentWindowId(): Promise<number | undefined> {
 
 /** Calls back when the set of mini windows may have changed. */
 export function onMiniWindowsChange(callback: () => void): () => void {
-  const offStorage = onStorageChange(KEY, callback);
+  const offStorage = onStorageChange(KEY, callback, AREA);
   const onRemoved = () => callback();
   browser.windows.onRemoved.addListener(onRemoved);
   return () => {
@@ -136,6 +144,8 @@ export function onMiniWindowsChange(callback: () => void): () => void {
 
 /** Background only: forget windows as they close. */
 export function pruneOnClose(): void {
+  // Older versions kept the ids in local storage, where they outlived restarts.
+  void browser.storage.local.remove(KEY).catch(() => {});
   browser.windows.onRemoved.addListener((windowId) => {
     void trackedIds().then((ids) => {
       if (ids.includes(windowId)) void setTracked(ids.filter((id) => id !== windowId));

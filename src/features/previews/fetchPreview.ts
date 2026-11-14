@@ -1,8 +1,11 @@
+import { isPrivateHost } from '@/src/lib/url';
 import { parsePreviewHtml, type PreviewMeta } from './parse';
 
 /**
  * Network side of link previews. Hardened for untrusted sites:
  * - only http(s) GETs, no cookies or credentials, no referrer;
+ * - never to the local network or this machine unless the bookmark itself
+ *   is there (a page can't point its image or a redirect at your router);
  * - timeouts, and hard caps on how much HTML / image data is read;
  * - only HTML is parsed; only raster images are accepted (no SVG), and they are
  *   decoded and re-encoded to a small WebP, so what's stored is plain pixels.
@@ -78,7 +81,11 @@ export type ImageEncoder = (blob: Blob) => Promise<string>;
 
 /** Decodes an image and re-encodes it as a small WebP data: URL. */
 export const encodeThumbnail: ImageEncoder = async (blob) => {
-  const bitmap = await createImageBitmap(blob);
+  // Decode straight to thumbnail size: a small file can hold a huge image.
+  const bitmap = await createImageBitmap(blob, {
+    resizeWidth: THUMB_WIDTH,
+    resizeQuality: 'medium',
+  });
   try {
     const scale = Math.min(1, THUMB_WIDTH / bitmap.width);
     const width = Math.max(1, Math.round(bitmap.width * scale));
@@ -103,8 +110,9 @@ async function fetchImage(
   url: string,
   encode: ImageEncoder,
   signal?: AbortSignal,
+  allowPrivate = false,
 ): Promise<string> {
-  if (!url) return '';
+  if (!url || (!allowPrivate && isPrivateHost(url))) return '';
   try {
     const res = await fetch(url, {
       ...REQUEST,
@@ -114,6 +122,7 @@ async function fetchImage(
     const type =
       (res.headers.get('content-type') ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
     if (!res.ok || !IMAGE_TYPES.test(type)) return '';
+    if (!allowPrivate && isPrivateHost(res.url)) return '';
     const bytes = await readCapped(res, MAX_IMAGE_BYTES);
     if (bytes.byteLength >= MAX_IMAGE_BYTES) return '';
     return await encode(new Blob([bytes], { type }));
@@ -131,6 +140,9 @@ export async function fetchPreview(
   }: { encode?: ImageEncoder; signal?: AbortSignal } = {},
 ): Promise<FetchedPreview> {
   if (!isHttp(url)) throw new PreviewError('Only web pages have previews');
+  // Bookmarks on your own network may preview each other, but a public page
+  // may not lead Arca there.
+  const allowPrivate = isPrivateHost(url);
   const res = await fetch(url, {
     ...REQUEST,
     headers: { Accept: 'text/html,application/xhtml+xml' },
@@ -138,6 +150,9 @@ export async function fetchPreview(
   });
   if (!res.ok) throw new PreviewError(`HTTP ${res.status}`);
   const finalUrl = isHttp(res.url) ? res.url : url;
+  if (!allowPrivate && isPrivateHost(finalUrl)) {
+    throw new PreviewError('Redirected to a local address');
+  }
   const type = (res.headers.get('content-type') ?? '').toLowerCase();
   if (!/text\/html|application\/xhtml\+xml/.test(type)) {
     throw new PreviewError('Not an HTML page');
@@ -145,7 +160,7 @@ export async function fetchPreview(
   const bytes = await readCapped(res, MAX_HTML_BYTES);
   const html = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
   const meta = parsePreviewHtml(html, finalUrl);
-  const image = await fetchImage(meta.imageUrl, encode, signal);
+  const image = await fetchImage(meta.imageUrl, encode, signal, allowPrivate);
   return {
     title: meta.title,
     description: meta.description,

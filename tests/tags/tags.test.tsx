@@ -59,6 +59,37 @@ describe('tag data', () => {
     });
     store.stop();
   });
+
+  it("keeps another page's edit that this page hasn't heard about yet", async () => {
+    const page = new MetaStore();
+    await page.start();
+    // Stop listening so the other page's write never reaches this snapshot.
+    page.stop();
+    await fakeBrowser.storage.local.set({
+      meta: { '20': { tags: ['popup'], url: 'https://p.dev/' } },
+    });
+    await page.setTags('21', 'https://d.dev/', ['dashboard']);
+    expect((await fakeBrowser.storage.local.get('meta')).meta).toEqual({
+      '20': { tags: ['popup'], url: 'https://p.dev/' },
+      '21': { tags: ['dashboard'], url: 'https://d.dev/' },
+    });
+  });
+
+  it('tags many items with one storage write', async () => {
+    const store = new MetaStore();
+    await store.start();
+    const set = vi.spyOn(fakeBrowser.storage.local, 'set');
+    await store.setTagsMany(
+      Array.from({ length: 50 }, (_, i) => ({
+        id: String(100 + i),
+        url: `https://${i}.dev/`,
+        tags: ['bulk'],
+      })),
+    );
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(store.allTags()).toEqual([{ tag: 'bulk', count: 50 }]);
+    store.stop();
+  });
 });
 
 describe('tags in the dashboard', () => {

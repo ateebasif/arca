@@ -40,6 +40,26 @@ export async function clearLinkResults(): Promise<void> {
     .catch(() => {});
 }
 
+/**
+ * Every fresh cached result, read in one go. Results older than two weeks
+ * are deleted here, so the list of checked addresses doesn't pile up.
+ */
+async function loadResults(now: number): Promise<Map<string, LinkResult>> {
+  const fresh = new Map<string, LinkResult>();
+  const entries = await store()
+    .entries()
+    .catch(() => [] as Array<[string, LinkResult]>);
+  for (const [url, raw] of entries) {
+    const result = parseCached(raw);
+    if (result && now - result.checkedAt < CACHE_TTL_MS) fresh.set(url, result);
+    else
+      void store()
+        .delete(url)
+        .catch(() => {});
+  }
+  return fresh;
+}
+
 /** Same page ignoring http→https, www., a trailing slash and the fragment. */
 export function samePage(a: string, b: string): boolean {
   const norm = (u: string) => {
@@ -152,17 +172,13 @@ export async function checkAll(
   },
 ): Promise<void> {
   const now = opts.now ?? Date.now;
+  const known = await loadResults(now());
   const queue: CheckItem[] = [];
   for (const item of items) {
+    if (opts.signal?.aborted) return;
     if (!/^https?:\/\//i.test(item.url)) continue;
-    const cached = opts.fresh
-      ? null
-      : parseCached(
-          await store()
-            .get(item.url)
-            .catch(() => undefined),
-        );
-    if (cached && now() - cached.checkedAt < CACHE_TTL_MS) opts.onResult(item.id, cached);
+    const cached = opts.fresh ? undefined : known.get(item.url);
+    if (cached) opts.onResult(item.id, cached);
     else queue.push(item);
   }
   const perHost = new Map<string, number>();

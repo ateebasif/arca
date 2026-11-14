@@ -2,7 +2,8 @@
  * Minimal client for a LOCAL Ollama server (https://ollama.com).
  * - Only loopback hosts are allowed (localhost, 127.0.0.1, [::1]): bookmark
  *   titles never go to another machine.
- * - No credentials, timeouts on every call, responses validated.
+ * - No credentials, no redirects, timeouts on every call, capped and
+ *   validated responses. Callers can cancel with an AbortSignal.
  */
 
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
@@ -44,24 +45,57 @@ export function originPattern(base: string): string {
   return `${base}/*`;
 }
 
+/** Embedding replies for a full batch are a few MB; anything far larger is wrong. */
+const MAX_RESPONSE_BYTES = 64 * 1024 * 1024;
+
+async function readJson(res: Response): Promise<unknown> {
+  const declared = Number(res.headers.get('content-length') ?? 0);
+  if (declared > MAX_RESPONSE_BYTES) throw new Error('too large');
+  const reader = res.body?.getReader();
+  if (!reader) return JSON.parse(await res.text());
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done || !value) break;
+    total += value.byteLength;
+    if (total > MAX_RESPONSE_BYTES) {
+      void reader.cancel().catch(() => {});
+      throw new Error('too large');
+    }
+    chunks.push(value);
+  }
+  return JSON.parse(await new Blob(chunks as BlobPart[]).text());
+}
+
+const isAbort = (e: unknown, signal?: AbortSignal) =>
+  !!signal?.aborted || (e instanceof DOMException && e.name === 'AbortError');
+
 async function call<T>(
   base: string,
   path: string,
-  init: RequestInit & { timeoutMs: number },
+  init: RequestInit & { timeoutMs: number; signal?: AbortSignal },
 ): Promise<T> {
+  const { timeoutMs, signal: cancel, ...rest } = init;
   const root = localOllamaUrl(base);
   if (!root)
     throw new OllamaError('NOT_LOCAL', 'Ollama must run on this computer (localhost).');
   let res: Response;
   try {
     res = await fetch(`${root}${path}`, {
-      ...init,
+      ...rest,
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
-      signal: AbortSignal.timeout(init.timeoutMs),
+      // Something else on the port must not bounce bookmark titles elsewhere.
+      redirect: 'error',
+      signal: cancel
+        ? AbortSignal.any([cancel, AbortSignal.timeout(timeoutMs)])
+        : AbortSignal.timeout(timeoutMs),
       headers: { 'Content-Type': 'application/json' },
     });
   } catch {
+    // Cancelled by the user: let callers tell it apart from "Ollama is down".
+    if (cancel?.aborted) throw new DOMException('Cancelled', 'AbortError');
     throw new OllamaError('UNREACHABLE', `Can't reach Ollama at ${root}. Is it running?`);
   }
   if (res.status === 403) {
@@ -71,8 +105,9 @@ async function call<T>(
   if (!res.ok)
     throw new OllamaError('BAD_RESPONSE', `Ollama returned HTTP ${res.status}.`);
   try {
-    return (await res.json()) as T;
-  } catch {
+    return (await readJson(res)) as T;
+  } catch (e) {
+    if (isAbort(e, cancel)) throw new DOMException('Cancelled', 'AbortError');
     throw new OllamaError('BAD_RESPONSE', 'Ollama sent something that is not JSON.');
   }
 }
@@ -129,11 +164,13 @@ export async function embed(
   base: string,
   model: string,
   input: string[],
+  signal?: AbortSignal,
 ): Promise<number[][]> {
   const data = await call<{ embeddings?: unknown }>(base, '/api/embed', {
     method: 'POST',
     body: JSON.stringify({ model, input, truncate: true, keep_alive: KEEP_ALIVE }),
     timeoutMs: 120_000,
+    signal,
   });
   const vectors = data.embeddings;
   if (
@@ -160,6 +197,8 @@ export async function chatJson(
   schema: object,
   /** Cap on the reply length; list-style answers need more than the default. */
   maxTokens = 400,
+  /** Cancels the request (Ollama stops generating when the connection drops). */
+  signal?: AbortSignal,
 ): Promise<unknown> {
   const data = await call<{ message?: { content?: unknown } }>(base, '/api/chat', {
     method: 'POST',
@@ -176,6 +215,7 @@ export async function chatJson(
       ],
     }),
     timeoutMs: 90_000,
+    signal,
   });
   const content = data.message?.content;
   if (typeof content !== 'string')

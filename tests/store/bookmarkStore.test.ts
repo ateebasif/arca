@@ -84,6 +84,7 @@ describe('live sync', () => {
   it('applies onChildrenReordered', async () => {
     const ids = fake.childIds('1');
     fake.onChildrenReordered.fire('1', { childIds: [...ids].reverse() });
+    await Promise.resolve();
     expect(store.getSnapshot().nodes.get('1')?.childIds).toEqual([...ids].reverse());
   });
 
@@ -98,6 +99,19 @@ describe('live sync', () => {
     expect(after.version).toBe(before.version + 1);
     // Untouched nodes keep identity so memoized rows don't re-render.
     expect(after.nodes.get(titleId('Dev'))).toBe(before.nodes.get(titleId('Dev')));
+  });
+
+  it('shows a burst of changes as one update', async () => {
+    const listener = vi.fn();
+    store.subscribe(listener);
+    const ids = fake.childIds('1');
+    fake.onChildrenReordered.fire('1', { childIds: [...ids].reverse() });
+    fake.onChildrenReordered.fire('1', { childIds: [...ids] });
+    fake.onChildrenReordered.fire('1', { childIds: [...ids].reverse() });
+    expect(listener).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot().nodes.get('1')?.childIds).toEqual([...ids].reverse());
   });
 
   it('batches browser imports into a single reload', async () => {

@@ -66,7 +66,7 @@ export const usePurge = create<PurgeState>()((set, get) => ({
       }
     } finally {
       if (!signal.aborted) set({ review: null });
-      controller = null;
+      if (controller?.signal === signal) controller = null;
     }
   },
   cancelReview() {

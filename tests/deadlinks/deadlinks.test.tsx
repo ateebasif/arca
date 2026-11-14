@@ -122,6 +122,29 @@ describe('link status', () => {
     expect(results).toEqual([]);
   });
 
+  it('deletes results older than two weeks instead of keeping them', async () => {
+    fakeWeb({ 'https://a.dev/': 200, 'https://b.dev/': 200 });
+    const mem = memoryStore<LinkResult>();
+    setLinkStoreForTests(mem);
+    let now = 1_000_000;
+    await checkAll(
+      [
+        { id: '1', url: 'https://a.dev/' },
+        { id: '2', url: 'https://b.dev/' },
+      ],
+      { onResult: () => {}, now: () => now },
+    );
+    expect((await mem.entries()).length).toBe(2);
+    now += CACHE_TTL_MS + 1;
+    await checkAll([{ id: '1', url: 'https://a.dev/' }], {
+      onResult: () => {},
+      now: () => now,
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    // b.dev's old result is gone; a.dev was just checked again.
+    expect((await mem.entries()).map(([u]) => u)).toEqual(['https://a.dev/']);
+  });
+
   it('updates moved links in one undo', async () => {
     undo.clearUndoForTests();
     const fake = installFakeBookmarks({

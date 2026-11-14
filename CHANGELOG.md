@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Security
 
+- Mini windows: Arca could mistake a normal window for one of its mini windows after
+  a browser restart (window ids are reused) and close it. Ids now live in session
+  storage, and every window is checked to still be a one-tab popup before Arca acts.
+- Link previews never contact your local network (localhost, `*.local`, private IPs)
+  on a public page's behalf, via its image or a redirect.
+- Local AI requests no longer follow redirects, cap the reply size and can be
+  cancelled.
+- Search text and Ask questions are no longer saved to disk as embeddings.
+- Broken-link results older than two weeks are deleted, with a "Forget results"
+  button; a check refuses to run without site access.
+
 - Strict Content Security Policy for all extension pages.
 - Other extensions and websites can't message, frame or fetch Arca.
 - `javascript:`, `data:` and similar bookmark URLs are never opened or rendered as
@@ -17,6 +28,25 @@ All notable changes to this project are documented here. The format follows
   a hostile website and a planted bookmarklet. See SECURITY.md.
 
 ### Fixed
+
+- Tags added in two Arca pages at the same time no longer overwrite each other.
+- Folder names from AI organize keep leading accented or non-Latin letters
+  ("Éducation", "日本 News").
+- Stop on link check / clean-out review keeps working after a quick restart.
+- Cancel and Stop now stop Ollama too; Ask Arca stops reading the library when its
+  panel closes; list descriptions stop when rows scroll away or the setting is off.
+
+### Performance
+
+- Tagging many items (bulk tag, organize with tags) is one storage write instead of
+  one per item.
+- Bursts of bookmark changes (organize, bulk moves) render once instead of per item.
+- AI organize no longer freezes the page while grouping large libraries.
+- Meaning matches read cached readings in one go and remember what's missing,
+  instead of thousands of IndexedDB reads per keystroke.
+- Preview cache: memory capped, pruning no longer loads every thumbnail, abandoned
+  fetches are dropped; thumbnails decode at thumbnail size.
+- In-memory AI vectors capped by size (96 MB) and freed when AI is turned off.
 
 - "Small tiles" now applies to folders too (compact folder rows), so the
   Large/Small switch visibly changes views that are mostly folders.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { clearEmbeddings } from '@/src/features/ai/embedCache';
+import { clearEmbeddings, forgetMemoryVectors } from '@/src/features/ai/embedCache';
+import { useAskChat } from '@/src/store/askChat';
 import { forgetDescriptions } from '@/src/features/ai/useDescription';
 import { hasOrigin, requestOrigin } from '@/src/lib/permissions';
 import {
@@ -51,6 +52,9 @@ export function AiSettings() {
   const toggle = async () => {
     if (s.aiEnabled) {
       await s.update({ aiEnabled: false });
+      // Free the memory and stop background reading.
+      useAskChat.getState().stopWarming();
+      forgetMemoryVectors();
       setStatus({ kind: 'idle' });
       return;
     }
