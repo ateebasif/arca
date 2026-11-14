@@ -79,6 +79,15 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   look like bookmark ids, tags are lowercased, stripped of control/zero-width/bidi
   characters, capped at 32 characters and 20 per item. Rendered as plain text.
 
+### Broken-link check (opt-in)
+
+- Uses the same optional site permission as link previews; asked for when you
+  start a check, never runs on its own.
+- HEAD (GET only if refused) with no cookies, no credentials, no referrer and an
+  8 s timeout; the response body is cancelled unread. Only the status code and
+  final address are kept, in IndexedDB, for two weeks.
+- At most 6 requests at once and 2 per site.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.
