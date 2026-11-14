@@ -226,7 +226,10 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.form.requestSubmit();
       })()`);
-      await page.waitFor(`document.querySelector('[data-ask-answer]')`, 120000);
+      await page.waitFor(
+        `document.querySelector('[data-ask-answer]') && !document.querySelector('[role=dialog]').textContent.includes('which fit best')`,
+        120000,
+      );
       const found = await page.eval<string[]>(
         `[...document.querySelectorAll('[data-ask-result]')].map((a) => a.getAttribute('href'))`,
       );

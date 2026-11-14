@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { askItems, keywordHits } from '@/src/features/ai/askItems';
-import { estimateSeconds } from '@/src/features/ai/organize';
+import { askItems, keywordHits, keywordTerms } from '@/src/features/ai/askItems';
 import { bookmarkLinkProps } from '@/src/features/open';
 import { compactPath } from '@/src/features/tidy/normalize';
 import { displayHost } from '@/src/lib/url';
@@ -28,25 +27,31 @@ export default function AskPanel() {
   const settings = useSettings();
   const draft = useOverlays((s) => s.ask?.draft ?? '');
   const close = useOverlays((s) => s.closeAsk);
-  const { messages, status, error, send, cancel, clear } = useAskChat();
+  const { messages, status, index, error, send, cancel, clear, warm } = useAskChat();
   const [text, setText] = useState(draft);
   const items = useMemo(() => askItems(state), [state]);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const working = status.kind === 'working';
 
+  const opts = {
+    base: settings.ollamaUrl,
+    embedModel: settings.embedModel,
+    chatModel: settings.chatModel,
+  };
+
+  // Start reading bookmarks as soon as the panel opens (first time only), so
+  // it's well under way, or done, by the time a question is typed.
   useEffect(() => {
-    listRef.current?.scrollTo?.({ top: listRef.current.scrollHeight });
-  }, [messages.length, working]);
+    if (settings.aiEnabled) warm(items, opts);
+    // Re-run when the library or models change, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.aiEnabled, settings.embedModel, settings.ollamaUrl, items.length]);
 
   const submit = (question: string) => {
     if (!question.trim() || working) return;
     setText('');
-    void send(question, items, keywordHits(state, items, question), {
-      base: settings.ollamaUrl,
-      embedModel: settings.embedModel,
-      chatModel: settings.chatModel,
-    });
+    void send(question, items, keywordHits(state, items, question), opts);
     inputRef.current?.focus();
   };
 
@@ -87,13 +92,10 @@ export default function AskPanel() {
         <div className="flex min-h-[320px] flex-col gap-3">
           <div ref={listRef} className="flex flex-col gap-4" aria-live="polite">
             {messages.length === 0 && (
-              <Intro
-                count={items.length}
-                model={settings.embedModel}
-                onPick={(q) => submit(q)}
-              />
+              <Intro count={items.length} onPick={(q) => submit(q)} />
             )}
-            {messages.map((m) =>
+            {index && <Reading index={index} />}
+            {messages.map((m, i) =>
               m.role === 'user' ? (
                 <p
                   key={m.id}
@@ -102,11 +104,25 @@ export default function AskPanel() {
                   {m.text}
                 </p>
               ) : (
-                <Answer key={m.id} message={m} state={state} onReveal={close} />
+                <Answer
+                  key={m.id}
+                  message={m}
+                  question={messages[i - 1]?.text ?? ''}
+                  model={settings.chatModel}
+                  state={state}
+                  onCancel={cancel}
+                  onClose={close}
+                />
               ),
             )}
-            {working && (
-              <Working status={status} model={settings.chatModel} onCancel={cancel} />
+            {working && !messages.some((m) => m.pending) && !index && (
+              <p className="text-ink-muted flex items-center gap-2 text-xs" role="status">
+                <span
+                  className="bg-accent size-1.5 animate-pulse rounded-full"
+                  aria-hidden
+                />
+                Searching your bookmarks…
+              </p>
             )}
             {error && <OllamaHelp error={error} />}
           </div>
@@ -136,32 +152,17 @@ export default function AskPanel() {
   );
 }
 
-function Intro({
-  count,
-  model,
-  onPick,
-}: {
-  count: number;
-  model: string;
-  onPick(question: string): void;
-}) {
-  const minutes = Math.round(estimateSeconds(model, count) / 60);
+function Intro({ count, onPick }: { count: number; onPick(question: string): void }) {
   return (
     <div className="text-ink-muted flex flex-col gap-3 text-[13px] leading-relaxed">
       <p className="flex items-start gap-2">
         <SparkleIcon className="text-accent mt-0.5 shrink-0" />
         <span>
           Describe a bookmark the way you remember it, even vaguely. Arca searches all{' '}
-          {count.toLocaleString()} of your links by meaning and shows the ones that fit.
-          Everything runs on this computer.
+          {count.toLocaleString()} of your links by meaning and by keyword, then a local
+          AI picks the best ones. Everything runs on this computer.
         </span>
       </p>
-      {minutes >= 1 && (
-        <p className="text-ink-faint text-xs">
-          The first question reads your bookmarks once (about {minutes} min with{' '}
-          <code>{model}</code>). After that, answers take a few seconds.
-        </p>
-      )}
       <div className="flex flex-wrap gap-2">
         {EXAMPLES.map((q) => (
           <button
@@ -178,85 +179,125 @@ function Intro({
   );
 }
 
-function Working({
-  status,
-  model,
-  onCancel,
+/** First-time read of all bookmarks (runs in the background once). */
+function Reading({
+  index,
 }: {
-  status: Extract<ReturnType<typeof useAskChat.getState>['status'], { kind: 'working' }>;
-  model: string;
-  onCancel(): void;
+  index: NonNullable<ReturnType<typeof useAskChat.getState>['index']>;
 }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const { index, stage, startedAt } = status;
-  const indexing = stage === 'reading' && index && index.done < index.total;
-  let label = 'Looking…';
-  let detail = '';
-  if (indexing && index) {
-    label = `Reading your bookmarks once · ${index.done.toLocaleString()}/${index.total.toLocaleString()}`;
-    const fresh = index.done - index.cached;
-    const elapsed = (now - startedAt) / 1000;
-    detail =
-      fresh > 0 && elapsed > 2
-        ? `about ${Math.max(1, Math.ceil(((index.total - index.done) * elapsed) / fresh / 60))} min left · only needed the first time`
-        : 'starting the model…';
-  } else if (stage === 'searching') {
-    label = 'Searching by meaning…';
-  } else if (stage === 'thinking') {
-    label = `Picking the best matches with ${model}…`;
-  }
+  const fresh = index.done - index.cached;
+  const elapsed = (now - index.startedAt) / 1000;
+  const left =
+    fresh > 0 && elapsed > 2 ? ((index.total - index.done) * elapsed) / fresh : null;
   return (
     <div className="flex flex-col gap-1.5 text-xs" role="status">
-      <div className="flex items-center gap-3">
-        <span
-          className="bg-accent size-1.5 shrink-0 animate-pulse rounded-full"
-          aria-hidden
+      <p className="text-ink-muted tabular-nums">
+        Reading your bookmarks once · {index.done.toLocaleString()}/
+        {index.total.toLocaleString()}
+        {left !== null &&
+          ` · about ${left < 60 ? 'under a minute' : `${Math.ceil(left / 60)} min`} left`}
+      </p>
+      <div className="bg-hover h-1 overflow-hidden rounded-full">
+        <div
+          className="bg-accent-strong h-full transition-[width] duration-200"
+          style={{
+            width: `${Math.round((index.done / Math.max(1, index.total)) * 100)}%`,
+          }}
         />
-        <span className="text-ink-muted flex-1 tabular-nums">{label}</span>
-        <Button onClick={onCancel}>Cancel</Button>
       </div>
-      {indexing && index && (
-        <div className="bg-hover h-1 overflow-hidden rounded-full">
-          <div
-            className="bg-accent-strong h-full transition-[width] duration-200"
-            style={{
-              width: `${Math.round((index.done / Math.max(1, index.total)) * 100)}%`,
-            }}
-          />
-        </div>
-      )}
-      {detail && <p className="text-ink-faint">{detail}</p>}
+      <p className="text-ink-faint">
+        Only needed the first time (and for new bookmarks). It keeps going if you close
+        this panel; after that, answers take a few seconds.
+      </p>
     </div>
   );
 }
 
+const MORE_STEP = 10;
+
 function Answer({
   message,
+  question,
+  model,
   state,
-  onReveal,
+  onCancel,
+  onClose,
 }: {
   message: AskMessage;
+  question: string;
+  model: string;
   state: BookmarkSnapshot;
-  onReveal(): void;
+  onCancel(): void;
+  onClose(): void;
 }) {
-  // Bookmarks may have changed since the answer; show only those that still exist.
-  const nodes = (message.ids ?? []).flatMap((id) => {
-    const node = state.nodes.get(id);
-    return node?.url ? [node] : [];
-  });
+  const [shown, setShown] = useState(MORE_STEP);
+  const exists = (id: string) => !!state.nodes.get(id)?.url;
+  const picks = (message.ids ?? []).filter(exists);
+  const others = (message.matches ?? []).filter(
+    (id) => exists(id) && !picks.includes(id),
+  );
+  const term = keywordTerms(question)[0];
+  const list = (ids: string[]) => (
+    <ul className="border-line bg-surface flex flex-col overflow-hidden rounded-xl border">
+      {ids.map((id) => {
+        const node = state.nodes.get(id);
+        return node ? (
+          <ResultRow key={id} node={node} state={state} onReveal={onClose} />
+        ) : null;
+      })}
+    </ul>
+  );
   return (
     <div className="flex max-w-[92%] flex-col gap-2" data-ask-answer>
-      <p className="text-[13px] leading-relaxed">{message.text}</p>
-      {nodes.length > 0 && (
-        <ul className="border-line bg-surface flex flex-col overflow-hidden rounded-xl border">
-          {nodes.map((node) => (
-            <ResultRow key={node.id} node={node} state={state} onReveal={onReveal} />
-          ))}
-        </ul>
+      {message.pending ? (
+        <div className="text-ink-muted flex items-center gap-2 text-xs" role="status">
+          <span className="bg-accent size-1.5 animate-pulse rounded-full" aria-hidden />
+          <span className="flex-1">
+            Found {others.length} matches. Asking {model} which fit best…
+          </span>
+          <Button onClick={onCancel}>Stop</Button>
+        </div>
+      ) : (
+        message.text && <p className="text-[13px] leading-relaxed">{message.text}</p>
+      )}
+      {picks.length > 0 && list(picks)}
+      {others.length > 0 && (
+        <>
+          {(picks.length > 0 || !message.pending) && (
+            <p className="text-ink-faint mt-1 text-[11px] font-medium tracking-wide uppercase">
+              {picks.length > 0 ? 'More matches' : 'Matches'}
+            </p>
+          )}
+          {list(others.slice(0, shown))}
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            {others.length > shown && (
+              <button
+                type="button"
+                className="text-accent hover:underline"
+                onClick={() => setShown((n) => n + MORE_STEP * 2)}
+              >
+                Show {Math.min(others.length - shown, MORE_STEP * 2)} more
+              </button>
+            )}
+            {term && (
+              <button
+                type="button"
+                className="text-ink-muted hover:text-ink hover:underline"
+                onClick={() => {
+                  useUi.getState().setQuery(term);
+                  onClose();
+                }}
+              >
+                All keyword results for “{term}”
+              </button>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

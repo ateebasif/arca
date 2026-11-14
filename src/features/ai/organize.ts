@@ -56,14 +56,15 @@ export interface PlanOptions {
 }
 
 /**
- * Text that gets embedded for a bookmark: title, site and its own folder
- * name. Folder names shared by most items carry no signal and are dropped
- * (see planGroups), so they don't drown out the topic.
+ * Text that gets embedded for a bookmark: its title and site. Folder names
+ * are left out on purpose: they'd tie the cached vectors to where a link
+ * lives, so organizing (which moves links) would force everything to be read
+ * again, and re-organizing would just echo the current folders. Organize and
+ * Ask Arca share these vectors when the model needs no task prefix.
  */
-export function embeddingText(item: OrganizeItem, includeFolder = true): string {
+export function embeddingText(item: OrganizeItem): string {
   const site = mainDomain(item.url);
-  const folder = includeFolder ? item.folder.split(' / ').at(-1) : '';
-  return [item.title || site, site, folder && `in ${folder}`].filter(Boolean).join(' · ');
+  return [item.title || site, site].filter(Boolean).join(' · ');
 }
 
 /**
@@ -107,18 +108,8 @@ async function embedAll(
   items: OrganizeItem[],
   opts: PlanOptions,
 ): Promise<Float32Array[]> {
-  // Drop the folder when one folder holds most items: it says nothing about topic.
-  const lastFolder = (it: OrganizeItem) => it.folder.split(' / ').at(-1) ?? '';
-  const counts = new Map<string, number>();
-  for (const it of items)
-    counts.set(lastFolder(it), (counts.get(lastFolder(it)) ?? 0) + 1);
-  const common = new Set(
-    [...counts].filter(([, n]) => n > items.length * 0.4).map(([folder]) => folder),
-  );
   const prefix = taskPrefix(opts.embedModel);
-  const texts = items.map(
-    (it) => prefix + embeddingText(it, !common.has(lastFolder(it))),
-  );
+  const texts = items.map((it) => prefix + embeddingText(it));
   return embedTexts(texts, {
     base: opts.base,
     model: opts.embedModel,
