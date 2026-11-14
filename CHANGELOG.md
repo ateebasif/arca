@@ -88,6 +88,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **One-line descriptions** in list view (with local AI on): the answer model
+  writes a short line under each title from its title and address, only for rows
+  you look at, once per link (cached); a cached link preview's own description
+  is used when there is one. Toggle in Settings → Local AI.
 - **Tags**: add tags to any bookmark or folder in its Edit dialog (with
   suggestions from tags you already use). Tags show as coloured chips on tiles,
   list rows and folder cards; the sidebar lists every tag with a count, and

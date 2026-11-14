@@ -24,6 +24,8 @@ export interface Settings {
   openIn: OpenDisposition;
   /** Local AI (Ollama) for "AI organize". Off until set up. */
   aiEnabled: boolean;
+  /** One-line AI descriptions under titles in list view (needs aiEnabled). */
+  aiDescriptions: boolean;
   ollamaUrl: string;
   embedModel: string;
   chatModel: string;
@@ -40,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   linkPreviews: false,
   openIn: 'current',
   aiEnabled: false,
+  aiDescriptions: true,
   ollamaUrl: DEFAULT_OLLAMA_URL,
   // Best grouping in testing; nomic-embed-text is ~10× faster but rougher.
   embedModel: 'qwen3-embedding:4b',
@@ -61,6 +64,7 @@ export function parseSettings(raw: unknown): Settings {
     linkPreviews: bool(r.linkPreviews, d.linkPreviews),
     openIn: oneOf(r.openIn, OPEN_DISPOSITIONS, d.openIn),
     aiEnabled: bool(r.aiEnabled, d.aiEnabled),
+    aiDescriptions: bool(r.aiDescriptions, d.aiDescriptions),
     // Only ever a loopback address: bookmark titles never leave this machine.
     ollamaUrl: localOllamaUrl(str(r.ollamaUrl, d.ollamaUrl, 200)) ?? d.ollamaUrl,
     embedModel: str(r.embedModel, d.embedModel, 200),

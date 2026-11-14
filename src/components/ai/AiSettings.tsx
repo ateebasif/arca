@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { clearEmbeddings } from '@/src/features/ai/embedCache';
+import { forgetDescriptions } from '@/src/features/ai/useDescription';
 import { hasOrigin, requestOrigin } from '@/src/lib/permissions';
 import {
   checkAccess,
@@ -171,6 +172,23 @@ export function AiSettings() {
               />
             </div>
           )}
+          <label className="flex items-start gap-2 text-xs">
+            <input
+              type="checkbox"
+              className="accent-accent mt-0.5"
+              checked={s.aiDescriptions}
+              onChange={(e) => void s.update({ aiDescriptions: e.target.checked })}
+            />
+            <span>
+              <span className="text-ink font-medium">
+                One-line descriptions in list view
+              </span>
+              <span className="text-ink-faint block">
+                Written once per link by the answer model from its title and site (or
+                taken from a cached link preview), only for rows you look at.
+              </span>
+            </span>
+          </label>
           <ClearCache />
         </div>
       )}
@@ -183,7 +201,15 @@ function ClearCache() {
   return (
     <button
       type="button"
-      onClick={() => void clearEmbeddings().then(() => setCleared(true))}
+      onClick={() =>
+        void Promise.all([
+          clearEmbeddings(),
+          import('@/src/features/ai/describe').then((m) => m.clearDescriptions()),
+        ]).then(() => {
+          forgetDescriptions();
+          setCleared(true);
+        })
+      }
       className="text-ink-muted hover:text-ink text-xs underline-offset-2 hover:underline"
     >
       {cleared ? 'Cached AI data cleared' : 'Clear cached AI data'}

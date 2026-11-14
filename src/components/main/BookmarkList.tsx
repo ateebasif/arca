@@ -1,3 +1,4 @@
+import { useDescription, useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useTags } from '@/src/store/useMeta';
 import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
@@ -99,6 +100,7 @@ export const FolderRow = memo(function FolderRow({
     (s) => s.renamingId === folder.id && s.renameIn === 'main',
   );
   const handlers = itemHandlers(folder);
+  const tall = useDescriptionsOn();
   const drag = useDragItem(folder);
   const drop = useFolderDrop(folder.id, 'row');
   const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
@@ -129,7 +131,7 @@ export const FolderRow = memo(function FolderRow({
         if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(folder.id);
         else handlers.onKeyDown(e);
       }}
-      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
         <FolderIcon className="text-accent shrink-0" />
@@ -171,6 +173,8 @@ export const BookmarkRow = memo(function BookmarkRow({
     (s) => s.renamingId === bookmark.id && s.renameIn === 'main',
   );
   const link = bookmarkLinkProps(url);
+  const tall = useDescriptionsOn();
+  const description = useDescription(bookmark.id, bookmark.title, url);
   const handlers = itemHandlers(bookmark);
   const drag = useDragItem(bookmark);
   const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
@@ -212,16 +216,33 @@ export const BookmarkRow = memo(function BookmarkRow({
         }
         handlers.onKeyDown(e);
       }}
-      className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong h-10 items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
       <span role="cell" className="flex min-w-0 items-center gap-2.5">
         <Favicon url={url} title={title} size={16} />
-        {renaming ? (
-          <InlineRename id={bookmark.id} initial={bookmark.title} className="h-7" />
-        ) : (
-          <span className="truncate">{title}</span>
-        )}
-        <RowTags id={bookmark.id} />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="flex min-w-0 items-center gap-2.5">
+            {renaming ? (
+              <InlineRename id={bookmark.id} initial={bookmark.title} className="h-7" />
+            ) : (
+              <span className="truncate">{title}</span>
+            )}
+            <RowTags id={bookmark.id} />
+          </span>
+          {tall &&
+            (description === undefined ? (
+              <span
+                className="bg-hover mt-1 h-2 w-40 max-w-full animate-pulse rounded"
+                aria-hidden
+              />
+            ) : (
+              description && (
+                <span className="text-ink-faint truncate text-[11px]" data-description>
+                  {description}
+                </span>
+              )
+            ))}
+        </span>
       </span>
       <span role="cell" className="text-ink-muted truncate text-xs">
         {url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}

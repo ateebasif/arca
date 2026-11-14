@@ -61,6 +61,8 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   same safe-link rules as everywhere else. Its reply is cleaned like folder names
   and rendered as plain text. The conversation is kept in memory and in that tab's sessionStorage (so Back
   restores it), validated on read, and dropped when the tab closes.
+- List descriptions are written from the title and address only (nothing is
+  fetched for them), cleaned like other model text, and cached in IndexedDB.
 - Embeddings are cached in IndexedDB (private to Arca) and can be cleared in Settings.
 
 ### Mini windows

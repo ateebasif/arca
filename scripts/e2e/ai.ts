@@ -258,6 +258,25 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
         `  ✓ Ask Arca with real Ollama: ${found.length} results (${found.join(', ')})`,
       );
       await page.key('Escape');
+
+      // 4. List view: one-line descriptions written by the local model.
+      await page.key('Escape');
+      await page.eval(`document.querySelector('[aria-label="List"]').click()`);
+      await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+      await page.waitFor(`document.querySelector('[data-folder-id="${folder}"]')`);
+      await page.eval(`document.querySelector('[data-folder-id="${folder}"]').click()`);
+      await page.waitFor(
+        `document.querySelectorAll('[data-description]').length >= 6`,
+        90000,
+      );
+      const descriptions = await page.eval<string[]>(
+        `[...document.querySelectorAll('[data-description]')].map((e) => e.textContent)`,
+      );
+      assert.ok(descriptions.every((d) => d.length > 3 && d.length <= 140));
+      await sleep(300);
+      await page.screenshot(`${out}/list-descriptions.png`);
+      console.log(`  ✓ List descriptions with real Ollama: e.g. “${descriptions[0]}”`);
+      await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
       await page.eval(`chrome.bookmarks.removeTree('${folder}')`);
     } finally {
       browser.close();
