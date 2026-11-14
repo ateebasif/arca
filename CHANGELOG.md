@@ -78,6 +78,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Ask Arca has an "Answers by" model picker (smallest marked fastest), separate
+  from the folder-naming model.
+- The Ask Arca chat survives leaving the tab: open a result in the same tab, go
+  Back, and the chat (and panel) come back. It's kept only in that tab and gone
+  when the tab closes.
+- Settings explains that some browsers (Ardia, Arc) show mini windows as regular
+  windows, and that their own Little Arc / Peek can't be opened by extensions.
 - Mini windows can become a normal tab: while one is open, a small bar in Arca
   offers **Open here** (or close). In the mini window itself, right-click →
   **Open in main window**, or press ⌥⇧O. Mini windows now open as a peek on the

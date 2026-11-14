@@ -1,3 +1,4 @@
+import { askPanelWasOpen } from '@/src/store/askChat';
 import { MiniWindowBar } from './mini/MiniWindowBar';
 import { useEffect, useState } from 'react';
 import { DndProvider } from '@/src/features/dnd/DndProvider';
@@ -65,6 +66,10 @@ export function Dashboard({ surface }: DashboardProps) {
   }, [state.ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => preloadOverlays(), []);
+  // Came back to this tab (e.g. after opening an Ask Arca result here): reopen the chat.
+  useEffect(() => {
+    if (askPanelWasOpen()) useOverlays.getState().openAsk();
+  }, []);
 
   // Mouse side buttons (3 = back, 4 = forward) move through folder history.
   useEffect(() => {

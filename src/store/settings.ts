@@ -27,6 +27,8 @@ export interface Settings {
   ollamaUrl: string;
   embedModel: string;
   chatModel: string;
+  /** Model Ask Arca answers with ('' = the naming model). */
+  askModel: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -42,6 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   // Best grouping in testing; nomic-embed-text is ~10× faster but rougher.
   embedModel: 'qwen3-embedding:4b',
   chatModel: 'llama3.2:latest',
+  askModel: '',
 };
 
 export const SETTINGS_KEY = 'settings';
@@ -62,6 +65,7 @@ export function parseSettings(raw: unknown): Settings {
     ollamaUrl: localOllamaUrl(str(r.ollamaUrl, d.ollamaUrl, 200)) ?? d.ollamaUrl,
     embedModel: str(r.embedModel, d.embedModel, 200),
     chatModel: str(r.chatModel, d.chatModel, 200),
+    askModel: str(r.askModel, d.askModel, 200),
   };
 }
 
