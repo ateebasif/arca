@@ -110,6 +110,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Related by meaning** in search results (local AI on): links close in meaning
+  to what you typed that the keyword search missed, from the readings Ask Arca
+  already cached. Only your query is sent to the local model, so it's quick
+  and never starts reading the library from a keystroke.
 - **Add to Arca…** in the right-click menu on any web page or link: opens Arca's
   popup as a save box with an editable title, the folder picker (create folders
   there too) and tags. It says if the page is already saved. Falls back to a

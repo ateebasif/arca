@@ -6,7 +6,6 @@
 
 ## Up Next
 
-- [ ] ARC-062 · Meaning matches inline in search results (reuse Ask's cached embeddings, no chat model), merged under keyword results · P2
 - [ ] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, output in Other Bookmarks, Bookmarks Bar opt-in, higher folder cap (~40–60) · part of / follow-up to ARC-058 · P1
 
 ## Backlog
@@ -49,6 +48,7 @@
 
 ## Done
 
+- [x] ARC-062 · "Related by meaning" in search results: cache-only bookmark vectors, query-only embed, debounced, AI code lazy · `feature/search-meaning` · 2026-11-14
 - [x] ARC-029 · "Add page/link to Arca…" context menu → popup save box (title, folder picker, tags); validated 2-minute handoff · `feature/add-to-arca-menu` · 2026-11-14
 - [x] ARC-033 · Tag manager: search, rename/merge (incl. look-alikes), colours (`tagColors`, validated), delete, view; one undo each · `feature/tag-manager` · 2026-11-14
 - [x] ARC-074 · Rounded-square checkboxes; Select all (full view list, not just rendered rows); batch Ungroup with one undo · `feature/select-polish` · 2026-11-14
@@ -116,8 +116,10 @@
 
 ## Known Issues / Bugs
 
+- [ ] ARC-075 · "Related by meaning" results aren't in the ↑↓ keyboard navigation yet (click only) · P3
+
 - [ ] ARC-B06 · Full e2e not yet re-run for ARC-069/070/multi-select (deferred at the user's request); `bun run e2e:ai` stalled once in its first AI step and needs a look · P1
-- [ ] ARC-B07 · New Tab initial JS is ~428 KB, over the 400 KB budget (React + app growth); options: Preact compat, or lazy-load more of the dashboard · P2
+- [ ] ARC-B07 · New Tab initial JS is ~435 KB, over the 400 KB budget (React + app growth); options: Preact compat, or lazy-load more of the dashboard · P2
 - [ ] ARC-071 · Drag a multi-selection together (today drag moves one item) · P3
 
 ## Tech Debt / Risks to Verify
