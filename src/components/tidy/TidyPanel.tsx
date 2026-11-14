@@ -15,14 +15,16 @@ import { getBookmarkStore, useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { useAiRun } from '@/src/store/aiRun';
 import { AiOrganize } from '../ai/AiOrganize';
+import { CleanOut } from './CleanOut';
 import { FolderIcon } from '../icons';
 import { Favicon } from '../main/Favicon';
 import { Button, Dialog } from '../overlays/Dialog';
 
-type Tab = 'duplicates' | 'empty' | 'sort' | 'group' | 'ai';
+type Tab = 'duplicates' | 'empty' | 'purge' | 'sort' | 'group' | 'ai';
 const TABS: Array<[Tab, string]> = [
   ['duplicates', 'Duplicates'],
   ['empty', 'Empty folders'],
+  ['purge', 'Clean out'],
   ['sort', 'Sort folder'],
   ['group', 'Group by site'],
   ['ai', 'AI organize'],
@@ -116,7 +118,7 @@ export default function TidyPanel() {
             </button>
           ))}
         </div>
-        {(tab === 'duplicates' || tab === 'empty') && (
+        {(tab === 'duplicates' || tab === 'empty' || tab === 'purge') && (
           <label className="text-ink-muted flex items-center gap-2 text-xs">
             Look in
             <select
@@ -144,6 +146,9 @@ export default function TidyPanel() {
             busy={!!busy}
             run={run}
           />
+        )}
+        {tab === 'purge' && (
+          <CleanOut baseId={wholeLibrary ? '0' : folderId} busy={!!busy} run={run} />
         )}
         {tab === 'sort' && <SortFolder folderId={folderId} busy={!!busy} run={run} />}
         {tab === 'group' && <GroupBySite folderId={folderId} busy={!!busy} run={run} />}

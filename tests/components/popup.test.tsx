@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { Popup } from '@/src/components/Popup';
 import { useSettings } from '@/src/store/settings';
-import { renderWithBookmarks, SAMPLE_SEED } from '../helpers/render';
+import { renderWithBookmarks, SAMPLE_SEED, setRenderSettings } from '../helpers/render';
+
+// These tests check the "same tab" behaviour (the default is a new tab).
+beforeEach(() => setRenderSettings({ openIn: 'current' }));
+afterEach(() => setRenderSettings({}));
 
 function activeTab(url: string, title = 'Some page') {
   vi.spyOn(fakeBrowser.tabs, 'query').mockResolvedValue([

@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { Dashboard } from '@/src/components/Dashboard';
 import { useUi } from '@/src/store/ui';
-import { renderWithBookmarks, SAMPLE_SEED } from '../helpers/render';
+import { renderWithBookmarks, SAMPLE_SEED, setRenderSettings } from '../helpers/render';
+
+// These tests check the "same tab" behaviour (the default is a new tab).
+beforeEach(() => setRenderSettings({ openIn: 'current' }));
+afterEach(() => setRenderSettings({}));
 
 const input = () => screen.getByRole('combobox', { name: 'Search bookmarks' });
 const options = () => within(screen.getByRole('listbox')).getAllByRole('option');

@@ -22,6 +22,8 @@ data stays on your machine.
   Undo).
 - **Drag & drop**: reorder tiles, drop on a folder card's top band, a sidebar
   folder or a breadcrumb to move. Keyboard: Space, arrows, Space.
+- **Clean out**: finds impulse saves (old searches, local links, one-time pages,
+  optional AI review) to archive or delete, all undoable.
 - **Tidy up**: remove duplicates (keeps the best copy), remove empty folders,
   sort a folder for real, group links into per-site folders. Local and undoable.
 - **AI organize** (opt-in, local only): groups links by topic with your own

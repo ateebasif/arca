@@ -31,6 +31,7 @@ describe('open links setting', () => {
 
   it('leaves plain clicks to the browser in "same tab" mode', async () => {
     await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    await act(() => useSettings.getState().update({ openIn: 'current' }));
     const clicked = fireEvent.click(tile('GitHub'));
     expect(clicked).toBe(true); // not prevented: the real link navigates
     expect(create).not.toHaveBeenCalled();
@@ -84,6 +85,6 @@ describe('open links setting', () => {
       'window',
     );
     expect(useSettings.getState().openIn).toBe('window');
-    expect(parseSettings({ openIn: 'everywhere' }).openIn).toBe('current');
+    expect(parseSettings({ openIn: 'everywhere' }).openIn).toBe('new-tab');
   });
 });

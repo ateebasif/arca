@@ -110,3 +110,42 @@ export async function groupBySite(
   }
   return groups.length;
 }
+
+export const ARCHIVE_TITLE = 'Archived by Arca';
+
+/**
+ * Moves bookmarks into "Archived by Arca" in Other bookmarks (created if
+ * needed). Gentler than deleting: everything stays searchable and can be
+ * moved back. One undo reverses it.
+ */
+export async function archiveAll(
+  ids: readonly string[],
+  onProgress?: Progress,
+): Promise<number> {
+  const steps: undo.UndoAction[] = [];
+  const others = (await bm.getTree()).children?.find((r) => r.id === '2') ? '2' : '1';
+  let archive = (await bm.getChildren(others)).find(
+    (c) => c.url === undefined && c.title === ARCHIVE_TITLE,
+  );
+  if (!archive) {
+    archive = await bm.create({ parentId: others, title: ARCHIVE_TITLE });
+    steps.push(undo.created(archive));
+  }
+  let done = 0;
+  try {
+    for (const id of ids) {
+      const from = await bm.getNode(id).catch(() => null);
+      if (from?.parentId && from.parentId !== archive.id) {
+        await bm.move(id, { parentId: archive.id });
+        steps.push(
+          undo.moved(id, { parentId: from.parentId, index: from.index ?? 0 }, ''),
+        );
+      }
+      onProgress?.(++done, ids.length);
+    }
+  } finally {
+    const moved = steps.filter((s) => s.label === '').length;
+    if (steps.length) undo.record(undo.combine(`Archived ${moved} links`, steps));
+  }
+  return done;
+}

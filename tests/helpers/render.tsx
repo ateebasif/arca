@@ -4,7 +4,7 @@ import { clearUndoForTests } from '@/src/features/undo/undo';
 import { BookmarkStore } from '@/src/store/bookmarkStore';
 import { resetOverlaysForTests } from '@/src/store/overlays';
 import { resetMetaForTests } from '@/src/store/useMeta';
-import { resetSettingsForTests } from '@/src/store/settings';
+import { resetSettingsForTests, useSettings, type Settings } from '@/src/store/settings';
 import { resetUiForTests } from '@/src/store/ui';
 import { setBookmarkStoreForTests } from '@/src/store/useBookmarks';
 import {
@@ -30,6 +30,7 @@ export async function renderWithBookmarks(
   resetOverlaysForTests();
   resetMetaForTests();
   resetSettingsForTests();
+  useSettings.setState(renderSettings);
   clearUndoForTests();
   await store.start();
   const result = render(ui);
@@ -55,3 +56,9 @@ export const SAMPLE_SEED: FakeBookmarksSeed = {
     { title: 'Recipes', children: [{ title: 'Pasta', url: 'https://pasta.dev/' }] },
   ],
 };
+
+let renderSettings: Partial<Settings> = {};
+/** Settings applied after the reset in renderWithBookmarks (per test file). */
+export function setRenderSettings(settings: Partial<Settings>): void {
+  renderSettings = settings;
+}

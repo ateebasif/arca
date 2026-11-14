@@ -677,7 +677,7 @@ check('mini window: opens small, "Open here" moves it into this window', async (
   try {
     const origin = await page.eval<string>('location.origin');
     const id = await page.eval<string>(`(async () => {
-      await chrome.storage.local.set({ settings: { openIn: 'window' } });
+      await chrome.storage.local.set({ settings: { openIn: 'window', version: 2 } });
       return (await chrome.bookmarks.create({ parentId: '1', title: 'Mini page', url: '${url}' })).id;
     })()`);
     await page.navigate(`${origin}/dashboard.html`);
