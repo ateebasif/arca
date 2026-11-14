@@ -1,3 +1,5 @@
+import { fakeBrowser } from 'wxt/testing/fake-browser';
+import userEvent from '@testing-library/user-event';
 import { act, screen, within } from '@testing-library/react';
 import { Dashboard } from '@/src/components/Dashboard';
 import { docText, type AskItem } from '@/src/features/ai/ask';
@@ -99,5 +101,17 @@ describe('meaning matches in search', () => {
     const section = await screen.findByRole('region', { name: 'Related by meaning' });
     expect(await within(section).findByText('Downie')).toBeVisible();
     expect(within(section).queryByText('React docs')).toBeNull();
+
+    // ↓ past the keyword results reaches the meaning match; Enter opens it.
+    const box = screen.getByRole('combobox', { name: 'Search bookmarks' });
+    box.focus();
+    const keyword = screen.queryAllByRole('option').filter((o) => !section.contains(o));
+    for (let i = 0; i <= keyword.length; i++) await userEvent.keyboard('{ArrowDown}');
+    const downie = within(section).getByRole('option', { name: /Downie/ });
+    expect(downie).toHaveAttribute('aria-selected', 'true');
+    expect(box).toHaveAttribute('aria-activedescendant', downie.id);
+    const create = vi.spyOn(fakeBrowser.tabs, 'create');
+    await userEvent.keyboard('{Enter}');
+    await vi.waitFor(() => expect(create).toHaveBeenCalled());
   });
 });

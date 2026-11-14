@@ -3,6 +3,7 @@ import { openResult } from '@/src/features/search/actions';
 import { resultId, RESULTS_ID, useSearchResults } from '@/src/features/search/useSearch';
 import { useHotkeys } from '@/src/lib/hotkeys';
 import { useUi } from '@/src/store/ui';
+import { useMeaningResults } from '@/src/store/meaningResults';
 import { CloseIcon, SearchIcon } from '../icons';
 
 /** Global search field (combobox). ⌘K or / focuses it. */
@@ -12,7 +13,10 @@ export function SearchBox() {
   const setQuery = useUi((s) => s.setQuery);
   const active = useUi((s) => s.activeResult);
   const setActive = useUi((s) => s.setActiveResult);
-  const results = useSearchResults();
+  const keyword = useSearchResults();
+  const meaning = useMeaningResults((s) => s.results);
+  // ↑↓ move through keyword results, then the "Related by meaning" ones.
+  const results = meaning.length ? [...keyword, ...meaning] : keyword;
   const open = query.trim().length > 0;
 
   useHotkeys({
