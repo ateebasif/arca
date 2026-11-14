@@ -31,7 +31,14 @@ export interface Settings {
   chatModel: string;
   /** Model Ask Arca answers with ('' = the naming model). */
   askModel: string;
+  /** Your rules for AI organize folder names ('' = Arca's defaults). */
+  organizeRules: string;
+  /** Your rules for AI organize tags ('' = Arca's defaults). */
+  tagRules: string;
 }
+
+/** Longest instruction text kept (it goes into every naming prompt). */
+export const RULES_MAX = 600;
 
 export const DEFAULT_SETTINGS: Settings = {
   newTabMode: 'dashboard',
@@ -48,6 +55,8 @@ export const DEFAULT_SETTINGS: Settings = {
   embedModel: 'qwen3-embedding:4b',
   chatModel: 'llama3.2:latest',
   askModel: '',
+  organizeRules: '',
+  tagRules: '',
 };
 
 export const SETTINGS_KEY = 'settings';
@@ -70,6 +79,8 @@ export function parseSettings(raw: unknown): Settings {
     embedModel: str(r.embedModel, d.embedModel, 200),
     chatModel: str(r.chatModel, d.chatModel, 200),
     askModel: str(r.askModel, d.askModel, 200),
+    organizeRules: str(r.organizeRules, d.organizeRules, RULES_MAX),
+    tagRules: str(r.tagRules, d.tagRules, RULES_MAX),
   };
 }
 
