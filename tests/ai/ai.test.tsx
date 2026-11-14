@@ -703,6 +703,50 @@ describe('AI organize panel', () => {
     expect(getMetaStore().idsWithTag('docs')).toHaveLength(0);
   });
 
+  it('organizes all bookmarks into Other bookmarks, Bookmarks bar opt-in', async () => {
+    fakeOllama();
+    const link = (t: string) => ({
+      title: t,
+      url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+    });
+    const { fake } = await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [link('Pinned on the bar')],
+      other: [
+        { title: 'Web', children: REACT.map(link) },
+        { title: 'Kitchen', children: FOOD.map(link) },
+      ],
+    });
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().setTidyOpen(true));
+    const panel = await screen.findByRole('dialog', { name: 'Tidy up' });
+    await userEvent.click(within(panel).getByRole('tab', { name: 'AI organize' }));
+    await userEvent.click(within(panel).getByRole('radio', { name: 'All bookmarks' }));
+    const total = REACT.length + FOOD.length;
+    expect(panel).toHaveTextContent(
+      `Groups the ${total} links in all your bookmarks except the Bookmarks bar`,
+    );
+    await userEvent.click(
+      within(panel).getByRole('checkbox', { name: /Include the Bookmarks bar/ }),
+    );
+    expect(panel).toHaveTextContent(`Groups the ${total + 1} links`);
+    await userEvent.click(
+      within(panel).getByRole('checkbox', { name: /Include the Bookmarks bar/ }),
+    );
+    await userEvent.selectOptions(within(panel).getByRole('combobox'), '0');
+    await userEvent.click(within(panel).getByRole('button', { name: 'Suggest folders' }));
+    await within(panel).findAllByRole('textbox', { name: 'Folder name' });
+    await userEvent.click(
+      within(panel).getByRole('button', { name: /^Apply 2 folders/ }),
+    );
+    await vi.waitFor(() => expect(fake.findByTitle('Organized by Arca')).toBeDefined());
+    // Results land in Other bookmarks; the bar link stays put.
+    expect(fake.findByTitle('Organized by Arca')!.parentId).toBe('2');
+    expect(fake.findByTitle('Pinned on the bar')!.parentId).toBe('1');
+    await vi.waitFor(() =>
+      expect(fake.childIds(fake.findByTitle('Web')!.id)).toHaveLength(0),
+    );
+  });
+
   it('keeps running across tab switches, closing the panel and browsing', async () => {
     // Hold the embedding request until we say so.
     let release!: () => void;
