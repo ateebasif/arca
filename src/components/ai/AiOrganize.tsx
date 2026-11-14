@@ -43,18 +43,36 @@ export function AiOrganize() {
   const folderId = !idle && run.folderId ? run.folderId : currentId;
   const folderTitle =
     state.nodes.get(folderId)?.title || run.folderTitle || 'this folder';
+  const all = run.scope === 'all';
+  // "All bookmarks": every root except the Bookmarks bar (unless included);
+  // results go into Other bookmarks.
+  const otherId = state.rootIds.includes('2')
+    ? '2'
+    : (state.rootIds.find((id) => id !== '1') ?? '1');
+  const sourceIds = all
+    ? state.rootIds.filter((id) => id !== '1' || run.includeBar)
+    : [currentId];
+  const sourceKey = sourceIds.join(',');
   const items = useMemo<OrganizeItem[]>(
     () =>
-      linksWithin(state, currentId)
-        .filter((l) => l.node.url && /^https?:/i.test(l.node.url))
-        .map((l) => ({
-          id: l.node.id,
-          title: l.node.title,
-          url: l.node.url ?? '',
-          folder: l.folderLabel,
-        })),
-    [state, currentId],
+      sourceIds.flatMap((base) => {
+        const root = all ? state.nodes.get(base)?.title : '';
+        return linksWithin(state, base)
+          .filter((l) => l.node.url && /^https?:/i.test(l.node.url))
+          .map((l) => ({
+            id: l.node.id,
+            title: l.node.title,
+            url: l.node.url ?? '',
+            folder: [root, l.folderLabel].filter(Boolean).join(' / '),
+          }));
+      }),
+    // sourceIds is compared by its key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, sourceKey, all],
   );
+  const target = all
+    ? { id: otherId, title: state.nodes.get(otherId)?.title || 'Other bookmarks' }
+    : { id: currentId, title: state.nodes.get(currentId)?.title || 'this folder' };
   const auto = chooseK(items.length);
   const meta = useMeta();
   const known = useMemo(
@@ -84,31 +102,82 @@ export function AiOrganize() {
   }
 
   const start = () =>
-    void run.start(
-      { id: currentId, title: state.nodes.get(currentId)?.title || 'this folder' },
-      items,
-      {
-        base: settings.ollamaUrl,
-        embedModel: settings.embedModel,
-        chatModel: settings.chatModel,
-        groups: run.groupsWanted === -1 ? 'ai' : run.groupsWanted || undefined,
-        organizeRules: settings.organizeRules,
-        tagRules: settings.tagRules,
-        knownTags: getMetaStore()
-          .allTags()
-          .map((t) => t.tag),
-      },
-    );
+    void run.start(target, items, {
+      base: settings.ollamaUrl,
+      embedModel: settings.embedModel,
+      chatModel: settings.chatModel,
+      groups: run.groupsWanted === -1 ? 'ai' : run.groupsWanted || undefined,
+      organizeRules: settings.organizeRules,
+      tagRules: settings.tagRules,
+      knownTags: getMetaStore()
+        .allTags()
+        .map((t) => t.tag),
+    });
 
   return (
     <div className="flex flex-col gap-3">
       {idle ? (
-        <p className="text-ink-muted text-xs leading-relaxed">
-          Groups the <strong className="text-ink">{items.length.toLocaleString()}</strong>{' '}
-          links in “{folderTitle}” (and its subfolders) by topic using{' '}
-          <code>{settings.embedModel}</code> and <code>{settings.chatModel}</code>. You
-          review everything before anything moves, and one Undo reverses it.
-        </p>
+        <>
+          <div
+            role="radiogroup"
+            aria-label="What to organize"
+            className="bg-hover flex w-fit gap-0.5 rounded-lg p-0.5 text-xs"
+          >
+            {(
+              [
+                [
+                  'folder',
+                  `This folder (${state.nodes.get(currentId)?.title || 'open folder'})`,
+                ],
+                ['all', 'All bookmarks'],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="radio"
+                aria-checked={run.scope === key}
+                onClick={() => run.setScope(key)}
+                className={`h-7 max-w-64 truncate rounded-md px-2.5 ${
+                  run.scope === key
+                    ? 'bg-surface-strong text-ink shadow-(--shadow-tile)'
+                    : 'text-ink-muted hover:text-ink'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-ink-muted text-xs leading-relaxed">
+            Groups the{' '}
+            <strong className="text-ink">{items.length.toLocaleString()}</strong> links{' '}
+            {all ? (
+              <>
+                in all your bookmarks{run.includeBar ? '' : ' except the Bookmarks bar'}{' '}
+                into topic folders in “{target.title} / Organized by Arca”
+              </>
+            ) : (
+              <>in “{folderTitle}” (and its subfolders)</>
+            )}{' '}
+            by topic using <code>{settings.embedModel}</code> and{' '}
+            <code>{settings.chatModel}</code>. You review everything before anything
+            moves, and one Undo reverses it.
+          </p>
+          {all && (
+            <label className="text-ink-muted flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                className="accent-accent"
+                checked={run.includeBar}
+                onChange={(e) => run.setIncludeBar(e.target.checked)}
+              />
+              Include the Bookmarks bar
+              <span className="text-ink-faint">
+                (off by default: it's usually arranged by hand)
+              </span>
+            </label>
+          )}
+        </>
       ) : (
         <p className="text-ink-muted text-xs leading-relaxed">
           Organizing “<span className="text-ink">{folderTitle}</span>”. This keeps running
@@ -170,6 +239,7 @@ export function AiOrganize() {
             <span className="text-ink-muted text-xs" role="status">
               Created {phase.count} folders in “Organized by Arca”. Undo is in the toast
               or ⌘Z.
+              {all && ' Folders left empty can be removed in the Empty folders tab.'}
             </span>
           )}
         </div>

@@ -6,7 +6,6 @@
 
 ## Up Next
 
-- [ ] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, output in Other Bookmarks, Bookmarks Bar opt-in, higher folder cap (~40–60) · part of / follow-up to ARC-058 · P1
 
 ## Backlog
 
@@ -47,6 +46,8 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, results in Other bookmarks / Organized by Arca, Bookmarks bar opt-in (folder cap 60 from ARC-076) · `feature/organize-all-bookmarks` · 2026-11-14
 
 - [x] ARC-077 · AI organize instructions (optional, defaults shown): folder-name and tag rules saved in Settings; model suggests 1–3 tags per folder (reusing existing tags), editable in review · `feature/ai-instructions` · 2026-11-14
 - [x] ARC-B11 · Tags on link tiles clipped at the card bottom; folder and tags now share one line · `feature/ai-instructions` · 2026-11-14

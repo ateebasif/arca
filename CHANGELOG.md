@@ -144,6 +144,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- AI organize can work on **all bookmarks** at once (not just the open folder):
+  results go into Other bookmarks / Organized by Arca; the Bookmarks bar is left
+  alone unless you include it.
 - AI organize: optional instructions for folder names and for tags (empty boxes use
   the defaults shown in them). The model now suggests 1–3 tags per folder that
   follow your rules and reuse tags you already have; edit them before applying.

@@ -46,6 +46,12 @@ interface AiRunState {
   folderTitle: string;
   /** -1 = let AI decide, 0 = quick estimate, else a fixed number of folders. */
   groupsWanted: number;
+  /** Organize the open folder, or every bookmark (results go to Other bookmarks). */
+  scope: 'folder' | 'all';
+  /** With scope 'all': also take links from the Bookmarks bar. */
+  includeBar: boolean;
+  setScope(scope: 'folder' | 'all'): void;
+  setIncludeBar(on: boolean): void;
   /** Also tag links with their new folder's name when applying. */
   tagWithFolder: boolean;
   setTagWithFolder(on: boolean): void;
@@ -82,7 +88,11 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
   ...initial,
   groupsWanted: -1,
   tagWithFolder: false,
+  scope: 'folder',
+  includeBar: false,
 
+  setScope: (scope) => set({ scope }),
+  setIncludeBar: (includeBar) => set({ includeBar }),
   setGroupsWanted: (groupsWanted) => set({ groupsWanted }),
   setTagWithFolder: (tagWithFolder) => set({ tagWithFolder }),
   setName: (index, name) => set((s) => ({ names: { ...s.names, [index]: name } })),
@@ -206,5 +216,7 @@ export function resetAiRun(): void {
     skipped: new Set(),
     groupsWanted: -1,
     tagWithFolder: false,
+    scope: 'folder',
+    includeBar: false,
   });
 }
