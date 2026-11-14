@@ -88,6 +88,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Ungroup** a folder (right-click or ⋯ → Ungroup): everything inside moves up to
+  where the folder was, in order, and the empty folder is removed. One Undo puts
+  it back.
 - Ask Arca has an "Answers by" model picker (smallest marked fastest), separate
   from the folder-naming model.
 - The Ask Arca chat survives leaving the tab: open a result in the same tab, go

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { requestDelete } from '@/src/features/editing/actions';
+import { requestDelete, ungroupFolder } from '@/src/features/editing/actions';
 import { defaultDisposition, openSafely } from '@/src/features/open';
 import { useOverlays, type MenuState } from '@/src/store/overlays';
 import { useBookmarks } from '@/src/store/useBookmarks';
@@ -79,6 +79,15 @@ export function ItemMenu({ menu }: { menu: MenuState }) {
       disabled: locked,
       run: () => startRename(node.id, menu.from),
     },
+    ...(isFolder
+      ? [
+          {
+            label: 'Ungroup',
+            disabled: locked || (node.childIds?.length ?? 0) === 0,
+            run: () => void ungroupFolder(node.id),
+          },
+        ]
+      : []),
     {
       label: 'Delete',
       shortcut: '⌘⌫',

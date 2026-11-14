@@ -58,6 +58,7 @@
 
 ## Done
 
+- [x] ARC-066 · Ungroup folder: move contents up in place, remove folder, one undo · `feature/ungroup-folder` · 2026-11-14
 - [x] ARC-B04 · Ask follow-ups repeated a fresh search; reading progress hidden; nomic v2 prefix · `fix/ask-followups-progress` · 2026-11-14
 - [x] ARC-065 · Ask Arca model picker; chat kept across same-tab navigation; mini-window caveat for Ardia/Arc · `feature/ask-model-persist` · 2026-11-14
 - [x] ARC-064 · Mini window → main window: Open here bar, right-click Open in main window, ⌥⇧O command · `feature/mini-window-promote` · 2026-11-14
