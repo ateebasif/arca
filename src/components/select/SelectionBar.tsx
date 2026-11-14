@@ -2,7 +2,13 @@ import { rememberFolder } from '@/src/features/editing/recentFolders';
 import { FolderPicker } from '../FolderPicker';
 import { useUi } from '@/src/store/ui';
 import { useMemo, useState } from 'react';
-import { deleteMany, moveMany, openMany, retagMany } from '@/src/features/editing/bulk';
+import {
+  deleteMany,
+  moveMany,
+  openMany,
+  retagMany,
+  ungroupMany,
+} from '@/src/features/editing/bulk';
 import { errorMessage } from '@/src/features/editing/actions';
 import { tagStyle } from '@/src/features/tags/style';
 import { useOverlays } from '@/src/store/overlays';
@@ -13,7 +19,7 @@ import { CloseIcon } from '../icons';
 import { Button } from '../overlays/Dialog';
 import { TagInput } from '../tags/TagInput';
 
-type Panel = null | 'move' | 'tag' | 'open' | 'delete';
+type Panel = null | 'move' | 'tag' | 'open' | 'ungroup' | 'delete';
 const OPEN_WARN = 10;
 
 /** Floating bar while items are selected: move, tag, open all, delete. */
@@ -21,6 +27,8 @@ export function SelectionBar() {
   const state = useBookmarks();
   const meta = useMeta();
   const ids = useSelection((s) => s.ids);
+  const viewIds = useSelection((s) => s.viewIds);
+  const viewTotal = viewIds.length;
   const sidebar = useUi((s) => (s.sidebarCollapsed ? 0 : s.sidebarWidth));
   const clear = useSelection((s) => s.clear);
   const [panel, setPanel] = useState<Panel>(null);
@@ -145,6 +153,21 @@ export function SelectionBar() {
               </Button>
             </div>
           )}
+          {panel === 'ungroup' && (
+            <div className="flex items-center gap-2">
+              <span className="flex-1">
+                Ungroup {folders} folders? Everything inside each one moves up to where
+                the folder was. You can undo this.
+              </span>
+              <Button
+                variant="primary"
+                disabled={busy}
+                onClick={() => void run(() => ungroupMany(list).then(clear))}
+              >
+                Ungroup {folders} folders
+              </Button>
+            </div>
+          )}
           {panel === 'delete' && (
             <div className="flex items-center gap-2">
               <span className="flex-1">
@@ -165,12 +188,26 @@ export function SelectionBar() {
         </div>
       )}
       <div className="border-line bg-surface-strong flex items-center gap-1.5 rounded-xl border p-1.5 pl-3 text-xs shadow-(--shadow-pop) backdrop-blur-xl">
-        <span className="text-ink flex-1 font-medium tabular-nums">{count} selected</span>
+        <span className="text-ink flex min-w-0 flex-1 items-center gap-2 font-medium tabular-nums">
+          {count} selected
+          {viewTotal > list.length && (
+            <button
+              type="button"
+              onClick={() => useSelection.getState().selectAll(viewIds)}
+              className="text-accent rounded px-1 font-normal hover:underline"
+            >
+              Select all {viewTotal.toLocaleString()}
+            </button>
+          )}
+        </span>
         {(
           [
             ['move', 'Move to…'],
             ['tag', 'Tag…'],
             ['open', 'Open all'],
+            ...(folders > 0
+              ? ([['ungroup', folders > 1 ? 'Ungroup…' : 'Ungroup']] as const)
+              : []),
             ['delete', 'Delete…'],
           ] as const
         ).map(([key, label]) => (
@@ -183,6 +220,11 @@ export function SelectionBar() {
               // Small "open all" needs no confirmation.
               if (key === 'open' && links.length <= OPEN_WARN) {
                 void run(() => openMany(list));
+                return;
+              }
+              // One folder: just do it (it's undoable); several: confirm first.
+              if (key === 'ungroup' && folders === 1) {
+                void run(() => ungroupMany(list).then(clear));
                 return;
               }
               setPanel(panel === key ? null : key);

@@ -2,6 +2,7 @@ import * as bm from '@/src/lib/bookmarks';
 import { openUrls } from '@/src/lib/tabs';
 import { getMetaStore } from '@/src/store/useMeta';
 import { setTags } from '../tags/actions';
+import { ungroupSteps } from './actions';
 import * as undo from '../undo/undo';
 
 /**
@@ -108,4 +109,39 @@ export async function openMany(ids: readonly string[]): Promise<number> {
   const urls = await urlsOf(ids);
   await openUrls(urls);
   return urls.length;
+}
+
+/**
+ * Ungroups every selected folder (contents move up where each folder was),
+ * as one undo. Links in the selection are left alone; browser root folders
+ * are skipped.
+ */
+export async function ungroupMany(ids: readonly string[]): Promise<number> {
+  const steps: undo.UndoAction[] = [];
+  let folders = 0;
+  try {
+    for (const id of ids) {
+      const node = await bm.getNode(id).catch(() => null);
+      if (!node || node.url !== undefined || bm.isRootFolder(node)) continue;
+      try {
+        const result = await ungroupSteps(id);
+        steps.push(...result.steps);
+        folders++;
+      } catch (error) {
+        const partial = (error as { partialSteps?: undo.UndoAction[] }).partialSteps;
+        if (partial) steps.push(...partial);
+        throw error;
+      }
+    }
+  } finally {
+    if (steps.length) {
+      undo.record(
+        undo.combine(
+          `Ungrouped ${folders} ${folders === 1 ? 'folder' : 'folders'}`,
+          steps,
+        ),
+      );
+    }
+  }
+  return folders;
 }

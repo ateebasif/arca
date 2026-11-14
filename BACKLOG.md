@@ -51,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-074 · Rounded-square checkboxes; Select all (full view list, not just rendered rows); batch Ungroup with one undo · `feature/select-polish` · 2026-11-14
 - [x] ARC-073 · Folder picker: create a new folder (footer or from search), selected right away, undoable; search box focus fix · `feature/picker-new-folder` · 2026-11-14
 - [x] ARC-B09 · Selection checkbox gets its own left column (icons stay); description placeholders never stick · `fix/select-column` · 2026-11-14
 - [x] ARC-072 · Searchable folder picker (recent first, tree, keyboard) in popup save, Edit and bulk Move; popup search shows all matches with a count, scrolling · `feature/popup-folder-picker` · 2026-11-14

@@ -74,35 +74,62 @@ export async function deleteNode(id: string): Promise<void> {
  * up into the parent folder, in order, where the folder was, and the empty
  * folder is removed. One undo puts it all back.
  */
+/**
+ * Moves a folder's contents up into its parent where the folder was and
+ * removes the folder. Returns undo steps in the order `combine` needs:
+ * undoing recreates the folder, then moves items back first-to-last.
+ * On a partial failure the steps so far are attached to the error.
+ */
+export async function ungroupSteps(
+  id: string,
+): Promise<{ steps: undo.UndoAction[]; title: string; count: number }> {
+  const folder = await bm.getNode(id);
+  if (bm.isRootFolder(folder)) throw new ArcaError('ROOT_FOLDER', '');
+  if (folder.url !== undefined || !folder.parentId)
+    throw new ArcaError('NOT_A_FOLDER', '');
+  const parentId = folder.parentId;
+  const start = folder.index ?? 0;
+  const children = await bm.getChildren(id);
+  const moves: undo.UndoAction[] = [];
+  try {
+    for (const [k, child] of children.entries()) {
+      await bm.move(child.id, { parentId, index: start + k });
+      moves.push(undo.moved(child.id, { parentId: id, index: child.index ?? k }, ''));
+    }
+  } catch (error) {
+    throw Object.assign(error instanceof Error ? error : new Error(String(error)), {
+      partialSteps: moves.reverse(),
+    });
+  }
+  const removed = await bm.remove(id);
+  return {
+    steps: [...moves.reverse(), undo.deleted(removed)],
+    title: folder.title || 'Untitled',
+    count: children.length,
+  };
+}
+
+/**
+ * Ungroups a folder (like ungrouping tabs in Ardia): everything inside moves
+ * up into the parent folder, in order, where the folder was, and the empty
+ * folder is removed. One undo puts it all back.
+ */
 export async function ungroupFolder(id: string): Promise<void> {
   await run(async () => {
-    const folder = await bm.getNode(id);
-    if (bm.isRootFolder(folder)) throw new ArcaError('ROOT_FOLDER', '');
-    if (folder.url !== undefined || !folder.parentId)
-      throw new ArcaError('NOT_A_FOLDER', '');
-    const parentId = folder.parentId;
-    const start = folder.index ?? 0;
-    const children = await bm.getChildren(id);
-    const moves: undo.UndoAction[] = [];
     try {
-      for (const [k, child] of children.entries()) {
-        await bm.move(child.id, { parentId, index: start + k });
-        moves.push(undo.moved(child.id, { parentId: id, index: child.index ?? k }, ''));
-      }
+      const { steps, title, count } = await ungroupSteps(id);
+      undo.record(
+        undo.combine(
+          `Ungrouped “${title}” (${count} ${count === 1 ? 'item' : 'items'})`,
+          steps,
+        ),
+      );
     } catch (error) {
-      // Partly done: still make what moved undoable, then report.
-      undo.record(undo.combine(`Ungrouped part of “${folder.title}”`, moves.reverse()));
+      const partial = (error as { partialSteps?: undo.UndoAction[] }).partialSteps;
+      if (partial?.length)
+        undo.record(undo.combine('Ungrouped part of a folder', partial));
       throw error;
     }
-    const removed = await bm.remove(id);
-    // Undo runs steps last-to-first: recreate the folder, then move items back
-    // into it first-to-last so each index exists.
-    undo.record(
-      undo.combine(
-        `Ungrouped “${folder.title || 'Untitled'}” (${children.length} ${children.length === 1 ? 'item' : 'items'})`,
-        [...moves.reverse(), undo.deleted(removed)],
-      ),
-    );
   });
 }
 

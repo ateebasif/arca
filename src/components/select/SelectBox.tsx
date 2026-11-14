@@ -35,7 +35,7 @@ export function SelectBox({
         if (e.shiftKey && s.anchor) s.extendTo(id, pageOrder());
         else s.toggle(id);
       }}
-      className={`z-10 grid size-5 place-items-center rounded-full border transition-[opacity,background-color,border-color] duration-150 ${
+      className={`z-10 grid size-[18px] place-items-center rounded-[5px] border transition-[opacity,background-color,border-color] duration-150 ${
         selected
           ? 'bg-accent-strong border-accent-strong text-white opacity-100'
           : `text-transparent ${
