@@ -290,5 +290,5 @@ export const BookmarkRow = memo(function BookmarkRow({
 
 function RowTags({ id }: { id: string }) {
   const tags = useTags(id);
-  return <TagChips tags={tags} max={2} className="shrink-0 flex-nowrap" />;
+  return <TagChips tags={tags} max={2} wrap={false} className="shrink-0" />;
 }

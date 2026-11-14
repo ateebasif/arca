@@ -6,17 +6,20 @@ export function TagChips({
   tags,
   max = 3,
   className = '',
+  wrap = true,
 }: {
   tags: readonly string[];
   max?: number;
   className?: string;
+  /** false: one line (chips shrink and truncate). */
+  wrap?: boolean;
 }) {
   const colors = useTagColors();
   if (tags.length === 0) return null;
   const shown = tags.slice(0, max);
   return (
     <span
-      className={`flex min-w-0 flex-wrap items-center gap-1 ${className}`}
+      className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'} ${className}`}
       data-tags
       title={tags.map((t) => `#${t}`).join(' ')}
     >

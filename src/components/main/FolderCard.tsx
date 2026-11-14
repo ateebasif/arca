@@ -174,7 +174,7 @@ export const FolderCard = memo(function FolderCard({
         )}
         <span className="flex min-w-0 items-center gap-2">
           <span className="text-ink-faint shrink-0 truncate text-[11px]">{meta}</span>
-          <TagChips tags={tags} max={2} className="flex-nowrap overflow-hidden" />
+          <TagChips tags={tags} max={2} wrap={false} className="overflow-hidden" />
         </span>
       </span>
     </>
