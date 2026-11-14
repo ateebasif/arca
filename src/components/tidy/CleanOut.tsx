@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react';
-import { analyzePurge, type PurgeGroup, type PurgeItem } from '@/src/features/tidy/purge';
+import {
+  analyzePurge,
+  LABELS,
+  type PurgeGroup,
+  type PurgeItem,
+} from '@/src/features/tidy/purge';
+import { useLinkCheck } from '@/src/store/linkCheck';
+import { LinkCheck } from './LinkCheck';
 import { archiveAll, removeAll } from '@/src/features/tidy/apply';
 import { displayHost } from '@/src/lib/url';
 import { usePurge } from '@/src/store/purgeRun';
@@ -59,7 +66,14 @@ export function CleanOut({ baseId, busy, run }: Props) {
   }, [groups, allLinks, verdicts]);
 
   const live = [...selected].filter((id) => state.nodes.get(id)?.url);
-  const shown = aiGroup ? [aiGroup, ...groups] : groups;
+  const linkResults = useLinkCheck((s) => s.results);
+  const brokenGroup: PurgeGroup | null = useMemo(() => {
+    const items: PurgeItem[] = allLinks
+      .filter((l) => linkResults.get(l.node.id)?.status === 'broken')
+      .map((l) => ({ node: l.node, folder: l.folderLabel, reasons: ['broken'] }));
+    return items.length ? { reason: 'broken', ...LABELS.broken, items } : null;
+  }, [allLinks, linkResults]);
+  const shown = [brokenGroup, aiGroup, ...groups].filter((g): g is PurgeGroup => !!g);
 
   const act = (kind: 'archive' | 'delete') =>
     void run(async (progress) => {
@@ -78,6 +92,14 @@ export function CleanOut({ baseId, busy, run }: Props) {
         changes until you pick some. <strong className="text-ink">Archive</strong> moves
         them into “Archived by Arca” (still searchable); one Undo reverses either action.
       </p>
+
+      <LinkCheck
+        links={allLinks.map((l) => ({
+          id: l.node.id,
+          url: l.node.url ?? '',
+          node: l.node,
+        }))}
+      />
 
       {settings.aiEnabled && (
         <div className="border-line bg-surface flex flex-wrap items-center gap-3 rounded-xl border p-3 text-xs">

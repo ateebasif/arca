@@ -22,6 +22,7 @@ data stays on your machine.
   Undo).
 - **Drag & drop**: reorder tiles, drop on a folder card's top band, a sidebar
   folder or a breadcrumb to move. Keyboard: Space, arrows, Space.
+- **Broken links** (opt-in): find dead or moved links and fix or remove them.
 - **Clean out**: finds impulse saves (old searches, local links, one-time pages,
   optional AI review) to archive or delete, all undoable.
 - **Tidy up**: remove duplicates (keeps the best copy), remove empty folders,

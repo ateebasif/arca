@@ -95,6 +95,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Broken links** (Tidy up → Clean out, opt-in): checks every link with a HEAD
+  request (GET if refused), no cookies or referrer, nothing downloaded, 8 s
+  timeout, 6 at a time and 2 per site. Broken links (404/410/server errors/sites
+  that no longer exist) join Clean out to archive or delete; moved links can be
+  updated to their new address (one at a time or all, one undo). Login walls and
+  rate limits count as "couldn't confirm". Results are cached for two weeks and
+  the check never runs on its own.
 - **Multi-select and bulk actions**: hover a tile, card or row and tick its
   checkbox to start selecting; then clicks toggle items, ⇧-click selects a range,
   ⌘A selects everything shown and Esc clears. A bar at the bottom moves the

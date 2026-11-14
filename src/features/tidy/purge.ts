@@ -11,7 +11,7 @@ import { linksWithin } from '@/src/store/selectors';
  * checkout, password reset…), titles that say nothing, and age.
  */
 
-export type PurgeReason = 'search' | 'local' | 'one-time' | 'vague' | 'old';
+export type PurgeReason = 'broken' | 'search' | 'local' | 'one-time' | 'vague' | 'old';
 
 export interface PurgeItem {
   node: BNode;
@@ -29,7 +29,11 @@ export interface PurgeGroup {
 const YEAR = 365 * 24 * 60 * 60 * 1000;
 export const OLD_AFTER_YEARS = 3;
 
-const LABELS: Record<PurgeReason, { label: string; hint: string }> = {
+export const LABELS: Record<PurgeReason, { label: string; hint: string }> = {
+  broken: {
+    label: 'Broken links',
+    hint: 'The page is gone (404/410), the server errors, or the site no longer exists.',
+  },
   search: {
     label: 'Search result pages',
     hint: 'Saved searches go stale; search again when you need it.',
