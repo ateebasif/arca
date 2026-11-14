@@ -57,9 +57,15 @@ export interface PreviewCacheOptions {
   now?: () => number;
 }
 
+/** Previews (with thumbnails) kept in memory; the rest stay in IndexedDB. */
+const MEMORY_MAX = 150;
+
 export class PreviewCache {
   private memory = new Map<string, Preview>();
-  private inflight = new Map<string, Promise<Preview>>();
+  private inflight = new Map<
+    string,
+    { promise: Promise<Preview>; signal?: AbortSignal }
+  >();
   private queue: Array<() => void> = [];
   private running = 0;
   private writes = 0;
@@ -77,6 +83,16 @@ export class PreviewCache {
     this.now = now;
   }
 
+  private remember(url: string, preview: Preview) {
+    this.memory.delete(url);
+    this.memory.set(url, preview);
+    while (this.memory.size > MEMORY_MAX) {
+      const oldest = this.memory.keys().next().value;
+      if (oldest === undefined) break;
+      this.memory.delete(oldest);
+    }
+  }
+
   private fresh(preview: Preview): boolean {
     const ttl = preview.status === 'ok' ? OK_TTL_MS : ERROR_TTL_MS;
     return this.now() - preview.fetchedAt < ttl;
@@ -88,26 +104,32 @@ export class PreviewCache {
     if (mem && this.fresh(mem)) return mem;
     const stored = parseStored(await this.store.get(url).catch(() => undefined), url);
     if (stored && this.fresh(stored)) {
-      this.memory.set(url, stored);
+      this.remember(url, stored);
       return stored;
     }
     return undefined;
   }
 
-  /** Cached preview, or fetch it once (deduplicated, rate-limited). */
-  get(url: string): Promise<Preview> {
+  /**
+   * Cached preview, or fetch it once (deduplicated, rate-limited). With a
+   * signal, a request still waiting its turn is dropped once the card that
+   * wanted it has gone (moving the mouse over many rows doesn't fetch them all).
+   */
+  get(url: string, { signal }: { signal?: AbortSignal } = {}): Promise<Preview> {
     const pending = this.inflight.get(url);
-    if (pending) return pending;
+    if (pending && !pending.signal?.aborted) return pending.promise;
     const promise = (async () => {
       const cached = await this.peek(url);
       if (cached) return cached;
-      const preview = await this.limit(() => this.load(url));
-      this.memory.set(url, preview);
+      const preview = await this.limit(() => this.load(url), signal);
+      this.remember(url, preview);
       await this.store.put(url, { ...preview, v: PREVIEW_VERSION }).catch(() => {});
       if (++this.writes % 50 === 0) void this.prune();
       return preview;
-    })().finally(() => this.inflight.delete(url));
-    this.inflight.set(url, promise);
+    })().finally(() => {
+      if (this.inflight.get(url)?.promise === promise) this.inflight.delete(url);
+    });
+    this.inflight.set(url, { promise, signal });
     return promise;
   }
 
@@ -131,9 +153,14 @@ export class PreviewCache {
     }
   }
 
-  private limit<T>(task: () => Promise<T>): Promise<T> {
+  private limit<T>(task: () => Promise<T>, signal?: AbortSignal): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const run = () => {
+        if (signal?.aborted) {
+          reject(new DOMException('Cancelled', 'AbortError'));
+          this.queue.shift()?.();
+          return;
+        }
         this.running++;
         task()
           .then(resolve, reject)
@@ -149,6 +176,8 @@ export class PreviewCache {
 
   /** Keeps only the newest MAX_ENTRIES entries. */
   async prune(): Promise<void> {
+    // Counting is cheap; reading every entry (thumbnails included) is not.
+    if ((await this.store.count().catch(() => 0)) <= MAX_ENTRIES) return;
     const entries = await this.store.entries().catch(() => []);
     if (entries.length <= MAX_ENTRIES) return;
     const byAge = entries

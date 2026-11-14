@@ -69,14 +69,14 @@ export function pageOrder(root: ParentNode = document): string[] {
     .filter(Boolean);
 }
 
-/** Views call this with their items so select-all and ranges see all of them. */
+/**
+ * Views call this with their items so select-all and ranges see all of them.
+ * Pass a memoized array: it's re-published only when the array changes.
+ */
 export function useViewIds(ids: readonly string[], enabled = true): void {
-  const key = enabled ? ids.join(',') : null;
   useEffect(() => {
-    if (key === null) return;
+    if (!enabled) return;
     useSelection.getState().setViewIds(ids);
     return () => useSelection.getState().setViewIds([]);
-    // Re-publish only when the list actually changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [ids, enabled]);
 }

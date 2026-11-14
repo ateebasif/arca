@@ -167,13 +167,12 @@ function PreviewCard({
   const [pos, setPos] = useState<Placement | null>(null);
 
   useEffect(() => {
-    let alive = true;
+    const ctrl = new AbortController();
     void getPreviewCache()
-      .get(url)
-      .then((p) => alive && setPreview(p));
-    return () => {
-      alive = false;
-    };
+      .get(url, { signal: ctrl.signal })
+      .then((p) => !ctrl.signal.aborted && setPreview(p))
+      .catch(() => {});
+    return () => ctrl.abort();
   }, [url]);
 
   useLayoutEffect(() => {

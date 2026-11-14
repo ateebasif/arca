@@ -77,7 +77,11 @@ export function TagView({ tag }: { tag: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, tag, meta.version]);
   const counts = folderCounts(state);
-  useViewIds([...folders, ...links].map((n) => n.id));
+  const viewIds = useMemo(
+    () => [...folders, ...links].map((n) => n.id),
+    [folders, links],
+  );
+  useViewIds(viewIds);
   if (!state.ready) return null;
 
   const total = folders.length + links.length;

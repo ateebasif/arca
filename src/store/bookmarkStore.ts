@@ -97,6 +97,8 @@ export class BookmarkStore {
         do {
           this.reloadQueued = false;
           const root = await this.bookmarks.getTree();
+          // A full tree replaces any changes still waiting to be shown.
+          this.pending = null;
           this.publish(buildNodes(root));
         } while (this.reloadQueued);
       } finally {
@@ -120,12 +122,32 @@ export class BookmarkStore {
       return;
     }
     const next = update();
-    if (next) this.publish(next);
-    else void this.reload();
+    if (!next) {
+      this.pending = null;
+      void this.reload();
+      return;
+    }
+    this.pending = next;
+    // Bursts of events (organize, bulk moves, imports by other apps) are
+    // applied to one draft and shown once, not copied and re-rendered per event.
+    if (!this.flushQueued) {
+      this.flushQueued = true;
+      queueMicrotask(() => {
+        this.flushQueued = false;
+        const nodes = this.pending;
+        this.pending = null;
+        if (nodes) this.publish(nodes);
+      });
+    }
   }
 
+  /** Changes not yet published, edited in place by the event handlers. */
+  private pending: Map<string, BNode> | null = null;
+  private flushQueued = false;
+
   private draft(): Map<string, BNode> {
-    return new Map(this.snapshot.nodes);
+    this.pending ??= new Map(this.snapshot.nodes);
+    return this.pending;
   }
 
   private onCreated(id: string, node: BookmarkNode): Map<string, BNode> | null {
