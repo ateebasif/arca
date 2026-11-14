@@ -1,3 +1,4 @@
+import { useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   rectSortingStrategy,
@@ -49,6 +50,8 @@ export function FolderView() {
 }
 
 function FolderContents() {
+  // Rows grow to fit a description line when those are on.
+  const rowHeight = useDescriptionsOn() ? 53 : 41;
   const state = useBookmarks();
   const currentFolderId = useUi((s) => s.currentFolderId);
   const density = useUi((s) => s.density);
@@ -113,7 +116,7 @@ function FolderContents() {
             {rows.length > VIRTUALIZE_OVER ? (
               <VirtualRows
                 items={rows}
-                rowHeight={41}
+                rowHeight={rowHeight}
                 minColumnWidth={0}
                 gap={1}
                 getKey={(n) => n.id}
@@ -195,6 +198,8 @@ function FolderContents() {
 
 /** Every link inside the open folder, flattened, each labelled with its folder. */
 function AllLinksView() {
+  // Rows grow to fit a description line when those are on.
+  const rowHeight = useDescriptionsOn() ? 53 : 41;
   const state = useBookmarks();
   const currentFolderId = useUi((s) => s.currentFolderId);
   const density = useUi((s) => s.density);
@@ -250,7 +255,7 @@ function AllLinksView() {
               {items.length > VIRTUALIZE_OVER ? (
                 <VirtualRows
                   items={items}
-                  rowHeight={41}
+                  rowHeight={rowHeight}
                   minColumnWidth={0}
                   gap={1}
                   getKey={(n) => n.id}

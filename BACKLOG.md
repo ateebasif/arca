@@ -58,6 +58,7 @@
 
 ## Done
 
+- [x] ARC-068 · AI one-line descriptions in list view: lazy, batched, cached per model, preview description preferred · `feature/ai-descriptions` · 2026-11-14
 - [x] ARC-031 · Tags: storage (`meta`, validated), Edit dialog editor, chips, sidebar tag list + tag view across folders, `#tag` search, URL re-link, undo remap · `feature/tags` · 2026-11-14
 - [x] ARC-067 · Ask Arca ranked picks with reasons; "which would you pick" ranks up to five · `feature/ask-ranked-picks` · 2026-11-14
 - [x] ARC-066 · Ungroup folder: move contents up in place, remove folder, one undo · `feature/ungroup-folder` · 2026-11-14

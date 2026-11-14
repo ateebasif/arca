@@ -1,3 +1,4 @@
+import { useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useMemo } from 'react';
 import { tagStyle } from '@/src/features/tags/style';
 import { folderCounts, folderPreview, getPath } from '@/src/store/selectors';
@@ -38,6 +39,8 @@ export function TagCrumb({ tag }: { tag: string }) {
 
 /** Every folder and link with a tag, from anywhere in the library. */
 export function TagView({ tag }: { tag: string }) {
+  // Rows grow to fit a description line when those are on.
+  const rowHeight = useDescriptionsOn() ? 53 : 41;
   const state = useBookmarks();
   const meta = useMeta();
   const view = useUi((s) => s.view);
@@ -114,7 +117,7 @@ export function TagView({ tag }: { tag: string }) {
             {rows.length > VIRTUALIZE_OVER ? (
               <VirtualRows
                 items={rows}
-                rowHeight={41}
+                rowHeight={rowHeight}
                 minColumnWidth={0}
                 gap={1}
                 getKey={(n) => n.id}

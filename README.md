@@ -33,6 +33,7 @@ data stays on your machine.
   window with **Open here**, right-click → Open in main window, or ⌥⇧O.
 - **Tags**: tag bookmarks and folders, filter by tag from the sidebar, or search
   `#tag`.
+- **Descriptions** (local AI): a one-line summary under each title in list view.
 - **Open links in**: same tab, new tab, background tab or a mini window.
 - **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
   excerpt, headings and quick-open buttons. Fetched once without cookies,
