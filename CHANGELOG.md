@@ -71,6 +71,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Bookmarks open in a new tab by default (applied once to existing settings,
+  since mini windows open full-size in Ardia and Arc; change it in Settings).
+- Link preview cards appear right below the hovered list row (or above it near
+  the bottom), aligned with the title and kept fully on screen; tiles keep the
+  side placement with the same fallback. Moving the pointer into a card keeps it
+  open even if it crosses other rows; switching cards needs a short pause on
+  another bookmark. Rows no longer stack the browser tooltip on top of the card.
 - Ask Arca is much faster: matches (by meaning and keyword, up to 40) appear in
   well under a second and the AI's answer follows in a couple of seconds, with
   its picks listed first, "Show more", and a jump to all keyword results.
@@ -88,6 +95,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Clean out** (Tidy up): suggests bookmarks that look saved on impulse:
+  search-result pages, local/temporary links, one-time pages (sign-in, checkout,
+  password reset…), titles that say nothing, and saves over 3 years old. With local
+  AI on, an optional second opinion labels what each page is and flags news, past
+  events, single videos, specific downloads and deals. Pick what to remove and
+  **Archive** (to "Archived by Arca", still searchable) or Delete; one Undo
+  reverses either.
 - **One-line descriptions** in list view (with local AI on): the answer model
   writes a short line under each title from its title and address, only for rows
   you look at, once per link (cached); a cached link preview's own description

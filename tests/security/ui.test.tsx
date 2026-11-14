@@ -4,7 +4,11 @@ import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { Dashboard } from '@/src/components/Dashboard';
 import { parsePrefs } from '@/src/store/ui';
 import { parseSettings, DEFAULT_SETTINGS } from '@/src/store/settings';
-import { renderWithBookmarks } from '../helpers/render';
+import { renderWithBookmarks, setRenderSettings } from '../helpers/render';
+
+// These tests check the "same tab" behaviour (the default is a new tab).
+beforeEach(() => setRenderSettings({ openIn: 'current' }));
+afterEach(() => setRenderSettings({}));
 
 // Bookmarks another extension or an imported file could have planted.
 const HOSTILE = {

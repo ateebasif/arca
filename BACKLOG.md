@@ -58,6 +58,8 @@
 
 ## Done
 
+- [x] ARC-069 · Clean out: impulse-save signals, optional AI page-kind review, archive/delete with undo · `fix/open-new-tab-preview-position` · 2026-11-14
+- [x] ARC-B05 · New-tab default (one-time migration); preview card placement below/above list rows, viewport-safe · `fix/open-new-tab-preview-position` · 2026-11-14
 - [x] ARC-068 · AI one-line descriptions in list view: lazy, batched, cached per model, preview description preferred · `feature/ai-descriptions` · 2026-11-14
 - [x] ARC-031 · Tags: storage (`meta`, validated), Edit dialog editor, chips, sidebar tag list + tag view across folders, `#tag` search, URL re-link, undo remap · `feature/tags` · 2026-11-14
 - [x] ARC-067 · Ask Arca ranked picks with reasons; "which would you pick" ranks up to five · `feature/ask-ranked-picks` · 2026-11-14

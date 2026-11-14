@@ -38,3 +38,17 @@ describe('settings', () => {
     ).toBeNull();
   });
 });
+
+describe('settings migration', () => {
+  it('switches saved settings to "new tab" once, then leaves later choices alone', async () => {
+    const { migrateSettings, SETTINGS_VERSION } = await import('@/src/store/settings');
+    expect(migrateSettings({ openIn: 'window', theme: 'dark' })).toEqual({
+      value: { openIn: 'new-tab', theme: 'dark', version: SETTINGS_VERSION },
+      changed: true,
+    });
+    const later = { openIn: 'window', version: SETTINGS_VERSION };
+    expect(migrateSettings(later)).toEqual({ value: later, changed: false });
+    // Fresh installs just get the default.
+    expect(migrateSettings({}).changed).toBe(false);
+  });
+});

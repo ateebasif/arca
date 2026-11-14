@@ -158,6 +158,8 @@ export async function chatJson(
   system: string,
   user: string,
   schema: object,
+  /** Cap on the reply length; list-style answers need more than the default. */
+  maxTokens = 400,
 ): Promise<unknown> {
   const data = await call<{ message?: { content?: unknown } }>(base, '/api/chat', {
     method: 'POST',
@@ -167,7 +169,7 @@ export async function chatJson(
       format: schema,
       keep_alive: KEEP_ALIVE,
       // Short JSON answers only; stops a model that rambles from taking minutes.
-      options: { temperature: 0.2, num_predict: 400 },
+      options: { temperature: 0.2, num_predict: maxTokens },
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },

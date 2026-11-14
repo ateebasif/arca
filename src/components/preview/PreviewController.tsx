@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useSettings } from '@/src/store/settings';
 
-export { HOVER_DELAY_MS, LEAVE_GRACE_MS } from './timing';
+export { HOVER_DELAY_MS, LEAVE_GRACE_MS, SWITCH_DELAY_MS } from './timing';
 
 // Fetching, parsing and the card UI load only once previews are switched on.
 const ActivePreviews = lazy(() => import('./ActivePreviews'));

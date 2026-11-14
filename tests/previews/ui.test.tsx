@@ -5,6 +5,7 @@ import { Dashboard } from '@/src/components/Dashboard';
 import {
   HOVER_DELAY_MS,
   LEAVE_GRACE_MS,
+  SWITCH_DELAY_MS,
 } from '@/src/components/preview/PreviewController';
 import { PreviewCache, setPreviewCacheForTests } from '@/src/features/previews/cache';
 import { memoryStore } from '@/src/lib/idb';
@@ -161,6 +162,33 @@ describe('interactive preview card', () => {
       expect.objectContaining({ url: 'https://github.com/' }),
     );
     expect(screen.queryByTestId('link-preview')).toBeNull();
+  });
+
+  it('keeps the card when the pointer crosses another bookmark on its way in', async () => {
+    granted = true;
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, SAMPLE_SEED);
+    await enablePreviews();
+    await hover(tile('GitHub'));
+    const card = await screen.findByTestId('link-preview');
+    expect(card).toHaveTextContent('GitHub');
+
+    // Pointer leaves GitHub, brushes over another bookmark, then reaches the card.
+    fireEvent.pointerOut(tile('GitHub'), { relatedTarget: tile('News') });
+    fireEvent.pointerOver(tile('News'));
+    await act(() => new Promise((r) => setTimeout(r, 150)));
+    fireEvent.pointerOut(tile('News'), { relatedTarget: card });
+    fireEvent.pointerOver(card);
+    await act(() => new Promise((r) => setTimeout(r, SWITCH_DELAY_MS + 100)));
+    expect(screen.getByTestId('link-preview')).toHaveTextContent('GitHub');
+
+    // Resting on another bookmark does switch.
+    fireEvent.pointerOut(card, { relatedTarget: tile('News') });
+    fireEvent.pointerOver(tile('News'));
+    await act(() => new Promise((r) => setTimeout(r, SWITCH_DELAY_MS + 100)));
+    const newsUrl = tile('News').getAttribute('href')!;
+    await vi.waitFor(() =>
+      expect(screen.getByTestId('link-preview')).toHaveTextContent(newsUrl),
+    );
   });
 
   it('closes when scrolling the page or pressing Escape', async () => {

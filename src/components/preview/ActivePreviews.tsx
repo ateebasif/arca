@@ -1,3 +1,4 @@
+import { placeCard, type Placement } from './placement';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { compactPath } from '@/src/features/tidy/normalize';
@@ -8,7 +9,7 @@ import type { OpenDisposition } from '@/src/lib/tabs';
 import { classifyUrl, displayHost } from '@/src/lib/url';
 import { getPath } from '@/src/store/selectors';
 import { getBookmarkStore } from '@/src/store/useBookmarks';
-import { HOVER_DELAY_MS, LEAVE_GRACE_MS } from './timing';
+import { HOVER_DELAY_MS, LEAVE_GRACE_MS, SWITCH_DELAY_MS } from './timing';
 
 interface Target {
   el: HTMLElement;
@@ -29,6 +30,9 @@ export default function ActivePreviews() {
   useEffect(() => {
     if (!active) return;
     let current: HTMLElement | null = null;
+    // The bookmark whose card is on screen (current can run ahead of it while
+    // a switch to another bookmark is pending).
+    let shown: HTMLElement | null = null;
     const inCard = (node: EventTarget | null) =>
       node instanceof Node && !!cardRef.current?.contains(node);
 
@@ -43,17 +47,29 @@ export default function ActivePreviews() {
     };
     const hideNow = () => {
       current = null;
+      shown = null;
       clearTimeout(showTimer.current);
       clearTimeout(hideTimer.current);
       setTarget(null);
     };
     const hideSoon = () => {
       clearTimeout(hideTimer.current);
-      hideTimer.current = setTimeout(hideNow, LEAVE_GRACE_MS);
+      hideTimer.current = setTimeout(() => {
+        // Heading for another bookmark: close this card but let that one open.
+        if (current && current !== shown) {
+          shown = null;
+          setTarget(null);
+        } else {
+          hideNow();
+        }
+      }, LEAVE_GRACE_MS);
     };
     const schedule = (e: Event) => {
       if (inCard(e.target)) {
+        // Reached the card: keep it, and forget bookmarks crossed on the way.
         clearTimeout(hideTimer.current);
+        clearTimeout(showTimer.current);
+        if (shown) current = shown;
         return;
       }
       const next = findTarget(e.target);
@@ -62,7 +78,13 @@ export default function ActivePreviews() {
       if (next.el === current) return;
       clearTimeout(showTimer.current);
       current = next.el;
-      showTimer.current = setTimeout(() => setTarget(next), HOVER_DELAY_MS);
+      // With a card open, switching takes a deliberate pause, so passing over
+      // other rows on the way into the card doesn't replace it.
+      const delay = shown && e.type === 'pointerover' ? SWITCH_DELAY_MS : HOVER_DELAY_MS;
+      showTimer.current = setTimeout(() => {
+        shown = next.el;
+        setTarget(next);
+      }, delay);
     };
     // Only leaving the previewed bookmark (or its card) closes it, after a
     // short grace period so the pointer can travel into the card.
@@ -74,6 +96,15 @@ export default function ActivePreviews() {
         return;
       }
       if (!current || findTarget(e.target)?.el !== current) return;
+      if (shown && current !== shown) {
+        // Passed over another bookmark without stopping: back to the open card.
+        if (related instanceof Node && current.contains(related)) return;
+        clearTimeout(showTimer.current);
+        current = shown;
+        if (!inCard(related) && !(related instanceof Node && shown.contains(related)))
+          hideSoon();
+        return;
+      }
       if (related instanceof Node && (current.contains(related) || inCard(related)))
         return;
       // A keyboard-focused bookmark keeps its preview while the mouse wanders.
@@ -133,7 +164,7 @@ function PreviewCard({
 }) {
   const { el: anchor, url, id } = target;
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [pos, setPos] = useState<Placement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -146,15 +177,14 @@ function PreviewCard({
   }, [url]);
 
   useLayoutEffect(() => {
-    const a = anchor.getBoundingClientRect();
-    const height = ref.current?.offsetHeight ?? 240;
-    const right = a.right + 10;
-    const left =
-      right + CARD_WIDTH < window.innerWidth - 8 ? right : a.left - CARD_WIDTH - 10;
-    setPos({
-      left: Math.max(8, left),
-      top: Math.max(8, Math.min(a.top, window.innerHeight - height - 8)),
-    });
+    const height = ref.current?.scrollHeight ?? 240;
+    setPos(
+      placeCard(
+        anchor.getBoundingClientRect(),
+        { width: CARD_WIDTH, height: Math.min(height, 560) },
+        { width: window.innerWidth, height: window.innerHeight },
+      ),
+    );
   }, [anchor, preview, ref]);
 
   const state = getBookmarkStore().getSnapshot();
@@ -175,7 +205,12 @@ function PreviewCard({
       aria-label={`Preview of ${preview?.status === 'ok' ? preview.title || host : host}`}
       data-testid="link-preview"
       className="animate-pop border-line bg-surface-strong fixed z-30 flex max-h-[min(560px,calc(100vh-16px))] flex-col overflow-hidden rounded-(--radius-panel) border shadow-(--shadow-pop) backdrop-blur-xl"
-      style={{ width: CARD_WIDTH, left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
+      style={{
+        width: CARD_WIDTH,
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? -9999,
+        maxHeight: pos ? Math.min(560, pos.maxHeight) : undefined,
+      }}
     >
       {!preview ? (
         <div className="flex flex-col gap-2 p-3.5" aria-label="Loading preview">

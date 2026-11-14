@@ -1,3 +1,4 @@
+import { useSettings } from '@/src/store/settings';
 import { useDescription, useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useTags } from '@/src/store/useMeta';
 import { TagChips } from '../tags/TagChips';
@@ -173,6 +174,7 @@ export const BookmarkRow = memo(function BookmarkRow({
     (s) => s.renamingId === bookmark.id && s.renameIn === 'main',
   );
   const link = bookmarkLinkProps(url);
+  const previews = useSettings((s) => s.linkPreviews);
   const tall = useDescriptionsOn();
   const description = useDescription(bookmark.id, bookmark.title, url);
   const handlers = itemHandlers(bookmark);
@@ -189,7 +191,8 @@ export const BookmarkRow = memo(function BookmarkRow({
       role="row"
       href={link.href}
       tabIndex={0}
-      title={renaming ? undefined : `${title}\n${url}`}
+      // The preview card shows this when previews are on; don't stack a tooltip on it.
+      title={renaming || previews ? undefined : `${title}\n${url}`}
       data-bookmark-id={bookmark.id}
       data-blocked={link.blocked || undefined}
       onClick={(e) => {

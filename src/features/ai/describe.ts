@@ -123,7 +123,14 @@ export async function describe(
       )
       .join('\n');
     try {
-      const reply = (await chatJson(opts.base, opts.chatModel, SYSTEM, list, SCHEMA)) as {
+      const reply = (await chatJson(
+        opts.base,
+        opts.chatModel,
+        SYSTEM,
+        list,
+        SCHEMA,
+        900,
+      )) as {
         items?: unknown;
       } | null;
       const items = Array.isArray(reply?.items) ? reply.items : [];

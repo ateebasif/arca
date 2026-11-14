@@ -40,7 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   // Arca is designed dark-first; System and Light are one click away.
   theme: 'dark',
   linkPreviews: false,
-  openIn: 'current',
+  openIn: 'new-tab',
   aiEnabled: false,
   aiDescriptions: true,
   ollamaUrl: DEFAULT_OLLAMA_URL,
@@ -73,8 +73,27 @@ export function parseSettings(raw: unknown): Settings {
   };
 }
 
+/**
+ * One-time changes to saved settings. v2: links open in a new tab by default
+ * (mini windows show as full windows in Ardia/Arc), applied once so a later
+ * choice in Settings sticks.
+ */
+export const SETTINGS_VERSION = 2;
+export function migrateSettings(raw: unknown): { value: unknown; changed: boolean } {
+  if (!isRecord(raw) || Object.keys(raw).length === 0)
+    return { value: raw, changed: false };
+  const version = typeof raw.version === 'number' ? raw.version : 1;
+  if (version >= SETTINGS_VERSION) return { value: raw, changed: false };
+  return {
+    value: { ...raw, openIn: 'new-tab', version: SETTINGS_VERSION },
+    changed: true,
+  };
+}
+
 export async function loadSettings(): Promise<Settings> {
-  return parseSettings(await storageGet<unknown>(SETTINGS_KEY, {}));
+  const { value, changed } = migrateSettings(await storageGet<unknown>(SETTINGS_KEY, {}));
+  if (changed) await storageSet(SETTINGS_KEY, value);
+  return parseSettings(value);
 }
 
 interface SettingsState extends Settings {
@@ -89,7 +108,8 @@ export const useSettings = create<SettingsState>()((set, get) => ({
     set(patch);
     const next = parseSettings({ ...get(), ...patch });
     if (patch.theme) applyTheme(next.theme);
-    await storageSet<Settings>(SETTINGS_KEY, next);
+    // Saved with the version so one-time migrations don't run again.
+    await storageSet(SETTINGS_KEY, { ...next, version: SETTINGS_VERSION });
   },
 }));
 

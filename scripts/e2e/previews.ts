@@ -169,6 +169,32 @@ export async function runPreviewChecks(out: string): Promise<void> {
       await page.eval(`!!document.querySelector('[data-testid=link-preview] img')`),
       false,
     );
+
+    // 5. List view: the card goes below/above the row, never over its title.
+    await page.hover(null);
+    await page.waitFor(`!document.querySelector('[data-testid=link-preview]')`);
+    await page.eval(`document.querySelector('[aria-label="List"]').click()`);
+    await page.waitFor(`document.querySelector('[role=table]')`);
+    const row = await selectorFor('Article');
+    await page.hover(row);
+    await page.waitFor(`document.querySelector('[data-testid=link-preview]')`, 10000);
+    await sleep(300);
+    const overlap = await page.eval<{
+      rowTop: number;
+      rowBottom: number;
+      top: number;
+      bottom: number;
+    }>(`(() => {
+      const r = document.querySelector(${JSON.stringify(row)}).getBoundingClientRect();
+      const c = document.querySelector('[data-testid=link-preview]').getBoundingClientRect();
+      return { rowTop: r.top, rowBottom: r.bottom, top: c.top, bottom: c.bottom };
+    })()`);
+    assert.ok(
+      overlap.top >= overlap.rowBottom || overlap.bottom <= overlap.rowTop,
+      `card doesn't cover the row: ${JSON.stringify(overlap)}`,
+    );
+    await page.screenshot(`${out}/link-preview-list.png`);
+    await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
     assert.deepEqual(page.consoleErrors, [], 'console errors');
     console.log(
       `  ✓ link previews: rendered, no cookies/referrer, cached (page hits: ${hits.get('/page.html')}), hostile page inert`,
