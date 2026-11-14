@@ -41,6 +41,46 @@ describe('fetchPreview', () => {
     expect(encode).toHaveBeenCalledTimes(1);
   });
 
+  it('a public page cannot point its image at the local network', async () => {
+    for (const img of [
+      'http://192.168.1.1/x.png',
+      'http://localhost:8080/x.png',
+      'http://[::1]/x.png',
+      'http://0x7f.1/x.png',
+      'http://router.local/x.png',
+    ]) {
+      fetchMock.mockReset();
+      fetchMock.mockResolvedValueOnce(
+        respond(html(`<meta property="og:image" content="${img}">`), 'text/html'),
+      );
+      const preview = await fetchPreview('https://evil.dev/', { encode });
+      expect(preview.image).toBe('');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('drops a public page that redirected to a local address', async () => {
+    const res = respond(html('<title>Admin</title>'), 'text/html');
+    Object.defineProperty(res, 'url', { value: 'http://10.0.0.1/admin' });
+    fetchMock.mockResolvedValueOnce(res);
+    await expect(fetchPreview('https://evil.dev/', { encode })).rejects.toThrow(
+      'local address',
+    );
+  });
+
+  it('a bookmark on your own network still previews, with its own images', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        respond(
+          html(`<title>NAS</title><meta property="og:image" content="/i.png">`),
+          'text/html',
+        ),
+      )
+      .mockResolvedValueOnce(respond(new Uint8Array([1]), 'image/png'));
+    const preview = await fetchPreview('http://192.168.1.20/', { encode });
+    expect(preview.image).not.toBe('');
+  });
+
   it('only fetches http(s) pages', async () => {
     for (const url of ['javascript:alert(1)', 'file:///etc/hosts', 'chrome://settings']) {
       await expect(fetchPreview(url, { encode })).rejects.toThrow();
