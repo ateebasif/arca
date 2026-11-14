@@ -95,6 +95,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Multi-select and bulk actions**: hover a tile, card or row and tick its
+  checkbox to start selecting; then clicks toggle items, ⇧-click selects a range,
+  ⌘A selects everything shown and Esc clears. A bar at the bottom moves the
+  selection to a folder, adds or removes tags, opens all links (asks first above
+  ten) or deletes, each in one undo.
 - AI organize can also tag links with their new folder's name (e.g. "Torrent
   Sites" → `#torrent-sites`): tick "Also tag links with their folder name" in the
   review step. Existing tags are kept, and one Undo removes the moves and the tags.

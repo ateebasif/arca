@@ -20,6 +20,7 @@ export function MoreButton({
   return (
     <button
       type="button"
+      data-more-button
       aria-label={`More actions for ${title}`}
       aria-haspopup="menu"
       onClick={(e) => {

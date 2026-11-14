@@ -1,3 +1,6 @@
+import { lazy, Suspense } from 'react';
+import { useSelection } from '@/src/store/selection';
+import { SelectionController } from './select/SelectionController';
 import { askPanelWasOpen } from '@/src/store/askChat';
 import { relinkMetaOnce } from '@/src/store/useMeta';
 import { MiniWindowBar } from './mini/MiniWindowBar';
@@ -150,7 +153,22 @@ export function Dashboard({ surface }: DashboardProps) {
         <OverlayHost />
         <PreviewController />
         <MiniWindowBar />
+        <SelectionController />
+        <LazySelectionBar />
       </div>
     </DndProvider>
   );
+}
+
+// The bulk-action bar (and its folder/tag/open/delete code) loads on first selection.
+const SelectionBar = lazy(() =>
+  import('./select/SelectionBar').then((m) => ({ default: m.SelectionBar })),
+);
+function LazySelectionBar() {
+  const selecting = useSelection((s) => s.ids.size > 0);
+  return selecting ? (
+    <Suspense fallback={null}>
+      <SelectionBar />
+    </Suspense>
+  ) : null;
 }

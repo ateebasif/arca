@@ -33,6 +33,8 @@ data stays on your machine.
   Arca finds it, with follow-up questions to narrow it down.
 - **Mini windows**: open links as a small peek window; move one into your main
   window with **Open here**, right-click → Open in main window, or ⌥⇧O.
+- **Multi-select**: tick items (or ⇧-click, ⌘A) to move, tag, open or delete them
+  together.
 - **Tags**: tag bookmarks and folders, filter by tag from the sidebar, or search
   `#tag`.
 - **Descriptions** (local AI): a one-line summary under each title in list view.
