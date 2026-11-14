@@ -19,7 +19,6 @@
 
 - [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
 - [ ] ARC-026 · Home view: Recently added (12) + Most visited, each hideable · Phase 2 · P1
-- [ ] ARC-029 · Background worker: "Add to Arca…" context menu · Phase 2 · P2
 - [ ] ARC-030 · Release v0.2.0 · Phase 2 · P0
 
 ### Phase 3 – Power tools
@@ -50,6 +49,7 @@
 
 ## Done
 
+- [x] ARC-029 · "Add page/link to Arca…" context menu → popup save box (title, folder picker, tags); validated 2-minute handoff · `feature/add-to-arca-menu` · 2026-11-14
 - [x] ARC-033 · Tag manager: search, rename/merge (incl. look-alikes), colours (`tagColors`, validated), delete, view; one undo each · `feature/tag-manager` · 2026-11-14
 - [x] ARC-074 · Rounded-square checkboxes; Select all (full view list, not just rendered rows); batch Ungroup with one undo · `feature/select-polish` · 2026-11-14
 - [x] ARC-073 · Folder picker: create a new folder (footer or from search), selected right away, undoable; search box focus fix · `feature/picker-new-folder` · 2026-11-14

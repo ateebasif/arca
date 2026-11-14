@@ -110,6 +110,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Add to Arca…** in the right-click menu on any web page or link: opens Arca's
+  popup as a save box with an editable title, the folder picker (create folders
+  there too) and tags. It says if the page is already saved. Falls back to a
+  small window if the browser won't open the popup from a menu.
 - **Tag manager** (sidebar → Tags → Manage): find, rename (renaming to an existing
   tag merges them), merge several checked tags into one, recolour (8 colours,
   shown everywhere tags appear), delete a tag from every item, or jump to its
