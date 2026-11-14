@@ -5,10 +5,11 @@ import * as bm from '@/src/lib/bookmarks';
 import { getActiveTab, type Tab } from '@/src/lib/tabs';
 import { displayHost } from '@/src/lib/url';
 import { useSettings } from '@/src/store/settings';
-import { folderOptions, getPath } from '@/src/store/selectors';
+import { getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { Favicon } from './main/Favicon';
-import { inputClass } from './overlays/Dialog';
+import { FolderPicker } from './FolderPicker';
+import { rememberFolder } from '@/src/features/editing/recentFolders';
 import { PopupHome } from './PopupHome';
 import { QuickSearch } from './quick/QuickSearch';
 
@@ -19,7 +20,12 @@ export function Popup() {
   const [searching, setSearching] = useState(false);
   return (
     <main className="flex w-[380px] flex-col gap-3 p-3">
-      <QuickSearch limit={8} onOpened={closePopup} onSearchingChange={setSearching} />
+      <QuickSearch
+        limit={500}
+        scroll
+        onOpened={closePopup}
+        onSearchingChange={setSearching}
+      />
       {!searching && (
         <>
           <CurrentTab />
@@ -43,7 +49,6 @@ function CurrentTab() {
     void getActiveTab().then((t) => setTab(t ?? null));
   }, []);
 
-  const options = useMemo(() => folderOptions(state), [state]);
   const url = tab?.url ?? '';
   const existing = useMemo(
     () => [...state.nodes.values()].find((n) => n.url !== undefined && n.url === url),
@@ -97,24 +102,19 @@ function CurrentTab() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <select
-            aria-label="Save to folder"
-            className={`${inputClass} h-8 min-w-0 flex-1`}
+          <FolderPicker
+            label="Save to folder"
             value={chosenFolder}
-            onChange={(e) => setFolderId(e.target.value)}
-          >
-            {options.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            onChange={setFolderId}
+            className="flex-1"
+          />
           <button
             type="button"
             onClick={async () => {
               try {
                 await bm.create({ parentId: chosenFolder, title, url });
                 await updateSettings({ saveFolderId: chosenFolder });
+                await rememberFolder(chosenFolder);
               } catch (e) {
                 setError(errorMessage(e));
               }

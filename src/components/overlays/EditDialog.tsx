@@ -1,3 +1,4 @@
+import { FolderPicker } from '../FolderPicker';
 import { useMemo, useState, type FormEvent } from 'react';
 import { errorMessage } from '@/src/features/editing/actions';
 import { normalizeInputUrl } from '@/src/features/editing/url';
@@ -7,7 +8,6 @@ import { setTags } from '@/src/features/tags/actions';
 import { useOverlays, type EditorState } from '@/src/store/overlays';
 import { getMetaStore, useMeta } from '@/src/store/useMeta';
 import { TagInput } from '../tags/TagInput';
-import { folderOptions } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { Button, Dialog, Field, inputClass } from './Dialog';
 
@@ -44,11 +44,6 @@ export function EditDialog({ editor }: { editor: EditorState }) {
   const [urlError, setUrlError] = useState<string>();
   const [formError, setFormError] = useState<string>();
   const [saving, setSaving] = useState(false);
-
-  const options = useMemo(
-    () => folderOptions(state, kind === 'folder' ? existing?.id : undefined),
-    [state, kind, existing?.id],
-  );
 
   if (editor.mode === 'edit' && !existing) return null;
   const locked = existing?.isRoot ?? false;
@@ -169,19 +164,15 @@ export function EditDialog({ editor }: { editor: EditorState }) {
           </Field>
         )}
         {!locked && (
-          <Field label="Folder">
-            <select
-              className={inputClass}
-              value={parentId ?? ''}
-              onChange={(e) => setParentId(e.target.value)}
-            >
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <div className="mb-3">
+            <p className="text-ink-muted mb-1.5 text-xs font-medium">Folder</p>
+            <FolderPicker
+              label="Folder"
+              value={parentId ?? '1'}
+              onChange={setParentId}
+              excludeId={kind === 'folder' ? existing?.id : undefined}
+            />
+          </div>
         )}
         {!locked && (
           <Field label="Tags">

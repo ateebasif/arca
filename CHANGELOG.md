@@ -75,6 +75,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Choosing a folder (popup "Bookmark this tab", Edit dialog, bulk Move) uses a
+  searchable folder picker instead of a long system dropdown: type to filter
+  (with each folder's path), recently used folders first, then the indented
+  tree; arrows and Enter to pick.
+- Popup search shows every match with a result count, in a list about ten rows
+  tall that scrolls (it used to stop at 8).
 - Bookmarks open in a new tab by default (applied once to existing settings,
   since mini windows open full-size in Ardia and Arc; change it in Settings).
 - Link preview cards appear right below the hovered list row (or above it near

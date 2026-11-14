@@ -1,3 +1,4 @@
+import { pickFolder } from '../helpers/folderPicker';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
@@ -30,7 +31,7 @@ describe('popup', () => {
     expect(window.close).toHaveBeenCalled();
   });
 
-  it('caps results at 8', async () => {
+  it('shows every match with a count, in a scrolling list', async () => {
     activeTab('https://example.com/');
     await renderWithBookmarks(<Popup />, {
       bar: Array.from({ length: 20 }, (_, i) => ({
@@ -39,7 +40,8 @@ describe('popup', () => {
       })),
     });
     await userEvent.type(screen.getByRole('combobox'), 'doc');
-    expect(within(screen.getByRole('listbox')).getAllByRole('option')).toHaveLength(8);
+    expect(within(screen.getByRole('listbox')).getAllByRole('option')).toHaveLength(20);
+    expect(screen.getByText('20 results')).toBeVisible();
   });
 
   it('bookmarks the current tab into the chosen folder and remembers it', async () => {
@@ -47,10 +49,7 @@ describe('popup', () => {
     const { fake } = await renderWithBookmarks(<Popup />, SAMPLE_SEED);
     const section = await screen.findByRole('region', { name: 'Current tab' });
     const recipes = fake.findByTitle('Recipes')!.id;
-    await userEvent.selectOptions(
-      within(section).getByLabelText('Save to folder'),
-      recipes,
-    );
+    await pickFolder(section, 'Save to folder', 'Recipes');
     await userEvent.click(
       within(section).getByRole('button', { name: 'Bookmark this tab' }),
     );

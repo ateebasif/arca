@@ -1,3 +1,4 @@
+import { folderChoices, pickFolder } from '../helpers/folderPicker';
 import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dashboard } from '@/src/components/Dashboard';
@@ -58,10 +59,7 @@ describe('editing', () => {
     const name = within(dialog).getByLabelText('Name');
     await userEvent.clear(name);
     await userEvent.type(name, 'GH');
-    await userEvent.selectOptions(
-      within(dialog).getByLabelText('Folder'),
-      fake.findByTitle('Recipes')!.id,
-    );
+    await pickFolder(dialog, 'Folder', 'Recipes');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
     expect(fake.findByTitle('GH')?.parentId).toBe(fake.findByTitle('Recipes')!.id);
     expect(screen.queryByRole('link', { name: /GH/ })).toBeNull();
@@ -77,9 +75,7 @@ describe('editing', () => {
         .getState()
         .openEditor({ mode: 'edit', id: fake.findByTitle('Dev')!.id }),
     );
-    const options = within(await screen.findByLabelText('Folder'))
-      .getAllByRole('option')
-      .map((o) => o.textContent?.trim());
+    const options = await folderChoices(await screen.findByRole('dialog'), 'Folder');
     expect(options).not.toContain('Dev');
     expect(options).not.toContain('Nested');
     expect(options).toContain('Recipes');

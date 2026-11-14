@@ -1,15 +1,16 @@
+import { rememberFolder } from '@/src/features/editing/recentFolders';
+import { FolderPicker } from '../FolderPicker';
 import { useUi } from '@/src/store/ui';
 import { useMemo, useState } from 'react';
 import { deleteMany, moveMany, openMany, retagMany } from '@/src/features/editing/bulk';
 import { errorMessage } from '@/src/features/editing/actions';
 import { tagStyle } from '@/src/features/tags/style';
 import { useOverlays } from '@/src/store/overlays';
-import { folderOptions } from '@/src/store/selectors';
 import { useSelection } from '@/src/store/selection';
 import { getMetaStore, useMeta } from '@/src/store/useMeta';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { CloseIcon } from '../icons';
-import { Button, inputClass } from '../overlays/Dialog';
+import { Button } from '../overlays/Dialog';
 import { TagInput } from '../tags/TagInput';
 
 type Panel = null | 'move' | 'tag' | 'open' | 'delete';
@@ -30,7 +31,6 @@ export function SelectionBar() {
   const list = useMemo(() => [...ids].filter((id) => state.nodes.has(id)), [ids, state]);
   const links = list.filter((id) => state.nodes.get(id)?.url);
   const folders = list.length - links.length;
-  const options = useMemo(() => folderOptions(state), [state]);
   // Tags on any selected item, offered for removal.
   const present = useMemo(() => {
     const set = new Set<string>();
@@ -76,23 +76,23 @@ export function SelectionBar() {
         <div className="border-line bg-surface-strong mb-2 rounded-xl border p-3 text-xs shadow-(--shadow-pop) backdrop-blur-xl">
           {panel === 'move' && (
             <div className="flex items-center gap-2">
-              <select
-                aria-label="Move to folder"
-                className={`${inputClass} h-8 flex-1`}
+              <FolderPicker
+                label="Move to folder"
                 value={target}
-                onChange={(e) => setTarget(e.target.value)}
-              >
-                <option value="">Choose a folder…</option>
-                {options.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setTarget}
+                dropUp
+                className="flex-1"
+              />
               <Button
                 variant="primary"
                 disabled={!target || busy}
-                onClick={() => void run(() => moveMany(list, target).then(clear))}
+                onClick={() =>
+                  void run(() =>
+                    moveMany(list, target)
+                      .then(() => rememberFolder(target))
+                      .then(clear),
+                  )
+                }
               >
                 Move {count}
               </Button>
