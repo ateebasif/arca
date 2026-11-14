@@ -24,7 +24,6 @@
 - [ ] ARC-031b · Notes on bookmarks (tags done in ARC-031) · Phase 3 · P1
 - [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
 - [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
-- [ ] ARC-039 · Import: Netscape HTML / Arca JSON into folder, preview, dup warnings · Phase 3 · P1
 - [ ] ARC-040 · Release v1.0.0 (v0.3.0 if more work is planned before 1.0) · Phase 3 · P0
 
 ### Phase 4 – Later
@@ -46,6 +45,8 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-039 · Import: Netscape HTML (any browser) / Arca JSON backup into a new folder; preview with counts, duplicates skipped by default, code links left out, tags kept, one undo; store ignores the event flood and reloads once · `feature/import` · 2026-11-14
 
 - [x] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, results in Other bookmarks / Organized by Arca, Bookmarks bar opt-in (folder cap 60 from ARC-076) · `feature/organize-all-bookmarks` · 2026-11-14
 
