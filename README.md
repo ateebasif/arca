@@ -41,6 +41,8 @@ data stays on your machine.
 - **Descriptions** (local AI): a one-line summary under each title in list view.
 - **Backup**: export everything as an HTML bookmarks file or a JSON backup with
   tags (Settings → Backup).
+- **Add to Arca…**: right-click any page or link to save it with a folder and
+  tags.
 - **Open links in**: same tab, new tab, background tab or a mini window.
 - **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
   excerpt, headings and quick-open buttons. Fetched once without cookies,

@@ -90,6 +90,14 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
 
 - Tag colours (`tagColors`) are validated the same way: known tags only, slots 0–7.
 
+### Right-click "Add to Arca…"
+
+- Uses the `contextMenus` permission Arca already has; menu items only appear on
+  http(s) pages and links. Arca reads just the clicked page's or link's address and
+  title (no content scripts, no page access), keeps it for at most two minutes
+  in local storage, validates it again when the popup reads it, and never opens
+  or saves non-web URLs.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.
