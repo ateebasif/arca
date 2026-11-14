@@ -18,6 +18,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The folder picker's search box now gets focus as soon as it opens (it could
+  stay on the button, so typing went nowhere).
 - List descriptions no longer show a loading bar forever when a description
   can't be written (Ollama busy or unavailable); those rows are just left blank.
 - Selection checkboxes: in list view and small tiles they have their own column
@@ -107,6 +109,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Create a folder right from the folder picker (popup save, Edit, bulk Move):
+  "New folder in …" at the bottom, or type a name that doesn't exist yet and pick
+  "Create …". It goes inside the chosen folder, is selected straight away, and
+  can be undone.
 - **Backup** (Settings): export all bookmarks as a standard HTML bookmarks file
   any browser can import (tags included, Bookmarks bar marked as the toolbar), or
   as an Arca JSON backup with the full tree and tags. Saved through a normal

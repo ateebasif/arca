@@ -8,10 +8,11 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { createFolder } from '@/src/features/editing/actions';
 import { loadRecentFolders } from '@/src/features/editing/recentFolders';
 import { folderList, type FolderEntry } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
-import { ChevronRight, FolderIcon, SearchIcon } from './icons';
+import { ChevronRight, FolderIcon, PlusIcon, SearchIcon } from './icons';
 
 interface Props {
   value: string;
@@ -42,10 +43,14 @@ export function FolderPicker({
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const [recent, setRecent] = useState<string[]>([]);
+  /** Typing a name for a new folder inside the chosen one. */
+  const [creating, setCreating] = useState(false);
+  const [busy, setBusy] = useState(false);
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{
     left: number;
     width: number;
@@ -81,6 +86,12 @@ export function FolderPicker({
   useEffect(() => {
     if (open) void loadRecentFolders().then(setRecent);
   }, [open]);
+
+  // Focus the search (or new-name) field once the list is placed: it's
+  // hidden until then, and hidden inputs can't take focus.
+  useEffect(() => {
+    if (open && pos) inputRef.current?.focus();
+  }, [open, pos, creating]);
 
   // Close when clicking elsewhere.
   useEffect(() => {
@@ -128,12 +139,38 @@ export function FolderPicker({
     onChange(id);
     setOpen(false);
     setQuery('');
+    setCreating(false);
+  };
+
+  // New folders go inside the currently chosen folder.
+  const parent = chosen ?? all[0];
+  const name = query.trim();
+  const offerCreate = !creating && !!q && !all.some((f) => f.title.toLowerCase() === q);
+  const total = rows.length + (offerCreate ? 1 : 0);
+  const create = async (title: string) => {
+    if (!parent || !title.trim() || busy) return;
+    setBusy(true);
+    const id = await createFolder(parent.id, title);
+    setBusy(false);
+    if (id) pick(id);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (creating) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        void create(name);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setCreating(false);
+        setQuery('');
+      }
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActive((i) => Math.min(i + 1, rows.length - 1));
+      setActive((i) => Math.min(i + 1, total - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((i) => Math.max(i - 1, 0));
@@ -141,6 +178,7 @@ export function FolderPicker({
       e.preventDefault();
       const row = rows[active];
       if (row) pick(row.id);
+      else if (offerCreate && active === rows.length) void create(name);
     } else if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
@@ -185,15 +223,22 @@ export function FolderPicker({
             className="animate-pop border-line bg-surface-strong fixed z-[60] flex flex-col overflow-hidden rounded-xl border shadow-(--shadow-pop) backdrop-blur-xl"
           >
             <div className="border-line flex items-center gap-2 border-b px-2.5">
-              <SearchIcon className="text-ink-faint shrink-0" width={14} height={14} />
+              {creating ? (
+                <PlusIcon className="text-accent shrink-0" width={14} height={14} />
+              ) : (
+                <SearchIcon className="text-ink-faint shrink-0" width={14} height={14} />
+              )}
               <input
-                autoFocus
+                key={creating ? 'create' : 'find'}
+                ref={inputRef}
                 role="combobox"
-                aria-label="Find a folder"
+                aria-label={creating ? 'New folder name' : 'Find a folder'}
                 aria-controls={listId}
                 aria-expanded
                 aria-activedescendant={rows[active] ? `${listId}-${active}` : undefined}
-                placeholder="Find a folder…"
+                placeholder={
+                  creating ? `New folder in “${parent?.title ?? ''}”…` : 'Find a folder…'
+                }
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -203,58 +248,110 @@ export function FolderPicker({
                 className="placeholder:text-ink-faint h-9 min-w-0 flex-1 bg-transparent text-[13px] outline-none"
               />
             </div>
-            <ul
-              ref={listRef}
-              id={listId}
-              role="listbox"
-              aria-label="Folders"
-              className="max-h-64 overflow-y-auto overscroll-contain p-1"
-            >
-              {rows.length === 0 && (
-                <li className="text-ink-muted px-2.5 py-2 text-xs">
-                  No folder matches “{query}”
-                </li>
-              )}
-              {rows.map((row, index) => (
-                <li
-                  key={`${row.section ?? ''}${row.flat ? 'f' : 't'}${row.id}`}
-                  role="presentation"
+            {creating ? (
+              <p className="text-ink-faint px-3 py-2.5 text-xs">
+                {busy ? 'Creating…' : 'Enter to create · Esc to go back'}
+              </p>
+            ) : (
+              <>
+                <ul
+                  ref={listRef}
+                  id={listId}
+                  role="listbox"
+                  aria-label="Folders"
+                  className="max-h-64 overflow-y-auto overscroll-contain p-1"
                 >
-                  {row.section && (
-                    <p className="text-ink-faint px-2.5 pt-1.5 pb-1 text-[10px] font-medium tracking-wide uppercase">
-                      {row.section}
-                    </p>
+                  {rows.length === 0 && !offerCreate && (
+                    <li className="text-ink-muted px-2.5 py-2 text-xs">
+                      No folder matches “{query}”
+                    </li>
                   )}
-                  <div
-                    id={`${listId}-${index}`}
-                    data-index={index}
-                    role="option"
-                    aria-selected={index === active}
-                    onMouseMove={() => setActive(index)}
-                    onClick={() => pick(row.id)}
-                    className={`flex h-8 cursor-default items-center gap-2 rounded-lg pr-2.5 text-[13px] ${
-                      index === active ? 'bg-hover text-ink' : 'text-ink-muted'
-                    }`}
-                    style={{ paddingLeft: row.flat ? 10 : 10 + row.depth * 14 }}
-                  >
-                    <FolderIcon
-                      width={14}
-                      height={14}
-                      className={`shrink-0 ${row.id === value ? 'text-accent' : 'text-ink-faint'}`}
-                    />
-                    <span className="min-w-0 flex-1 truncate">
-                      <span className={row.id === value ? 'text-ink font-medium' : ''}>
-                        {row.title}
-                      </span>
-                      {row.flat && row.path && (
-                        <span className="text-ink-faint text-[11px]"> · {row.path}</span>
+                  {rows.map((row, index) => (
+                    <li
+                      key={`${row.section ?? ''}${row.flat ? 'f' : 't'}${row.id}`}
+                      role="presentation"
+                    >
+                      {row.section && (
+                        <p className="text-ink-faint px-2.5 pt-1.5 pb-1 text-[10px] font-medium tracking-wide uppercase">
+                          {row.section}
+                        </p>
                       )}
-                    </span>
-                    {row.id === value && <span className="text-accent text-xs">✓</span>}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <div
+                        id={`${listId}-${index}`}
+                        data-index={index}
+                        role="option"
+                        aria-selected={index === active}
+                        onMouseMove={() => setActive(index)}
+                        onClick={() => pick(row.id)}
+                        className={`flex h-8 cursor-default items-center gap-2 rounded-lg pr-2.5 text-[13px] ${
+                          index === active ? 'bg-hover text-ink' : 'text-ink-muted'
+                        }`}
+                        style={{ paddingLeft: row.flat ? 10 : 10 + row.depth * 14 }}
+                      >
+                        <FolderIcon
+                          width={14}
+                          height={14}
+                          className={`shrink-0 ${row.id === value ? 'text-accent' : 'text-ink-faint'}`}
+                        />
+                        <span className="min-w-0 flex-1 truncate">
+                          <span
+                            className={row.id === value ? 'text-ink font-medium' : ''}
+                          >
+                            {row.title}
+                          </span>
+                          {row.flat && row.path && (
+                            <span className="text-ink-faint text-[11px]">
+                              {' '}
+                              · {row.path}
+                            </span>
+                          )}
+                        </span>
+                        {row.id === value && (
+                          <span className="text-accent text-xs">✓</span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                  {offerCreate && (
+                    <li role="presentation">
+                      <div
+                        id={`${listId}-${rows.length}`}
+                        data-index={rows.length}
+                        role="option"
+                        aria-selected={active === rows.length}
+                        onMouseMove={() => setActive(rows.length)}
+                        onClick={() => void create(name)}
+                        className={`flex h-8 cursor-default items-center gap-2 rounded-lg px-2.5 text-[13px] ${
+                          active === rows.length ? 'bg-hover text-ink' : 'text-accent'
+                        }`}
+                      >
+                        <PlusIcon width={14} height={14} className="shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">
+                          Create “{name}”
+                          <span className="text-ink-faint text-[11px]">
+                            {' '}
+                            in {parent?.title}
+                          </span>
+                        </span>
+                      </div>
+                    </li>
+                  )}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreating(true);
+                    setQuery('');
+                  }}
+                  className="border-line text-ink-muted hover:text-ink hover:bg-hover flex h-9 items-center gap-2 border-t px-3 text-left text-xs"
+                >
+                  <PlusIcon width={13} height={13} className="text-accent shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">
+                    New folder in “{parent?.title}”
+                  </span>
+                </button>
+              </>
+            )}
           </div>,
           document.body,
         )}

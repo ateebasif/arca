@@ -105,3 +105,15 @@ export async function ungroupFolder(id: string): Promise<void> {
     );
   });
 }
+
+/** Creates a folder (undoable) and returns its id, or null if it failed. */
+export async function createFolder(
+  parentId: string,
+  title: string,
+): Promise<string | null> {
+  const name = title.trim().slice(0, 200) || 'New folder';
+  const node = await run(() => bm.create({ parentId, title: name }));
+  if (!node) return null;
+  undo.record(undo.created(node), { toast: false });
+  return node.id;
+}
