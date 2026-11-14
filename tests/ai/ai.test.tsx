@@ -338,28 +338,28 @@ describe('embedding text', () => {
     expect(taskPrefix('qwen3-embedding:4b')).toBe('');
   });
 
-  it('uses title, site and own folder; drops a folder most links share', async () => {
+  it('embeds title and site only, so moving links keeps the cache valid', async () => {
     const [item] = items(['React hooks guide'], 'Bar / Dev / Frontend');
-    expect(embeddingText(item!)).toBe('React hooks guide · site0.dev · in Frontend');
-    expect(embeddingText(item!, false)).toBe('React hooks guide · site0.dev');
-
-    const { fn } = fakeOllama();
-    const mixed = [
-      ...items(REACT, 'Imported'),
-      ...items(FOOD, 'Imported'),
-      ...items(['Odd one'], 'Kitchen'),
-    ];
-    await planGroups(mixed, {
+    expect(embeddingText(item!)).toBe('React hooks guide · site0.dev');
+    const opts = {
       base: 'http://localhost:11434',
-      embedModel: 'nomic-embed-text:latest',
+      embedModel: 'qwen3-embedding:4b',
       chatModel: 'llama3.2:latest',
       groups: 2,
-    });
+    };
+    const { fn, calls } = fakeOllama();
+    await planGroups([...items(REACT, 'Imported'), ...items(FOOD, 'Imported')], opts);
     const embedCall = fn.mock.calls.find(([u]) => String(u).endsWith('/api/embed'));
     const sent = JSON.parse(String(embedCall![1]!.body)).input as string[];
-    expect(sent.every((t) => t.startsWith('clustering: '))).toBe(true);
-    expect(sent.some((t) => t.includes('in Imported'))).toBe(false);
-    expect(sent.some((t) => t.includes('in Kitchen'))).toBe(true);
+    expect(sent.some((t) => t.includes('Imported'))).toBe(false);
+    await new Promise((r) => setTimeout(r, 0));
+    // Same links, now in different folders (as after organizing): nothing to re-read.
+    const before = calls.embeddedTexts;
+    await planGroups(
+      [...items(REACT, 'Organized by Arca / Frontend'), ...items(FOOD, 'X')],
+      opts,
+    );
+    expect(calls.embeddedTexts).toBe(before);
   });
 
   it('estimates first-run time per model', () => {

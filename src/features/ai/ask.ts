@@ -30,17 +30,24 @@ export interface AskOptions {
   signal?: AbortSignal;
   onIndexProgress?(p: EmbedProgress): void;
   onStage?(stage: 'reading' | 'searching' | 'thinking'): void;
+  /** Called as soon as the matches are known, before the chat model answers. */
+  onMatches?(ids: string[]): void;
 }
 
 export interface AskAnswer {
   reply: string;
   /** Bookmark ids, best first. Always a subset of the items passed in. */
   ids: string[];
+  /** Every match (keyword and meaning), best first; ids above come first. */
+  matches: string[];
   /** False when the chat model failed and these are the closest matches only. */
   fromModel: boolean;
 }
 
-const CANDIDATES = 30;
+/** How many links the chat model looks at (keeps its prompt, and wait, short). */
+const CANDIDATES = 24;
+/** How many matches are listed under the answer. */
+const MATCHES = 40;
 const MAX_PICKS = 12;
 
 /** Document text: title, site and own folder, with the model's search prefix. */
@@ -85,6 +92,22 @@ export interface Ranking {
   order: number[];
   /** Similarity of every item to the question. */
   scores: Float32Array;
+}
+
+/** Reads (embeds) every item once; later calls are served from the cache. */
+export async function indexDocs(
+  items: readonly AskItem[],
+  opts: Pick<AskOptions, 'base' | 'embedModel' | 'signal' | 'onIndexProgress'>,
+): Promise<void> {
+  await embedTexts(
+    items.map((it) => docText(opts.embedModel, it)),
+    {
+      base: opts.base,
+      model: opts.embedModel,
+      signal: opts.signal,
+      onProgress: opts.onIndexProgress,
+    },
+  );
 }
 
 /** Ranks every item by meaning. */
@@ -195,25 +218,51 @@ export async function ask(
   opts: AskOptions,
 ): Promise<AskAnswer> {
   if (items.length === 0) {
-    return { reply: "You don't have any web bookmarks yet.", ids: [], fromModel: false };
+    return {
+      reply: "You don't have any web bookmarks yet.",
+      ids: [],
+      matches: [],
+      fromModel: false,
+    };
   }
   opts.onStage?.('reading');
   const { order: semantic, scores } = await semanticRank(
     items,
     retrievalQuery(question, history),
     opts,
+    MATCHES,
   );
+  const keyword = new Set(keywordHits);
+  // Meaning matches that are clearly closer than a typical bookmark, mixed with
+  // plain keyword matches so neither crowds the other out.
+  const close = keepClose(semantic, scores, keyword);
   const order: number[] = [];
   const add = (i: number | undefined) => {
     if (i !== undefined && !order.includes(i) && items[i]) order.push(i);
   };
-  // Interleave so strong keyword matches aren't pushed out by fuzzy meaning ones.
-  for (let k = 0; k < CANDIDATES && order.length < CANDIDATES; k++) {
-    add(semantic[k]);
-    if (k < 10) add(keywordHits[k]);
+  for (
+    let k = 0;
+    order.length < MATCHES && (k < close.length || k < keywordHits.length);
+    k++
+  ) {
+    add(close[k]);
+    add(keywordHits[k]);
   }
-  const candidates = order.flatMap((i) => (items[i] ? [items[i]] : []));
+  const idOf = (i: number) => items[i]?.id ?? '';
+  const matches = order.map(idOf);
+  opts.onMatches?.(matches);
+  const candidates = order
+    .slice(0, CANDIDATES)
+    .flatMap((i) => (items[i] ? [items[i]] : []));
   throwIfAborted(opts.signal);
+  if (candidates.length === 0) {
+    return {
+      reply: 'I couldn’t find anything that fits.',
+      ids: [],
+      matches,
+      fromModel: false,
+    };
+  }
   opts.onStage?.('thinking');
 
   const earlier = history
@@ -243,17 +292,18 @@ export async function ask(
     const kept = keepClose(
       picks.map((i) => order[i] ?? -1),
       scores,
-      new Set(keywordHits),
+      keyword,
     );
     const ids = kept.flatMap((i) => (items[i] ? [items[i].id] : []));
-    return { reply, ids, fromModel: true };
+    const rest = matches.filter((id) => !ids.includes(id));
+    return { reply, ids, matches: [...ids, ...rest], fromModel: true };
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e;
     // Chat model unavailable: still show the closest matches by meaning.
     return {
-      reply:
-        'I couldn’t reach the chat model, so here are the closest matches by meaning.',
-      ids: candidates.slice(0, 8).map((it) => it.id),
+      reply: 'I couldn’t reach the chat model, but these are the closest matches.',
+      ids: [],
+      matches,
       fromModel: false,
     };
   }

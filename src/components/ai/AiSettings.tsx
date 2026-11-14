@@ -167,7 +167,7 @@ export function AiSettings() {
                 value={pick(chatters, s.chatModel, [/^llama3\.2/, /mistral/])}
                 models={chatters.length ? chatters : models}
                 onChange={(chatModel) => void s.update({ chatModel })}
-                hint="Recommended: llama3.2 (mistral for nicer names)"
+                hint="Fastest: llama3.2 (Ask Arca answers in ~1–2 s) · mistral is slower but writes nicer names"
               />
             </div>
           )}

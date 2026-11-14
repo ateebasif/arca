@@ -108,7 +108,8 @@ describe('ask', () => {
     fakeOllama({ chat: 'fail' });
     const answer = await ask('torrent sites', [], ITEMS, [], OPTS);
     expect(answer.fromModel).toBe(false);
-    expect(answer.ids.slice(0, 2).sort()).toEqual(['b0', 'b1']);
+    expect(answer.ids).toEqual([]);
+    expect(answer.matches.slice(0, 2).sort()).toEqual(['b0', 'b1']);
   });
 
   it('reads each bookmark once, then answers from the cache', async () => {
@@ -126,6 +127,30 @@ describe('ask', () => {
     // An exact keyword match stays even when its meaning score is low.
     expect(keepClose([0, 4], scores, new Set([4]))).toEqual([0, 4]);
     expect(keepClose([3], scores, new Set())).toEqual([3]);
+  });
+
+  it('reports matches before the chat model answers, and lists picks first', async () => {
+    fakeOllama();
+    const seen: string[][] = [];
+    const answer = await ask('torrent', [], ITEMS, [4], {
+      ...OPTS,
+      onMatches: (ids) => seen.push(ids),
+    });
+    expect(seen).toHaveLength(1);
+    // Keyword hit (index 4) is kept even though its meaning is unrelated.
+    expect(seen[0]).toEqual(expect.arrayContaining(['b0', 'b1', 'b4']));
+    expect(answer.matches.slice(0, answer.ids.length)).toEqual(answer.ids);
+  });
+
+  it('shares cached readings with AI organize (qwen3 needs no prefix)', async () => {
+    const seen = fakeOllama();
+    const qwen = { ...OPTS, embedModel: 'qwen3-embedding:4b' };
+    const { planGroups } = await import('@/src/features/ai/organize');
+    await planGroups(ITEMS, { ...qwen, groups: 2 });
+    await new Promise((r) => setTimeout(r, 0));
+    const before = seen.embedInputs.length;
+    await ask('torrent sites', [], ITEMS, [], qwen);
+    expect(seen.embedInputs.length - before).toBe(1); // only the question
   });
 
   it('cleans picks and replies', () => {
@@ -202,6 +227,70 @@ describe('Ask Arca panel', () => {
     expect(within(panel).getByRole('textbox', { name: 'Ask Arca' })).toHaveValue(
       'pirate movie places',
     );
+    expect(useAskChat.getState().messages).toEqual([]);
+  });
+
+  it('shows matches while the AI is still answering, with more on demand', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    fakeOllama();
+    const real = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/api/chat')) await gate;
+      return real(url as string, init);
+    });
+    const many = Array.from({ length: 30 }, (_, i) => ({
+      title: `Torrent mirror ${i}`,
+      url: `https://mirror${i}.dev/`,
+    }));
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, {
+      bar: [
+        {
+          title: 'Imported',
+          children: [...ITEMS.map(({ title, url }) => ({ title, url })), ...many],
+        },
+      ],
+    });
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().openAsk());
+    const panel = await screen.findByRole('dialog', { name: 'Ask Arca' });
+    await userEvent.type(
+      within(panel).getByRole('textbox', { name: 'Ask Arca' }),
+      'torrent sites{Enter}',
+    );
+    // Matches appear before the chat model replies.
+    expect(
+      await within(panel).findByText(/Asking llama3\.2:latest which fit best/),
+    ).toBeVisible();
+    const rows = () =>
+      within(panel)
+        .queryAllByRole('link')
+        .filter((a) => a.hasAttribute('data-ask-result'));
+    expect(rows()).toHaveLength(10);
+    await userEvent.click(within(panel).getByRole('button', { name: /^Show \d+ more$/ }));
+    expect(rows().length).toBeGreaterThan(10);
+
+    await act(async () => release());
+    expect(
+      await within(panel).findByText('These look like your torrent sites.'),
+    ).toBeVisible();
+    expect(within(panel).getByText('More matches')).toBeVisible();
+
+    // Jump to the plain keyword search for everything.
+    await userEvent.click(
+      within(panel).getByRole('button', { name: 'All keyword results for “torrent”' }),
+    );
+    expect(useUi.getState().query).toBe('torrent');
+    expect(screen.queryByRole('dialog', { name: 'Ask Arca' })).toBeNull();
+  });
+
+  it('starts reading bookmarks as soon as the panel opens', async () => {
+    const seen = fakeOllama();
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, seed);
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().openAsk());
+    await screen.findByRole('dialog', { name: 'Ask Arca' });
+    await vi.waitFor(() => expect(seen.embedInputs.length).toBe(ITEMS.length));
     expect(useAskChat.getState().messages).toEqual([]);
   });
 });

@@ -61,6 +61,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Ask Arca is much faster: matches (by meaning and keyword, up to 40) appear in
+  well under a second and the AI's answer follows in a couple of seconds, with
+  its picks listed first, "Show more", and a jump to all keyword results.
+  Bookmarks are read in the background as soon as the panel opens, models stay
+  loaded between questions, and answers are capped so a model can't ramble.
+- Cached AI readings no longer include folder names, so organizing or moving
+  links doesn't force everything to be read again, and AI organize and Ask Arca
+  share the same cache (with qwen3-embedding).
 - Modern dark redesign: tiles get a cover in the site's brand colour (from its
   favicon, contrast-checked), folders match the tile shape, a deeper dark
   palette, and dark is the default theme.

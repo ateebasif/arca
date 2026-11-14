@@ -6,6 +6,12 @@
  */
 
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+
+/**
+ * Keep models loaded between questions (Ollama unloads after 5 minutes by
+ * default, and reloading a 4 GB model adds seconds to the next answer).
+ */
+const KEEP_ALIVE = '30m';
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export type OllamaErrorCode =
@@ -126,7 +132,7 @@ export async function embed(
 ): Promise<number[][]> {
   const data = await call<{ embeddings?: unknown }>(base, '/api/embed', {
     method: 'POST',
-    body: JSON.stringify({ model, input, truncate: true }),
+    body: JSON.stringify({ model, input, truncate: true, keep_alive: KEEP_ALIVE }),
     timeoutMs: 120_000,
   });
   const vectors = data.embeddings;
@@ -159,7 +165,9 @@ export async function chatJson(
       model,
       stream: false,
       format: schema,
-      options: { temperature: 0.2 },
+      keep_alive: KEEP_ALIVE,
+      // Short JSON answers only; stops a model that rambles from taking minutes.
+      options: { temperature: 0.2, num_predict: 400 },
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },

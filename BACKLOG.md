@@ -56,6 +56,7 @@
 
 ## Done
 
+- [x] ARC-063 · Ask Arca speed: instant matches then AI answer, background read on open, keep_alive, folder-free cache shared with organize · `perf/ask-instant` · 2026-11-14
 - [x] ARC-B03 · Menu rename broken for folders shown in sidebar too; AI organize nested "Organized by Arca"; confusing layout switcher · `fix/organize-rename-switcher` · 2026-11-14
 - [x] ARC-059 · Ask Arca: find bookmarks by description (local embeddings + chat model picks real bookmarks only), follow-ups, sidebar + search entry points · `feature/ask-arca` · 2026-11-14
 - [x] ARC-B02 · AI organize run lost when switching Tidy tabs or closing the panel; run state moved to a store, sidebar status · `fix/ai-run-persists` · 2026-11-14
