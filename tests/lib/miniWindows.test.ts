@@ -53,6 +53,18 @@ describe('mini windows', () => {
     expect(await fakeBrowser.windows.get(mini.id)).toBeUndefined();
   });
 
+  it('ignores a tracked id that is now a normal window (ids reset on restart)', async () => {
+    const normal = await fakeBrowser.windows.create({ url: 'https://a.dev/' });
+    await fakeBrowser.tabs.create({ windowId: normal!.id, url: 'https://b.dev/' });
+    // A stale id from the last session, in the session store.
+    await fakeBrowser.storage.session.set({ miniWindows: [normal!.id] });
+    expect(await isMiniWindow(normal!.id!)).toBe(false);
+    expect(await listMiniWindows()).toEqual([]);
+    await promoteMiniWindow(normal!.id!);
+    await closeMiniWindow(normal!.id!);
+    expect(await fakeBrowser.windows.get(normal!.id!)).toBeDefined();
+  });
+
   it('never touches windows Arca did not open', async () => {
     const other = await fakeBrowser.windows.create({
       url: 'https://x.dev/',
