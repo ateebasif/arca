@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "postinstall": "wxt prepare",
     "e2e": "bun scripts/e2e/smoke.ts",
-    "security": "bun scripts/security-check.ts"
+    "security": "bun scripts/security-check.ts",
+    "e2e:ai": "E2E_AI=1 bun scripts/e2e/smoke.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",
