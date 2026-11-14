@@ -33,6 +33,8 @@ interface DashboardProps {
 }
 
 export function Dashboard({ surface }: DashboardProps) {
+  // Leave room under the list for the selection bar.
+  const selecting = useSelection((s) => s.ids.size > 0);
   const tagFilter = useUi((s) => s.tagFilter);
   const state = useBookmarks();
   const collapsed = useUi((s) => s.sidebarCollapsed);
@@ -137,7 +139,7 @@ export function Dashboard({ surface }: DashboardProps) {
           <section
             ref={setScrollParent}
             aria-label="Folder contents"
-            className="relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
+            className={`relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 ${selecting ? 'pb-24' : 'pb-10'}`}
           >
             <ScrollParentContext.Provider value={scrollParent}>
               {searching ? (

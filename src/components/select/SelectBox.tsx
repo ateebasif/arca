@@ -7,10 +7,16 @@ import { pageOrder, useSelection } from '@/src/store/selection';
 export function SelectBox({
   id,
   title,
+  variant = 'overlay',
   className = '',
 }: {
   id: string;
   title: string;
+  /**
+   * overlay: on a tile's coloured cover (translucent dark).
+   * row: in a list row, sitting exactly over the icon and hiding it.
+   */
+  variant?: 'overlay' | 'row';
   className?: string;
 }) {
   const selected = useSelection((s) => s.ids.has(id));
@@ -29,10 +35,14 @@ export function SelectBox({
         if (e.shiftKey && s.anchor) s.extendTo(id, pageOrder());
         else s.toggle(id);
       }}
-      className={`z-10 grid size-5 place-items-center rounded-full border transition-opacity duration-150 ${
+      className={`z-10 grid size-5 place-items-center rounded-full border transition-[opacity,background-color,border-color] duration-150 ${
         selected
           ? 'bg-accent-strong border-accent-strong text-white opacity-100'
-          : `border-white/50 bg-black/35 text-transparent backdrop-blur-sm ${selecting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`
+          : `text-transparent ${
+              variant === 'row'
+                ? 'border-ink-faint/60 bg-canvas-to hover:border-accent'
+                : 'border-white/50 bg-black/35 backdrop-blur-sm'
+            } ${selecting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-hover/select:opacity-100 focus-visible:opacity-100'}`
       } ${className}`}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">

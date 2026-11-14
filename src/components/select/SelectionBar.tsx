@@ -1,3 +1,4 @@
+import { useUi } from '@/src/store/ui';
 import { useMemo, useState } from 'react';
 import { deleteMany, moveMany, openMany, retagMany } from '@/src/features/editing/bulk';
 import { errorMessage } from '@/src/features/editing/actions';
@@ -19,6 +20,7 @@ export function SelectionBar() {
   const state = useBookmarks();
   const meta = useMeta();
   const ids = useSelection((s) => s.ids);
+  const sidebar = useUi((s) => (s.sidebarCollapsed ? 0 : s.sidebarWidth));
   const clear = useSelection((s) => s.clear);
   const [panel, setPanel] = useState<Panel>(null);
   const [target, setTarget] = useState('');
@@ -66,7 +68,9 @@ export function SelectionBar() {
     <div
       role="region"
       aria-label="Selection"
-      className="animate-pop fixed bottom-5 left-1/2 z-30 w-[min(40rem,calc(100vw-2rem))] -translate-x-1/2"
+      // Centred over the main area, not the whole window (the sidebar is on the left).
+      style={{ left: `calc(${sidebar}px + (100vw - ${sidebar}px) / 2)` }}
+      className="animate-pop fixed bottom-5 z-30 w-[min(40rem,calc(100vw-2rem))] -translate-x-1/2"
     >
       {panel && (
         <div className="border-line bg-surface-strong mb-2 rounded-xl border p-3 text-xs shadow-(--shadow-pop) backdrop-blur-xl">

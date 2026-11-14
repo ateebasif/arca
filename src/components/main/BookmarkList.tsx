@@ -142,7 +142,8 @@ export const FolderRow = memo(function FolderRow({
       <SelectBox
         id={folder.id}
         title={folder.title || 'Untitled'}
-        className="absolute top-1/2 left-1.5 -translate-y-1/2"
+        variant="row"
+        className="absolute top-1/2 left-2.5 -translate-y-1/2"
       />
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
         <FolderIcon className="text-accent shrink-0" />
@@ -202,7 +203,8 @@ export const BookmarkRow = memo(function BookmarkRow({
       <SelectBox
         id={bookmark.id}
         title={title}
-        className="absolute top-1/2 left-1.5 -translate-y-1/2 group-hover/select:opacity-100"
+        variant="row"
+        className="absolute top-1/2 left-2.5 -translate-y-1/2"
       />
       <a
         ref={drag.setNodeRef}
