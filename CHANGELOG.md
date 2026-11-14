@@ -88,6 +88,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Tags**: add tags to any bookmark or folder in its Edit dialog (with
+  suggestions from tags you already use). Tags show as coloured chips on tiles,
+  list rows and folder cards; the sidebar lists every tag with a count, and
+  clicking one shows everything with that tag from all folders. Search finds
+  tags too, and `#tag` lists only tagged items. Tags follow a bookmark through
+  undo and re-link by URL if bookmark ids change. Ask Arca sees them as context.
 - Ask Arca ranks its picks (1, 2, 3…) with a few words on why each fits, and
   "which would you pick?" style follow-ups show up to five ranked options.
 - **Ungroup** a folder (right-click or ⋯ → Ungroup): everything inside moves up to

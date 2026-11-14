@@ -1,3 +1,5 @@
+import { useTags } from '@/src/store/useMeta';
+import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { isDragActive } from '@/src/features/dnd/ids';
@@ -148,6 +150,7 @@ function CoverTile({
   blocked,
 }: CoverTileProps) {
   const cover = useCover(url, title);
+  const tags = useTags(bookmark.id);
   return (
     <div className="group relative" ref={setNodeRef} style={dragStyle}>
       <a
@@ -191,6 +194,7 @@ function CoverTile({
                 : folderLabel?.split(' / ').at(-1) || host}
             </span>
           </span>
+          <TagChips tags={tags} max={2} className="flex-nowrap overflow-hidden" />
         </span>
       </a>
       <MoreButton

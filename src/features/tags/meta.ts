@@ -1,0 +1,192 @@
+import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
+import { onIdRemap } from '../undo/undo';
+
+/**
+ * Tags (and, later, notes) for bookmarks and folders, stored in
+ * chrome.storage.local as `meta: Record<id, { tags, note?, url }>` (PRD §8.7).
+ * `url` is a fallback key: if ids change (import, sync), metadata re-links to
+ * the bookmark with the same URL. Validated on every read.
+ */
+
+export const META_KEY = 'meta';
+const MAX_TAGS = 20;
+const MAX_TAG_LENGTH = 32;
+
+export interface Meta {
+  tags: string[];
+  note?: string;
+  url: string;
+}
+
+export interface MetaSnapshot {
+  readonly byId: ReadonlyMap<string, Meta>;
+  readonly version: number;
+}
+
+/** One tag: lowercase, trimmed, no control characters, at most 32 characters. */
+export function cleanTag(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  let out = '';
+  for (const ch of raw.normalize('NFC')) {
+    const code = ch.codePointAt(0) ?? 0;
+    const hidden =
+      code < 0x20 ||
+      (code >= 0x7f && code < 0xa0) ||
+      (code >= 0x200b && code <= 0x200f) ||
+      (code >= 0x202a && code <= 0x202e) ||
+      (code >= 0x2066 && code <= 0x2069);
+    out += hidden ? ' ' : ch;
+  }
+  return out
+    .trim()
+    .replace(/^#+/, '')
+    .replace(/[,;]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .slice(0, MAX_TAG_LENGTH)
+    .trim();
+}
+
+export function cleanTags(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.map(cleanTag).filter(Boolean))].slice(0, MAX_TAGS);
+}
+
+/** Validates stored metadata; anything malformed is dropped. */
+export function parseMeta(raw: unknown): Map<string, Meta> {
+  const out = new Map<string, Meta>();
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  for (const [id, value] of Object.entries(raw).slice(0, 50_000)) {
+    if (!/^[\w-]{1,64}$/.test(id) || !value || typeof value !== 'object') continue;
+    const v = value as Record<string, unknown>;
+    const tags = cleanTags(v.tags);
+    const note = typeof v.note === 'string' ? v.note.slice(0, 2000) : undefined;
+    if (!tags.length && !note) continue;
+    out.set(id, {
+      tags,
+      ...(note ? { note } : {}),
+      url: typeof v.url === 'string' ? v.url.slice(0, 4096) : '',
+    });
+  }
+  return out;
+}
+
+/** Stable colour slot (0–7) for a tag, so a tag looks the same everywhere. */
+export function tagHue(tag: string): number {
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
+  return h % 8;
+}
+
+type Listener = () => void;
+
+export class MetaStore {
+  private snapshot: MetaSnapshot = { byId: new Map(), version: 0 };
+  private listeners = new Set<Listener>();
+  private started: Promise<void> | null = null;
+  private offs: Array<() => void> = [];
+
+  getSnapshot = (): MetaSnapshot => this.snapshot;
+
+  subscribe = (listener: Listener): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  start(): Promise<void> {
+    this.started ??= (async () => {
+      this.replace(parseMeta(await storageGet<unknown>(META_KEY, {})));
+      // Other Arca pages (popup, other tabs) edit too.
+      this.offs.push(
+        onStorageChange<unknown>(META_KEY, (v) => this.replace(parseMeta(v))),
+      );
+      // Undo recreated a deleted item with a new id: its tags follow.
+      this.offs.push(onIdRemap((oldId, newId) => void this.remap(oldId, newId)));
+    })();
+    return this.started;
+  }
+
+  stop(): void {
+    this.offs.forEach((off) => off());
+    this.offs = [];
+    this.started = null;
+  }
+
+  private replace(byId: Map<string, Meta>) {
+    this.snapshot = { byId, version: this.snapshot.version + 1 };
+    this.listeners.forEach((l) => l());
+  }
+
+  private async write(byId: Map<string, Meta>) {
+    this.replace(byId);
+    await storageSet(META_KEY, Object.fromEntries(byId));
+  }
+
+  tagsOf(id: string): string[] {
+    return this.snapshot.byId.get(id)?.tags ?? [];
+  }
+
+  /** Sets an item's tags (url is kept so they can re-link if ids change). */
+  async setTags(id: string, url: string, tags: readonly string[]): Promise<void> {
+    const next = new Map(this.snapshot.byId);
+    const clean = cleanTags(tags);
+    const current = next.get(id);
+    if (clean.length || current?.note) {
+      next.set(id, { ...current, tags: clean, url: url || current?.url || '' });
+    } else {
+      next.delete(id);
+    }
+    await this.write(next);
+  }
+
+  private async remap(oldId: string, newId: string) {
+    const meta = this.snapshot.byId.get(oldId);
+    if (!meta) return;
+    const next = new Map(this.snapshot.byId);
+    next.delete(oldId);
+    next.set(newId, meta);
+    await this.write(next);
+  }
+
+  /**
+   * Re-links metadata whose id no longer exists to the bookmark with the same
+   * URL, and drops what matches nothing. `nodes` maps id → url ('' for folders).
+   */
+  async relink(nodes: ReadonlyMap<string, string>): Promise<void> {
+    const byId = this.snapshot.byId;
+    let changed = false;
+    const next = new Map(byId);
+    const byUrl = new Map<string, string>();
+    for (const [id, url] of nodes) if (url && !byId.has(id)) byUrl.set(url, id);
+    for (const [id, meta] of byId) {
+      if (nodes.has(id)) continue;
+      next.delete(id);
+      changed = true;
+      const target = meta.url ? byUrl.get(meta.url) : undefined;
+      if (target) {
+        next.set(target, meta);
+        byUrl.delete(meta.url);
+      }
+    }
+    if (changed) await this.write(next);
+  }
+
+  /** Every tag with how many items carry it, most used first. */
+  allTags(): Array<{ tag: string; count: number }> {
+    const counts = new Map<string, number>();
+    for (const meta of this.snapshot.byId.values()) {
+      for (const tag of meta.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+    return [...counts]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+  }
+
+  idsWithTag(tag: string): string[] {
+    const t = cleanTag(tag);
+    return [...this.snapshot.byId]
+      .filter(([, m]) => m.tags.includes(t))
+      .map(([id]) => id);
+  }
+}

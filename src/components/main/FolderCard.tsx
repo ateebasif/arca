@@ -1,3 +1,5 @@
+import { useTags } from '@/src/store/useMeta';
+import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
 import { isDragActive } from '@/src/features/dnd/ids';
 import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
@@ -31,6 +33,7 @@ export const FolderCard = memo(function FolderCard({
   preview,
   onOpen,
 }: FolderCardProps) {
+  const tags = useTags(folder.id);
   const renaming = useOverlays(
     (s) => s.renamingId === folder.id && s.renameIn === 'main',
   );
@@ -98,7 +101,10 @@ export const FolderCard = memo(function FolderCard({
             {title}
           </span>
         )}
-        <span className="text-ink-faint truncate text-[11px]">{meta}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="text-ink-faint shrink-0 truncate text-[11px]">{meta}</span>
+          <TagChips tags={tags} max={2} className="flex-nowrap overflow-hidden" />
+        </span>
       </span>
     </>
   );

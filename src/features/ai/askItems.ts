@@ -10,7 +10,10 @@ const STOPWORDS = new Set(
 );
 
 /** Every web bookmark, with its full folder path and date. */
-export function askItems(state: BookmarkSnapshot): AskItem[] {
+export function askItems(
+  state: BookmarkSnapshot,
+  tagsOf?: (id: string) => readonly string[],
+): AskItem[] {
   return state.rootIds.flatMap((rootId) => {
     const rootTitle = state.nodes.get(rootId)?.title ?? '';
     return linksWithin(state, rootId)
@@ -21,6 +24,7 @@ export function askItems(state: BookmarkSnapshot): AskItem[] {
         url: l.node.url ?? '',
         folder: [rootTitle, l.folderLabel].filter(Boolean).join(' / '),
         dateAdded: l.node.dateAdded || undefined,
+        tags: tagsOf?.(l.node.id),
       }));
   });
 }

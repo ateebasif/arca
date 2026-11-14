@@ -1,3 +1,4 @@
+import { useMeta } from '@/src/store/useMeta';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { askItems, keywordHits, keywordTerms } from '@/src/features/ai/askItems';
 import { bookmarkLinkProps } from '@/src/features/open';
@@ -30,7 +31,11 @@ export default function AskPanel() {
   const close = useOverlays((s) => s.closeAsk);
   const { messages, status, index, error, send, cancel, clear, warm } = useAskChat();
   const [text, setText] = useState(draft);
-  const items = useMemo(() => askItems(state), [state]);
+  const meta = useMeta();
+  const items = useMemo(
+    () => askItems(state, (id) => meta.byId.get(id)?.tags ?? []),
+    [state, meta],
+  );
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const working = status.kind === 'working';

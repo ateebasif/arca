@@ -71,6 +71,12 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   before reopening it as a tab. The right-click item is only shown while an Arca
   mini window is focused. No content scripts or host permissions are involved.
 
+### Tags
+
+- Stored in `chrome.storage.local` under `meta`, validated on every read: ids must
+  look like bookmark ids, tags are lowercased, stripped of control/zero-width/bidi
+  characters, capped at 32 characters and 20 per item. Rendered as plain text.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.

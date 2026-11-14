@@ -1,4 +1,5 @@
 import { askPanelWasOpen } from '@/src/store/askChat';
+import { relinkMetaOnce } from '@/src/store/useMeta';
 import { MiniWindowBar } from './mini/MiniWindowBar';
 import { useEffect, useState } from 'react';
 import { DndProvider } from '@/src/features/dnd/DndProvider';
@@ -12,6 +13,7 @@ import { SidebarIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { NavButtons } from './main/NavButtons';
 import { FolderView } from './main/FolderView';
+import { TagCrumb, TagView } from './main/TagView';
 import { AddMenu } from './main/AddMenu';
 import { ScopeSwitch, Toolbar } from './main/Toolbar';
 import { ScrollParentContext } from './main/scrollParent';
@@ -28,6 +30,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ surface }: DashboardProps) {
+  const tagFilter = useUi((s) => s.tagFilter);
   const state = useBookmarks();
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
@@ -66,6 +69,9 @@ export function Dashboard({ surface }: DashboardProps) {
   }, [state.ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => preloadOverlays(), []);
+  useEffect(() => {
+    if (state.ready) void relinkMetaOnce(state);
+  }, [state]);
   // Came back to this tab (e.g. after opening an Ask Arca result here): reopen the chat.
   useEffect(() => {
     if (askPanelWasOpen()) useOverlays.getState().openAsk();
@@ -111,7 +117,7 @@ export function Dashboard({ surface }: DashboardProps) {
               )}
               <NavButtons />
               <div className="min-w-0 flex-1">
-                <Breadcrumbs />
+                {tagFilter ? <TagCrumb tag={tagFilter} /> : <Breadcrumbs />}
               </div>
               <div className="flex w-[min(34rem,48%)] shrink-0">
                 <SearchBox />
@@ -120,7 +126,7 @@ export function Dashboard({ surface }: DashboardProps) {
             </div>
             {!searching && (
               <div className="flex h-10 items-center justify-between gap-3">
-                <ScopeSwitch />
+                {tagFilter ? <span /> : <ScopeSwitch />}
                 <Toolbar />
               </div>
             )}
@@ -131,7 +137,13 @@ export function Dashboard({ surface }: DashboardProps) {
             className="relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-10"
           >
             <ScrollParentContext.Provider value={scrollParent}>
-              {searching ? <SearchResults /> : <FolderView />}
+              {searching ? (
+                <SearchResults />
+              ) : tagFilter ? (
+                <TagView tag={tagFilter} />
+              ) : (
+                <FolderView />
+              )}
             </ScrollParentContext.Provider>
           </section>
         </main>

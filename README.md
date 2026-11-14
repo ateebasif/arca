@@ -31,6 +31,8 @@ data stays on your machine.
   Arca finds it, with follow-up questions to narrow it down.
 - **Mini windows**: open links as a small peek window; move one into your main
   window with **Open here**, right-click → Open in main window, or ⌥⇧O.
+- **Tags**: tag bookmarks and folders, filter by tag from the sidebar, or search
+  `#tag`.
 - **Open links in**: same tab, new tab, background tab or a mini window.
 - **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
   excerpt, headings and quick-open buttons. Fetched once without cookies,

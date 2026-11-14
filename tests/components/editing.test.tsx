@@ -42,7 +42,7 @@ describe('editing', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'New folder' }));
     expect(within(await screen.findByRole('dialog')).queryByLabelText('URL')).toBeNull();
     await userEvent.keyboard('{Enter}');
-    expect(fake.findByTitle('New folder')?.parentId).toBe('1');
+    await vi.waitFor(() => expect(fake.findByTitle('New folder')?.parentId).toBe('1'));
   });
 
   it('edits title, URL and folder from the item menu', async () => {

@@ -3,7 +3,10 @@ import { errorMessage } from '@/src/features/editing/actions';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import * as undo from '@/src/features/undo/undo';
 import * as bm from '@/src/lib/bookmarks';
+import { setTags } from '@/src/features/tags/actions';
 import { useOverlays, type EditorState } from '@/src/store/overlays';
+import { getMetaStore, useMeta } from '@/src/store/useMeta';
+import { TagInput } from '../tags/TagInput';
 import { folderOptions } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { Button, Dialog, Field, inputClass } from './Dialog';
@@ -24,6 +27,19 @@ export function EditDialog({ editor }: { editor: EditorState }) {
   );
   const [parentId, setParentId] = useState(
     existing?.parentId ?? (editor.mode === 'create' ? editor.parentId : '1'),
+  );
+  const meta = useMeta();
+  const [tags, setTagList] = useState<string[]>(() =>
+    existing ? (meta.byId.get(existing.id)?.tags ?? []) : [],
+  );
+  const knownTags = useMemo(
+    () =>
+      getMetaStore()
+        .allTags()
+        .map((t) => t.tag),
+    // Recompute when tags change anywhere.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meta.version],
   );
   const [urlError, setUrlError] = useState<string>();
   const [formError, setFormError] = useState<string>();
@@ -54,6 +70,7 @@ export function EditDialog({ editor }: { editor: EditorState }) {
     try {
       if (!existing) {
         const node = await bm.create({ parentId, title: finalTitle, url: finalUrl });
+        await setTags(node.id, finalUrl ?? '', tags);
         undo.record(undo.created(node));
       } else {
         const steps: undo.UndoAction[] = [];
@@ -76,6 +93,8 @@ export function EditDialog({ editor }: { editor: EditorState }) {
             ),
           );
         }
+        const tagStep = await setTags(existing.id, finalUrl ?? existing.url ?? '', tags);
+        if (tagStep) steps.push(tagStep);
         if (steps.length) undo.record(undo.combine(`Edited “${finalTitle}”`, steps));
       }
       close();
@@ -103,7 +122,22 @@ export function EditDialog({ editor }: { editor: EditorState }) {
         </>
       }
     >
-      <form id="arca-edit-form" onSubmit={onSubmit} noValidate>
+      <form
+        id="arca-edit-form"
+        onSubmit={onSubmit}
+        noValidate
+        onKeyDown={(e) => {
+          // Enter in any field saves (the tag field keeps Enter while typing a tag).
+          if (
+            e.key === 'Enter' &&
+            !e.defaultPrevented &&
+            e.target instanceof HTMLInputElement
+          ) {
+            e.preventDefault();
+            e.currentTarget.requestSubmit();
+          }
+        }}
+      >
         {locked && (
           <p className="bg-hover text-ink-muted mb-3 rounded-lg px-3 py-2 text-xs">
             This is a browser folder. It can't be renamed, moved or deleted.
@@ -147,6 +181,11 @@ export function EditDialog({ editor }: { editor: EditorState }) {
                 </option>
               ))}
             </select>
+          </Field>
+        )}
+        {!locked && (
+          <Field label="Tags">
+            <TagInput value={tags} onChange={setTagList} suggestions={knownTags} />
           </Field>
         )}
         {formError && (

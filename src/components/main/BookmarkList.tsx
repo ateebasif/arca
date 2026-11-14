@@ -1,3 +1,5 @@
+import { useTags } from '@/src/store/useMeta';
+import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
 import { isDragActive } from '@/src/features/dnd/ids';
 import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
@@ -136,6 +138,7 @@ export const FolderRow = memo(function FolderRow({
         ) : (
           <span className="truncate font-medium">{folder.title || 'Untitled'}</span>
         )}
+        <RowTags id={folder.id} />
       </div>
       <div role="cell" className="text-ink-faint truncate text-xs">
         {count === 1 ? '1 bookmark' : `${count} bookmarks`}
@@ -218,6 +221,7 @@ export const BookmarkRow = memo(function BookmarkRow({
         ) : (
           <span className="truncate">{title}</span>
         )}
+        <RowTags id={bookmark.id} />
       </span>
       <span role="cell" className="text-ink-muted truncate text-xs">
         {url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
@@ -235,3 +239,8 @@ export const BookmarkRow = memo(function BookmarkRow({
     </a>
   );
 });
+
+function RowTags({ id }: { id: string }) {
+  const tags = useTags(id);
+  return <TagChips tags={tags} max={2} className="shrink-0 flex-nowrap" />;
+}
