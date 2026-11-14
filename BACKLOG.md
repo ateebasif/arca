@@ -6,7 +6,6 @@
 
 ## Up Next
 
-
 ## Backlog
 
 ### Phase 1 – Core
