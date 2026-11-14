@@ -18,6 +18,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Ask Arca follow-ups ran a fresh keyword/meaning search on the new words, so
+  "what would u pick" returned colour pickers. The model now sees the previous
+  results first: choosing or narrowing ("which would you pick", "only the anime
+  one", "quickest to cook") answers from them, while a new topic ("any recipes?")
+  searches again. Narrowed answers show just the picks.
+- Reading progress (first time or after switching embedding models) shows on the
+  sidebar's Ask Arca button ("reading 42%") and just above the input again,
+  instead of scrolling out of view.
+- nomic-embed-text v2 (MoE) gets its search prefix for AI organize too, so both
+  features share its cached readings.
 - Rename from the right-click / ⋯ menu did nothing for folders that also show in
   the sidebar: both copies opened a name field and fought over focus. Rename now
   opens only where you started it (main view or sidebar).
