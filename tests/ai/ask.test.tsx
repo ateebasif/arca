@@ -382,11 +382,18 @@ describe('Ask Arca panel', () => {
 
   it('starts reading bookmarks as soon as the panel opens', async () => {
     const seen = fakeOllama();
-    await renderWithBookmarks(<Dashboard surface="dashboard" />, seed);
+    // Titles no other test uses, so nothing can already be cached.
+    const fresh = Array.from({ length: 5 }, (_, i) => ({
+      title: `Warm-up only ${i}`,
+      url: `https://warm${i}.dev/`,
+    }));
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, { bar: fresh });
     await act(() => useSettings.getState().update({ aiEnabled: true }));
     act(() => useOverlays.getState().openAsk());
     await screen.findByRole('dialog', { name: 'Ask Arca' });
-    await vi.waitFor(() => expect(seen.embedInputs.length).toBe(ITEMS.length));
+    await vi.waitFor(() =>
+      expect(seen.embedInputs.filter((t) => t.includes('Warm-up only'))).toHaveLength(5),
+    );
     expect(useAskChat.getState().messages).toEqual([]);
   });
 

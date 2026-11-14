@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { clearUndoForTests } from '@/src/features/undo/undo';
 import { BookmarkStore } from '@/src/store/bookmarkStore';
 import { resetOverlaysForTests } from '@/src/store/overlays';
+import { resetMetaForTests } from '@/src/store/useMeta';
 import { resetSettingsForTests } from '@/src/store/settings';
 import { resetUiForTests } from '@/src/store/ui';
 import { setBookmarkStoreForTests } from '@/src/store/useBookmarks';
@@ -27,6 +28,7 @@ export async function renderWithBookmarks(
   setBookmarkStoreForTests(store);
   resetUiForTests();
   resetOverlaysForTests();
+  resetMetaForTests();
   resetSettingsForTests();
   clearUndoForTests();
   await store.start();

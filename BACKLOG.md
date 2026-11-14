@@ -28,8 +28,8 @@
 
 ### Phase 3 – Power tools
 
-- [ ] ARC-031 · Tags & notes: storage, editing, URL fallback re-link · Phase 3 · P0
-- [ ] ARC-032 · Undo remaps tags/notes to recreated IDs; metadata cleanup after undo window · Phase 3 · P0
+- [ ] ARC-031b · Notes on bookmarks (tags done in ARC-031) · Phase 3 · P1
+- [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
 - [ ] ARC-033 · Tag manager: rename, merge, delete, colors · Phase 3 · P1
 - [ ] ARC-034 · Bulk add/remove tag · Phase 3 · P2
 - [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
@@ -58,6 +58,7 @@
 
 ## Done
 
+- [x] ARC-031 · Tags: storage (`meta`, validated), Edit dialog editor, chips, sidebar tag list + tag view across folders, `#tag` search, URL re-link, undo remap · `feature/tags` · 2026-11-14
 - [x] ARC-067 · Ask Arca ranked picks with reasons; "which would you pick" ranks up to five · `feature/ask-ranked-picks` · 2026-11-14
 - [x] ARC-066 · Ungroup folder: move contents up in place, remove folder, one undo · `feature/ungroup-folder` · 2026-11-14
 - [x] ARC-B04 · Ask follow-ups repeated a fresh search; reading progress hidden; nomic v2 prefix · `fix/ask-followups-progress` · 2026-11-14

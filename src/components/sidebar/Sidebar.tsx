@@ -6,6 +6,7 @@ import { useOverlays } from '@/src/store/overlays';
 import { GearIcon, KeyboardIcon, SearchIcon, SidebarIcon, SparkleIcon } from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
+import { TagList } from './TagList';
 
 export function Sidebar() {
   const width = useUi((s) => s.sidebarWidth);
@@ -34,6 +35,7 @@ export function Sidebar() {
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto">
         <FolderTree />
+        <TagList />
       </nav>
       <div className="px-2 pb-1.5">
         <button

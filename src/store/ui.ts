@@ -55,6 +55,9 @@ interface UiState extends UiPrefs {
   /** Folder history for back/forward (most recent last). Not persisted. */
   backStack: string[];
   forwardStack: string[];
+  /** Showing every item with this tag (across folders) instead of a folder. */
+  tagFilter: string | null;
+  setTagFilter(tag: string | null): void;
   openFolder(id: string): void;
   goBack(): void;
   goForward(): void;
@@ -87,11 +90,14 @@ export const useUi = create<UiState>()((set) => ({
   revealId: null,
   backStack: [],
   forwardStack: [],
+  tagFilter: null,
+  setTagFilter: (tagFilter) => set({ tagFilter, query: '' }),
   openFolder: (id) =>
     set((s) =>
       id === s.currentFolderId
-        ? s
+        ? { tagFilter: null }
         : {
+            tagFilter: null,
             currentFolderId: id,
             lastFolderId: id,
             backStack: [...s.backStack, s.currentFolderId].slice(-HISTORY_LIMIT),
@@ -109,6 +115,7 @@ export const useUi = create<UiState>()((set) => ({
         backStack: s.backStack.slice(0, -1),
         forwardStack: [...s.forwardStack, s.currentFolderId],
         query: '',
+        tagFilter: null,
       };
     }),
   goForward: () =>
@@ -121,6 +128,7 @@ export const useUi = create<UiState>()((set) => ({
         forwardStack: s.forwardStack.slice(0, -1),
         backStack: [...s.backStack, s.currentFolderId],
         query: '',
+        tagFilter: null,
       };
     }),
   setQuery: (query) => set({ query, activeResult: 0 }),
@@ -130,6 +138,7 @@ export const useUi = create<UiState>()((set) => ({
     set((s) => ({
       revealId: id,
       query: '',
+      tagFilter: null,
       currentFolderId: folderId,
       lastFolderId: folderId,
       backStack:
@@ -221,5 +230,6 @@ export function resetUiForTests(): void {
     revealId: null,
     backStack: [],
     forwardStack: [],
+    tagFilter: null,
   });
 }

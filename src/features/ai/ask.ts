@@ -16,6 +16,8 @@ import { embeddingText, throwIfAborted, type OrganizeItem } from './organize';
 
 export interface AskItem extends OrganizeItem {
   dateAdded?: number;
+  /** The user's tags, shown to the chat model as context. */
+  tags?: readonly string[];
 }
 
 export interface AskTurn {
@@ -91,6 +93,7 @@ function candidateLine(n: number, item: AskItem): string {
     mainDomain(item.url),
     item.folder && `folder: ${item.folder.split(' / ').slice(-2).join(' / ')}`,
     item.dateAdded ? `added ${month.format(item.dateAdded)}` : '',
+    item.tags?.length ? `tags: ${item.tags.slice(0, 5).join(', ')}` : '',
   ];
   return parts.filter(Boolean).join(' · ');
 }

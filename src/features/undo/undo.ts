@@ -87,6 +87,13 @@ export function combine(label: string, actions: UndoAction[]): UndoAction {
 // hold the old ids, so every action resolves ids through this map at undo time.
 
 const renamedIds = new Map<string, string>();
+const remapListeners = new Set<(oldId: string, newId: string) => void>();
+
+/** Called when undo recreates an item with a new id (tags follow it). */
+export function onIdRemap(listener: (oldId: string, newId: string) => void): () => void {
+  remapListeners.add(listener);
+  return () => remapListeners.delete(listener);
+}
 
 /** The current id for an id that may have been recreated by an undo. */
 export function resolveId(id: string): string {
@@ -118,6 +125,7 @@ export async function recreate(
     restore: true,
   });
   renamedIds.set(node.id, created.id);
+  for (const listener of remapListeners) listener(node.id, created.id);
   let failed = 0;
   for (const child of node.children ?? []) {
     try {

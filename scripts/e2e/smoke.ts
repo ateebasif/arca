@@ -724,6 +724,82 @@ check('mini window: opens small, "Open here" moves it into this window', async (
   }
 });
 
+check('tags: add in Edit, filter from the sidebar, find with #tag', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const ids = await page.eval<string[]>(`(async () => {
+    const a = await chrome.bookmarks.create({ parentId: '1', title: 'Tag me A', url: 'https://tag-a.invalid/' });
+    const f = await chrome.bookmarks.create({ parentId: '2', title: 'Tag folder' });
+    const b = await chrome.bookmarks.create({ parentId: f.id, title: 'Tag me B', url: 'https://tag-b.invalid/' });
+    return [a.id, b.id];
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('[data-folder-id="1"]')`);
+  await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+  await page.waitFor(`document.querySelector('[data-bookmark-id="${ids[0]}"]')`);
+  // Edit dialog → add a tag → save.
+  await page.eval(
+    `document.querySelector('[data-bookmark-id="${ids[0]}"]').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 200, clientY: 200 }))`,
+  );
+  await page.waitFor(
+    `[...document.querySelectorAll('[role=menuitem]')].some((b) => b.textContent.startsWith('Edit'))`,
+  );
+  await page.eval(
+    `[...document.querySelectorAll('[role=menuitem]')].find((b) => b.textContent.startsWith('Edit')).click()`,
+  );
+  await page.waitFor(
+    `document.querySelector('[role=dialog] input[aria-label="Add tag"]')`,
+  );
+  await page.eval(
+    `document.querySelector('[role=dialog] input[aria-label="Add tag"]').focus()`,
+  );
+  await page.type('research');
+  await page.key('Enter');
+  await page.waitFor(
+    `document.querySelector('[role=dialog]').textContent.includes('#research')`,
+  );
+  await page.eval(
+    `[...document.querySelectorAll('[role=dialog] button')].find((b) => b.textContent === 'Save').click()`,
+  );
+  await page.waitFor(`!document.querySelector('[role=dialog]')`);
+  // Same tag on a link in another root folder.
+  await page.eval(
+    `chrome.storage.local.get('meta').then(({ meta }) => chrome.storage.local.set({ meta: { ...meta, '${ids[1]}': { tags: ['research'], url: 'https://tag-b.invalid/' } } }))`,
+  );
+  await page.waitFor(
+    `document.querySelector('[data-bookmark-id="${ids[0]}"] [data-tags]')?.textContent.includes('#research')`,
+  );
+  // Sidebar tag → everything tagged, across folders.
+  await page.waitFor(
+    `[...document.querySelectorAll('[aria-label=Tags] button')].some((b) => b.textContent.includes('research'))`,
+  );
+  await page.eval(
+    `[...document.querySelectorAll('[aria-label=Tags] button')].find((b) => b.textContent.includes('research')).click()`,
+  );
+  await page.waitFor(`document.querySelector('[data-tag-view="research"]')`);
+  const shown = await page.eval<string[]>(
+    `[...document.querySelectorAll('[data-tag-view] [data-bookmark-id]')].map((e) => e.getAttribute('data-bookmark-id'))`,
+  );
+  assert.deepEqual(shown.sort(), [...ids].sort(), 'tag view shows both links');
+  await sleep(300);
+  await page.screenshot(`${OUT}/tags-view.png`);
+  // #tag in search.
+  await page.eval(`document.querySelector('[aria-label="Clear tag filter"]').click()`);
+  await page.eval(
+    `document.querySelector('input[type=search], [role=combobox]').focus()`,
+  );
+  await page.type('#resea');
+  await page.waitFor(
+    `document.querySelectorAll('[aria-label="Search results"] [role=option]').length === 2`,
+    5000,
+  );
+  await page.eval(`(async () => {
+    await chrome.storage.local.remove('meta');
+    for (const id of ${JSON.stringify(ids)}) await chrome.bookmarks.remove(id);
+    const [f] = await chrome.bookmarks.search({ title: 'Tag folder' });
+    if (f) await chrome.bookmarks.removeTree(f.id);
+  })()`);
+});
+
 check('chrome move semantics match the test fake', async (page) => {
   const result = await page.eval<{ order: string; eventIndex: number }>(`(async () => {
     const bm = chrome.bookmarks;
