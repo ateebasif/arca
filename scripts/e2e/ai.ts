@@ -43,6 +43,8 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
     },
     stdio: 'ignore',
   });
+  // Never leave the temporary Ollama running, even if the run is cut short.
+  process.once('exit', () => server.kill());
   try {
     let tags: { models?: Array<{ name: string }> } = {};
     for (let i = 0; i < 40; i++) {
@@ -101,6 +103,7 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
           `[...document.querySelectorAll('[role=dialog] button')].find((b) => b.textContent === 'Suggest folders').click()`,
         );
 
+      console.log('    … AI 1/4 setup help against your Ollama');
       // 1. The user's default Ollama (no extension origins) → clear help, not a crash.
       await settings('http://127.0.0.1:11434');
       await openAi();
@@ -150,6 +153,7 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       await page.key('Escape');
       await page.setViewport(1280, 860, true);
 
+      console.log('    … AI 2/4 organize with the temporary Ollama');
       // 2. Temporary server that allows Arca → suggest, review, apply, undo.
       await settings(`http://127.0.0.1:${PORT}`);
       await openAi();
@@ -172,6 +176,10 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       );
       await sleep(300);
       await page.screenshot(`${out}/ai-review.png`);
+      // Also tag links with their folder name.
+      await page.eval(
+        `[...document.querySelectorAll('[role=dialog] label')].find((l) => l.textContent.includes('Also tag links')).querySelector('input').click()`,
+      );
       await page.eval(
         `[...document.querySelectorAll('[role=dialog] button')].find((b) => b.textContent.startsWith('Apply')).click()`,
       );
@@ -193,6 +201,10 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       })()`);
       assert.equal(tree.root, TITLES.length, 'every link moved into a topic folder');
       assert.equal(tree.left, 0);
+      const tagged = await page.eval<number>(
+        `chrome.storage.local.get('meta').then(({ meta }) => Object.values(meta ?? {}).filter((m) => m.tags?.length).length)`,
+      );
+      assert.equal(tagged, TITLES.length, 'every link tagged with its folder name');
       // Undo (⌘Z) puts everything back.
       await page.key('Escape');
       await page.key('z', 4);
@@ -211,6 +223,7 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
         `  ✓ AI organize with real Ollama: ${groups.length} folders (${groups.join(', ')}); undo restored all`,
       );
 
+      console.log('    … AI 3/4 Ask Arca');
       // 3. Ask Arca: describe vaguely, get real bookmarks back.
       await page.key('Escape');
       await page.eval(
@@ -259,6 +272,7 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       );
       await page.key('Escape');
 
+      console.log('    … AI 4/4 list descriptions');
       // 4. List view: one-line descriptions written by the local model.
       await page.key('Escape');
       await page.eval(`document.querySelector('[aria-label="List"]').click()`);

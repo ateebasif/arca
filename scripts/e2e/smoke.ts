@@ -892,11 +892,28 @@ try {
     `  ✗ link previews\n    ${error instanceof Error ? error.message : error}`,
   );
 }
+// Real-model checks are slow (they start a second Ollama and load models), so
+// they run only with `bun run e2e:ai` (E2E_AI=1), and never longer than 6 min.
+const AI_LIMIT_MS = 6 * 60_000;
 let aiResult = 'skipped';
 try {
-  aiResult = await runAiChecks(OUT);
+  if (process.env.E2E_AI === '1') {
+    aiResult = await Promise.race([
+      runAiChecks(OUT),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('AI checks took longer than 6 minutes')),
+          AI_LIMIT_MS,
+        ),
+      ),
+    ]);
+  }
   if (aiResult === 'skipped')
-    console.log('  - AI organize skipped (Ollama or models not installed)');
+    console.log(
+      process.env.E2E_AI === '1'
+        ? '  - AI checks skipped (Ollama or models not installed)'
+        : '  - AI checks skipped (run `bun run e2e:ai` for real-model checks)',
+    );
 } catch (error) {
   failed++;
   console.error(`  ✗ AI organize\n    ${error instanceof Error ? error.message : error}`);

@@ -21,8 +21,6 @@
 - [ ] ARC-023 · Bulk actions: move, delete, open all (warn > 10) · Phase 2 · P1
 - [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
 - [ ] ARC-026 · Home view: Recently added (12) + Most visited, each hideable · Phase 2 · P1
-- [ ] ARC-027 · Settings page (§8.13), stored in `chrome.storage.local` · Phase 2 · P1
-- [ ] ARC-028 · Keyboard shortcuts, `?` sheet, extension command (⌥⇧B) · Phase 2 · P1
 - [ ] ARC-029 · Background worker: "Add to Arca…" context menu · Phase 2 · P2
 - [ ] ARC-030 · Release v0.2.0 · Phase 2 · P0
 
@@ -58,6 +56,9 @@
 
 ## Done
 
+- [x] ARC-070 · AI organize: optional tag per group (folder name), merged with existing tags, one undo · `feature/organize-tags` · 2026-11-14
+- [x] ARC-027 · Settings (dialog), stored in `chrome.storage.local`, validated · built across earlier items · 2026-11-14
+- [x] ARC-028 · Keyboard shortcuts, `?` sheet, ⌥⇧B popup command · built across earlier items · 2026-11-14
 - [x] ARC-069 · Clean out: impulse-save signals, optional AI page-kind review, archive/delete with undo · `fix/open-new-tab-preview-position` · 2026-11-14
 - [x] ARC-B05 · New-tab default (one-time migration); preview card placement below/above list rows, viewport-safe · `fix/open-new-tab-preview-position` · 2026-11-14
 - [x] ARC-068 · AI one-line descriptions in list view: lazy, batched, cached per model, preview description preferred · `feature/ai-descriptions` · 2026-11-14
