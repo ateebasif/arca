@@ -11,7 +11,12 @@ import {
 } from '@/src/features/ai/ask';
 import { setEmbeddingStoreForTests } from '@/src/features/ai/embedCache';
 import { memoryStore } from '@/src/lib/idb';
-import { resetAskChat, useAskChat } from '@/src/store/askChat';
+import {
+  askPanelWasOpen,
+  parseSaved,
+  resetAskChat,
+  useAskChat,
+} from '@/src/store/askChat';
 import { useOverlays } from '@/src/store/overlays';
 import { useSettings } from '@/src/store/settings';
 import { useUi } from '@/src/store/ui';
@@ -292,5 +297,113 @@ describe('Ask Arca panel', () => {
     await screen.findByRole('dialog', { name: 'Ask Arca' });
     await vi.waitFor(() => expect(seen.embedInputs.length).toBe(ITEMS.length));
     expect(useAskChat.getState().messages).toEqual([]);
+  });
+
+  it('keeps the chat in this tab, so coming back after opening a result restores it', async () => {
+    fakeOllama();
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, seed);
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().openAsk());
+    const panel = await screen.findByRole('dialog', { name: 'Ask Arca' });
+    expect(askPanelWasOpen()).toBe(true);
+    await userEvent.type(
+      within(panel).getByRole('textbox', { name: 'Ask Arca' }),
+      'torrent{Enter}',
+    );
+    await within(panel).findByText('These look like your torrent sites.');
+    // What a same-tab navigation leaves behind: the chat, and that the panel was open.
+    const saved = parseSaved(JSON.parse(sessionStorage.getItem('arca.ask')!));
+    expect(saved.open).toBe(true);
+    expect(saved.messages.map((m) => m.role)).toEqual(['user', 'arca']);
+    expect(saved.messages[1]!.ids?.length).toBeGreaterThan(0);
+    // Closing the panel on purpose means it doesn't reopen.
+    act(() => useOverlays.getState().closeAsk());
+    expect(askPanelWasOpen()).toBe(false);
+  });
+
+  it('drops tampered saved chats', () => {
+    expect(parseSaved('junk')).toEqual({ messages: [], open: false });
+    const { messages } = parseSaved({
+      open: true,
+      messages: [
+        { id: 1, role: 'user', text: 'hi' },
+        { id: 2, role: 'system', text: 'pwned' },
+        { id: 'x', role: 'arca', text: 'bad id' },
+        {
+          id: 3,
+          role: 'arca',
+          text: 'ok',
+          ids: ['5', 7, 'x'.repeat(100)],
+          matches: 'nope',
+        },
+      ],
+    });
+    expect(messages).toEqual([
+      {
+        id: 1,
+        role: 'user',
+        text: 'hi',
+        ids: undefined,
+        matches: undefined,
+        fromModel: undefined,
+      },
+      {
+        id: 3,
+        role: 'arca',
+        text: 'ok',
+        ids: ['5'],
+        matches: undefined,
+        fromModel: undefined,
+      },
+    ]);
+  });
+
+  it('lets you pick the answer model, marking the smallest as fastest', async () => {
+    const seen = fakeOllama();
+    const real = vi.mocked(fetch).getMockImplementation()!;
+    const models: string[] = [];
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === '/api/tags') {
+        return Response.json({
+          models: [
+            { name: 'mistral:latest', size: 4.1e9, details: { family: 'llama' } },
+            { name: 'llama3.2:latest', size: 2e9, details: { family: 'llama' } },
+            {
+              name: 'nomic-embed-text:latest',
+              size: 2.7e8,
+              details: { family: 'nomic-bert' },
+            },
+          ],
+        });
+      }
+      if (path === '/api/chat') models.push(JSON.parse(String(init?.body)).model);
+      return real(url as string, init);
+    });
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, seed);
+    await act(() =>
+      useSettings.getState().update({ aiEnabled: true, chatModel: 'mistral:latest' }),
+    );
+    act(() => useOverlays.getState().openAsk());
+    const panel = await screen.findByRole('dialog', { name: 'Ask Arca' });
+    const picker = await within(panel).findByRole('combobox', { name: 'Answer model' });
+    const options = within(picker)
+      .getAllByRole('option')
+      .map((o) => o.textContent);
+    expect(options).toEqual([
+      'llama3.2:latest · 2.0 GB · fastest',
+      'mistral:latest · 4.1 GB',
+    ]);
+    expect(picker).toHaveValue('mistral:latest');
+    await userEvent.selectOptions(picker, 'llama3.2:latest');
+    expect(useSettings.getState().askModel).toBe('llama3.2:latest');
+    expect(useSettings.getState().chatModel).toBe('mistral:latest'); // naming unchanged
+    await userEvent.type(
+      within(panel).getByRole('textbox', { name: 'Ask Arca' }),
+      'torrent{Enter}',
+    );
+    await within(panel).findByText('These look like your torrent sites.');
+    expect(models).toEqual(['llama3.2:latest']);
+    expect(seen.prompts).toHaveLength(1);
   });
 });

@@ -3,7 +3,8 @@ import { askItems, keywordHits, keywordTerms } from '@/src/features/ai/askItems'
 import { bookmarkLinkProps } from '@/src/features/open';
 import { compactPath } from '@/src/features/tidy/normalize';
 import { displayHost } from '@/src/lib/url';
-import { useAskChat, type AskMessage } from '@/src/store/askChat';
+import { setAskPanelOpen, useAskChat, type AskMessage } from '@/src/store/askChat';
+import { isEmbeddingModel, listModels, type OllamaModel } from '@/src/lib/ollama';
 import type { BookmarkSnapshot } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
 import { useSettings } from '@/src/store/settings';
@@ -34,11 +35,18 @@ export default function AskPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const working = status.kind === 'working';
 
+  const askModel = settings.askModel || settings.chatModel;
   const opts = {
     base: settings.ollamaUrl,
     embedModel: settings.embedModel,
-    chatModel: settings.chatModel,
+    chatModel: askModel,
   };
+
+  // Remember that the panel is open, so returning to this tab reopens it.
+  useEffect(() => {
+    setAskPanelOpen(true);
+    return () => setAskPanelOpen(false);
+  }, []);
 
   // Start reading bookmarks as soon as the panel opens (first time only), so
   // it's well under way, or done, by the time a question is typed.
@@ -108,7 +116,7 @@ export default function AskPanel() {
                   key={m.id}
                   message={m}
                   question={messages[i - 1]?.text ?? ''}
-                  model={settings.chatModel}
+                  model={askModel}
                   state={state}
                   onCancel={cancel}
                   onClose={close}
@@ -127,7 +135,7 @@ export default function AskPanel() {
             {error && <OllamaHelp error={error} />}
           </div>
 
-          <form onSubmit={onSubmit} className="mt-auto flex gap-2 pt-1">
+          <form onSubmit={onSubmit} className="mt-auto flex flex-wrap gap-2 pt-1">
             <input
               ref={inputRef}
               autoFocus
@@ -145,6 +153,11 @@ export default function AskPanel() {
             <Button variant="primary" type="submit" disabled={!text.trim() || working}>
               Ask
             </Button>
+            <ModelPicker
+              base={settings.ollamaUrl}
+              value={askModel}
+              onChange={(m) => void settings.update({ askModel: m })}
+            />
           </form>
         </div>
       )}
@@ -357,5 +370,55 @@ function ResultRow({
         <FolderIcon />
       </button>
     </li>
+  );
+}
+
+/**
+ * Which local model writes Ask Arca's answers. Smaller is faster: the
+ * smallest installed chat model is marked as the fastest.
+ */
+function ModelPicker({
+  base,
+  value,
+  onChange,
+}: {
+  base: string;
+  value: string;
+  onChange(model: string): void;
+}) {
+  const [models, setModels] = useState<OllamaModel[]>([]);
+  useEffect(() => {
+    let live = true;
+    listModels(base)
+      .then((all) => live && setModels(all.filter((m) => !isEmbeddingModel(m))))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [base]);
+  if (models.length === 0) return null;
+  const fastest = [...models].sort((a, b) => a.size - b.size)[0]?.name;
+  const known = models.some((m) => m.name === value);
+  return (
+    <label className="text-ink-faint flex w-full items-center gap-2 text-[11px]">
+      Answers by
+      <select
+        aria-label="Answer model"
+        className="border-line bg-surface text-ink-muted h-7 rounded-md border px-1.5 text-[11px]"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {!known && <option value={value}>{value}</option>}
+        {[...models]
+          .sort((a, b) => a.size - b.size)
+          .map((m) => (
+            <option key={m.name} value={m.name}>
+              {m.name} · {(m.size / 1e9).toFixed(1)} GB
+              {m.name === fastest ? ' · fastest' : ''}
+            </option>
+          ))}
+      </select>
+      <span>Smaller models answer faster; matches show instantly either way.</span>
+    </label>
   );
 }

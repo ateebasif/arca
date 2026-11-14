@@ -5,7 +5,10 @@ import { OllamaError } from '@/src/lib/ollama';
 
 /**
  * "Ask Arca" conversation. Lives outside the panel so closing it (or a slow
- * first read) doesn't lose anything. Never persisted.
+ * first read) doesn't lose anything. It's also kept in this tab's
+ * sessionStorage, so opening a result in the same tab and coming back
+ * restores it; it's gone when the tab closes, and never synced or saved
+ * anywhere else.
  */
 
 export interface AskMessage {
@@ -54,15 +57,80 @@ interface AskChatState {
   clear(): void;
 }
 
+const SESSION_KEY = 'arca.ask';
+const MAX_SAVED = 40;
+
+const strings = (v: unknown, max: number): string[] | undefined =>
+  Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === 'string' && x.length <= 64).slice(0, max)
+    : undefined;
+
+/** Messages saved in this tab, validated like anything read from storage. */
+export function parseSaved(raw: unknown): { messages: AskMessage[]; open: boolean } {
+  const empty = { messages: [], open: false };
+  if (!raw || typeof raw !== 'object') return empty;
+  const r = raw as { messages?: unknown; open?: unknown };
+  if (!Array.isArray(r.messages)) return empty;
+  const messages: AskMessage[] = [];
+  for (const m of r.messages.slice(-MAX_SAVED)) {
+    if (!m || typeof m !== 'object') continue;
+    const x = m as Record<string, unknown>;
+    if ((x.role !== 'user' && x.role !== 'arca') || typeof x.text !== 'string') continue;
+    if (!Number.isInteger(x.id)) continue;
+    messages.push({
+      id: x.id as number,
+      role: x.role,
+      text: x.text.slice(0, 2000),
+      ids: strings(x.ids, 40),
+      matches: strings(x.matches, 60),
+      fromModel: x.fromModel === false ? false : undefined,
+    });
+  }
+  return { messages, open: r.open === true };
+}
+
+function readSession(): { messages: AskMessage[]; open: boolean } {
+  try {
+    return parseSaved(JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? 'null'));
+  } catch {
+    return { messages: [], open: false };
+  }
+}
+
+let panelOpen = false;
+function writeSession(messages: AskMessage[]): void {
+  try {
+    const saved = messages.filter((m) => !m.pending).slice(-MAX_SAVED);
+    sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({ messages: saved, open: panelOpen }),
+    );
+  } catch {
+    // Storage full or unavailable: the chat just isn't kept.
+  }
+}
+
+/** The panel records whether it's open, so coming back to this tab reopens it. */
+export function setAskPanelOpen(open: boolean): void {
+  panelOpen = open;
+  writeSession(useAskChat.getState().messages);
+}
+
+/** True if Ask Arca was open when this tab last navigated away. */
+export function askPanelWasOpen(): boolean {
+  return readSession().open;
+}
+
 let controller: AbortController | null = null;
 let warming: { key: string; done: Promise<void>; abort: AbortController } | null = null;
-let nextId = 1;
+const restored = readSession();
+let nextId = Math.max(0, ...restored.messages.map((m) => m.id)) + 1;
 
 const warmKey = (items: AskItem[], opts: AskSendOptions) =>
   `${opts.base}|${opts.embedModel}|${items.length}`;
 
 export const useAskChat = create<AskChatState>()((set, get) => ({
-  messages: [],
+  messages: restored.messages,
   status: { kind: 'idle' },
   index: null,
   error: null,
@@ -194,8 +262,18 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
   },
 }));
 
+useAskChat.subscribe((state, prev) => {
+  if (state.messages !== prev.messages) writeSession(state.messages);
+});
+
 /** Test helper. */
 export function resetAskChat(): void {
+  panelOpen = false;
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    // ignore
+  }
   useAskChat.getState().clear();
   warming?.abort.abort();
   warming = null;

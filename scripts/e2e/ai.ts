@@ -243,6 +243,17 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       );
       await sleep(300);
       await page.screenshot(`${out}/ask-arca.png`);
+
+      // Leaving the tab and coming back (same-tab result, then Back) keeps the chat.
+      await page.reload();
+      await page.waitFor(
+        `document.querySelector('[role=dialog] [data-ask-answer]')`,
+        10000,
+      );
+      const kept = await page.eval<number>(
+        `document.querySelectorAll('[role=dialog] [data-ask-result]').length`,
+      );
+      assert.ok(kept > 0, 'chat restored after returning to the tab');
       console.log(
         `  ✓ Ask Arca with real Ollama: ${found.length} results (${found.join(', ')})`,
       );

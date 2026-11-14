@@ -109,7 +109,7 @@ const OPEN_IN: Array<{ value: OpenDisposition; label: string }> = [
   { value: 'current', label: 'Same tab' },
   { value: 'new-tab', label: 'New tab' },
   { value: 'background', label: 'New tab in background' },
-  { value: 'window', label: 'Mini window' },
+  { value: 'window', label: 'Mini window (where supported)' },
 ];
 
 /** Where a plain click opens a bookmark. Saved immediately. */
@@ -134,6 +134,14 @@ function OpenInSetting() {
       <p className="text-ink-faint -mt-1.5 text-[11px]">
         ⌘-click or middle-click always opens a new background tab.
       </p>
+      {openIn === 'window' && (
+        <p className="text-ink-faint mt-1.5 text-[11px] leading-relaxed">
+          Opens a small, toolbar-less window; “Open here” in Arca (or right-click → Open
+          in main window, ⌥⇧O) turns it into a tab. Some browsers, including Ardia and
+          Arc, show it as a regular window, and their own Little Arc / Peek can’t be
+          opened by extensions. In those, “New tab” is usually nicer.
+        </p>
+      )}
     </div>
   );
 }

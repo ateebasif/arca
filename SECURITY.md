@@ -59,7 +59,8 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   site, folder, date) and can only answer with their numbers; numbers outside the
   list are dropped, so every result shown is a real bookmark, opened through the
   same safe-link rules as everywhere else. Its reply is cleaned like folder names
-  and rendered as plain text. The conversation is kept in memory only.
+  and rendered as plain text. The conversation is kept in memory and in that tab's sessionStorage (so Back
+  restores it), validated on read, and dropped when the tab closes.
 - Embeddings are cached in IndexedDB (private to Arca) and can be cleared in Settings.
 
 ### Mini windows

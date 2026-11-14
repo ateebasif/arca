@@ -49,6 +49,8 @@
 
 ## Ideas (unscoped)
 
+- Ardia Peek / Little Ardia: Ardia only handles Peek clicks on web pages (its page script skips extension pages) and has no extension or AppleScript API for Little Ardia. Revisit if Ardia adds one.
+
 - AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Consider minSize 2 for small sets.
 
 - Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
@@ -56,6 +58,7 @@
 
 ## Done
 
+- [x] ARC-065 · Ask Arca model picker; chat kept across same-tab navigation; mini-window caveat for Ardia/Arc · `feature/ask-model-persist` · 2026-11-14
 - [x] ARC-064 · Mini window → main window: Open here bar, right-click Open in main window, ⌥⇧O command · `feature/mini-window-promote` · 2026-11-14
 - [x] ARC-063 · Ask Arca speed: instant matches then AI answer, background read on open, keep_alive, folder-free cache shared with organize · `perf/ask-instant` · 2026-11-14
 - [x] ARC-B03 · Menu rename broken for folders shown in sidebar too; AI organize nested "Organized by Arca"; confusing layout switcher · `fix/organize-rename-switcher` · 2026-11-14
