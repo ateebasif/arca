@@ -48,6 +48,8 @@
 
 ## Done
 
+- [x] ARC-B10 · Audit: leaks, performance, security (24 findings, all fixed or documented in SECURITY.md); ARC-B06 closed (25/25 browser checks, new e2e for multi-select and small tiles) · `chore/audit` · 2026-11-14
+
 - [x] ARC-076 · AI organize "Let AI decide" folder count (silhouette over candidate k on a sample, async); counts up to 60 · `fix/tile-size-and-ai-k` · 2026-11-14
 - [x] ARC-B10 · Small tiles ignored folders (folder grid always large) · `fix/tile-size-and-ai-k` · 2026-11-14
 - [x] ARC-062 · "Related by meaning" in search results: cache-only bookmark vectors, query-only embed, debounced, AI code lazy · `feature/search-meaning` · 2026-11-14
@@ -120,8 +122,7 @@
 
 - [ ] ARC-075 · "Related by meaning" results aren't in the ↑↓ keyboard navigation yet (click only) · P3
 
-- [ ] ARC-B06 · Full e2e not yet re-run for ARC-069/070/multi-select (deferred at the user's request); `bun run e2e:ai` stalled once in its first AI step and needs a look · P1
-- [ ] ARC-B07 · New Tab initial JS is ~435 KB, over the 400 KB budget (React + app growth); options: Preact compat, or lazy-load more of the dashboard · P2
+- [ ] ARC-B07 · New Tab initial JS is 437 KB, over the 400 KB budget. Measured 2026-11-14: react-dom (production build) is 242 KB of it, dnd-kit ~50 KB, TanStack Virtual ~20 KB; paint is still 28–32 ms FCP / 35–40 ms interactive at 5,000 bookmarks. Fix needs a decision: Preact compat (new dependency, ~-150 KB) or loading drag & drop after first paint (risky refactor) · P2
 - [ ] ARC-071 · Drag a multi-selection together (today drag moves one item) · P3
 
 ## Tech Debt / Risks to Verify
@@ -131,7 +132,9 @@
 - JS budget (PRD §10, 400 KB): New Tab loads 383 KB; the extension ships 422 KB in total after Phase 2/3 features (dialogs, Tidy, previews are lazy chunks). Options to get the total under 400 KB: swap React for Preact (-~150 KB, needs approval) or drop features.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. UI code should use the store's `isWithin`/`getPath` instead.
-- Store copies the id→node Map on every event (~5k entries, < 1 ms). Fine for v1; revisit if profiles show it during bulk ops (ARC-023).
+- Store applies bursts of bookmark events to one draft and publishes once per microtask (ARC-B10); a single event still copies the id→node Map once.
+- Embedding cache keeps vectors for bookmarks that were since edited or deleted (keys are text hashes). Cleared by "Clear cached AI data"; automatic pruning is a follow-up if the cache grows large.
+- k-means runs on the main thread in ~15 ms slices (ARC-B10); a Worker would free the thread entirely if organize ever feels sluggish.
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
 - Favicon placeholder detection fingerprints Chrome's generic globe per size. If Ardia or a Chrome update changes that image, detection silently stops and globes show again (cosmetic only).
