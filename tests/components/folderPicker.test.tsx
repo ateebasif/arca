@@ -45,9 +45,9 @@ describe('folder picker', () => {
     expect(button).toHaveTextContent('Bookmarks bar');
     await userEvent.click(button);
     await userEvent.type(screen.getByRole('combobox', { name: 'Find a folder' }), 'torr');
-    const options = within(screen.getByRole('listbox', { name: 'Folders' })).getAllByRole(
-      'option',
-    );
+    const options = within(screen.getByRole('listbox', { name: 'Folders' }))
+      .getAllByRole('option')
+      .filter((o) => !o.textContent?.startsWith('Create'));
     expect(options).toHaveLength(1);
     // Search results show where the folder lives.
     expect(options[0]).toHaveTextContent(
@@ -86,5 +86,54 @@ describe('folder picker', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save to folder' }));
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('creates a new folder inside the chosen one and selects it', async () => {
+    const fake = await setup();
+    await userEvent.click(screen.getByRole('button', { name: 'Save to folder' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /New folder in “Bookmarks bar”/ }),
+    );
+    await userEvent.type(
+      screen.getByRole('combobox', { name: 'New folder name' }),
+      'Side projects{Enter}',
+    );
+    await vi.waitFor(() => expect(fake.findByTitle('Side projects')).toBeDefined());
+    const created = fake.findByTitle('Side projects')!;
+    expect(created.parentId).toBe('1');
+    expect(screen.getByTestId('value')).toHaveTextContent(created.id);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('offers to create what you searched for when nothing matches', async () => {
+    const fake = await setup();
+    await userEvent.click(screen.getByRole('button', { name: 'Save to folder' }));
+    await userEvent.type(
+      screen.getByRole('combobox', { name: 'Find a folder' }),
+      'Podcasts',
+    );
+    const option = screen
+      .getAllByRole('option')
+      .find((o) => o.textContent?.startsWith('Create “Podcasts”'));
+    if (!option)
+      throw new Error(
+        screen
+          .getAllByRole('option')
+          .map((o) => o.textContent)
+          .join(' | '),
+      );
+    expect(option).toHaveTextContent('in Bookmarks bar');
+    await userEvent.click(option);
+    await vi.waitFor(() => expect(fake.findByTitle('Podcasts')?.parentId).toBe('1'));
+    expect(screen.getByTestId('value')).toHaveTextContent(
+      fake.findByTitle('Podcasts')!.id,
+    );
+    // An exact match doesn't offer a duplicate.
+    await userEvent.click(screen.getByRole('button', { name: 'Save to folder' }));
+    await userEvent.type(
+      screen.getByRole('combobox', { name: 'Find a folder' }),
+      'reading',
+    );
+    expect(screen.queryByRole('option', { name: /Create/ })).toBeNull();
   });
 });
