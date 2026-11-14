@@ -223,7 +223,8 @@ function CoverTile({
             <TagChips
               tags={tags}
               max={1}
-              className="max-w-[60%] shrink-0 flex-nowrap overflow-hidden"
+              wrap={false}
+              className="max-w-[60%] shrink-0 overflow-hidden"
             />
           </span>
         </span>
