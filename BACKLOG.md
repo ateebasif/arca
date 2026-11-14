@@ -26,7 +26,6 @@
 
 - [ ] ARC-031b · Notes on bookmarks (tags done in ARC-031) · Phase 3 · P1
 - [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
-- [ ] ARC-033 · Tag manager: rename, merge, delete, colors · Phase 3 · P1
 - [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
 - [ ] ARC-039 · Import: Netscape HTML / Arca JSON into folder, preview, dup warnings · Phase 3 · P1
 - [ ] ARC-040 · Release v1.0.0 (v0.3.0 if more work is planned before 1.0) · Phase 3 · P0
@@ -51,6 +50,7 @@
 
 ## Done
 
+- [x] ARC-033 · Tag manager: search, rename/merge (incl. look-alikes), colours (`tagColors`, validated), delete, view; one undo each · `feature/tag-manager` · 2026-11-14
 - [x] ARC-074 · Rounded-square checkboxes; Select all (full view list, not just rendered rows); batch Ungroup with one undo · `feature/select-polish` · 2026-11-14
 - [x] ARC-073 · Folder picker: create a new folder (footer or from search), selected right away, undoable; search box focus fix · `feature/picker-new-folder` · 2026-11-14
 - [x] ARC-B09 · Selection checkbox gets its own left column (icons stay); description placeholders never stick · `fix/select-column` · 2026-11-14

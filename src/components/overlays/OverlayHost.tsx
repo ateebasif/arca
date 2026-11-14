@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import {
   AskPanel,
+  TagManager,
   EditDialog,
   SettingsDialog,
   ShortcutsDialog,
@@ -22,6 +23,7 @@ export function OverlayHost() {
   const shortcutsOpen = useOverlays((s) => s.shortcutsOpen);
   const tidyOpen = useOverlays((s) => s.tidyOpen);
   const ask = useOverlays((s) => s.ask);
+  const tagManagerOpen = useOverlays((s) => s.tagManagerOpen);
   return (
     <>
       <Suspense fallback={null}>
@@ -34,6 +36,11 @@ export function OverlayHost() {
       {tidyOpen && (
         <Suspense fallback={null}>
           <TidyPanel />
+        </Suspense>
+      )}
+      {tagManagerOpen && (
+        <Suspense fallback={null}>
+          <TagManager />
         </Suspense>
       )}
       {ask && (

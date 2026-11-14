@@ -49,7 +49,13 @@ export function SelectionController() {
     const onKey = (e: KeyboardEvent) => {
       const s = useSelection.getState();
       const overlays = useOverlays.getState();
-      if (overlays.ask || overlays.tidyOpen || overlays.settingsOpen || overlays.editor)
+      if (
+        overlays.ask ||
+        overlays.tidyOpen ||
+        overlays.tagManagerOpen ||
+        overlays.settingsOpen ||
+        overlays.editor
+      )
         return;
       if (e.key === 'Escape' && s.ids.size) {
         e.preventDefault();

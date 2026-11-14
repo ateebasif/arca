@@ -1,3 +1,4 @@
+import { useTagColors } from '@/src/store/useMeta';
 import { tagStyle } from '@/src/features/tags/style';
 
 /** Small read-only tag pills (for tiles, rows and cards). */
@@ -10,6 +11,7 @@ export function TagChips({
   max?: number;
   className?: string;
 }) {
+  const colors = useTagColors();
   if (tags.length === 0) return null;
   const shown = tags.slice(0, max);
   return (
@@ -17,7 +19,7 @@ export function TagChips({
       {shown.map((tag) => (
         <span
           key={tag}
-          style={tagStyle(tag)}
+          style={tagStyle(tag, colors)}
           className="max-w-32 truncate rounded-full px-1.5 py-px text-[10px] leading-4 font-medium"
         >
           #{tag}

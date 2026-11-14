@@ -20,7 +20,33 @@ export interface Meta {
 
 export interface MetaSnapshot {
   readonly byId: ReadonlyMap<string, Meta>;
+  /** Colour chosen per tag (0–7); tags without one get a stable default. */
+  readonly colors: ReadonlyMap<string, number>;
   readonly version: number;
+}
+
+export const COLORS_KEY = 'tagColors';
+
+/** Validates stored tag colours. */
+export function parseColors(raw: unknown): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  for (const [tag, hue] of Object.entries(raw).slice(0, 2000)) {
+    const t = cleanTag(tag);
+    if (t && Number.isInteger(hue) && (hue as number) >= 0 && (hue as number) < 8) {
+      out.set(t, hue as number);
+    }
+  }
+  return out;
+}
+
+/** Key for spotting look-alike tags: "React.js", "reactjs", "react-js" → "react". */
+export function tagStem(tag: string): string {
+  return tag
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '')
+    .replace(/js$/, '')
+    .replace(/(?<=..)s$/, '');
 }
 
 /** One tag: lowercase, trimmed, no control characters, at most 32 characters. */
@@ -82,7 +108,7 @@ export function tagHue(tag: string): number {
 type Listener = () => void;
 
 export class MetaStore {
-  private snapshot: MetaSnapshot = { byId: new Map(), version: 0 };
+  private snapshot: MetaSnapshot = { byId: new Map(), colors: new Map(), version: 0 };
   private listeners = new Set<Listener>();
   private started: Promise<void> | null = null;
   private offs: Array<() => void> = [];
@@ -96,7 +122,11 @@ export class MetaStore {
 
   start(): Promise<void> {
     this.started ??= (async () => {
+      this.replaceColors(parseColors(await storageGet<unknown>(COLORS_KEY, {})));
       this.replace(parseMeta(await storageGet<unknown>(META_KEY, {})));
+      this.offs.push(
+        onStorageChange<unknown>(COLORS_KEY, (v) => this.replaceColors(parseColors(v))),
+      );
       // Other Arca pages (popup, other tabs) edit too.
       this.offs.push(
         onStorageChange<unknown>(META_KEY, (v) => this.replace(parseMeta(v))),
@@ -114,8 +144,54 @@ export class MetaStore {
   }
 
   private replace(byId: Map<string, Meta>) {
-    this.snapshot = { byId, version: this.snapshot.version + 1 };
+    this.snapshot = { ...this.snapshot, byId, version: this.snapshot.version + 1 };
     this.listeners.forEach((l) => l());
+  }
+
+  private replaceColors(colors: Map<string, number>) {
+    this.snapshot = { ...this.snapshot, colors, version: this.snapshot.version + 1 };
+    this.listeners.forEach((l) => l());
+  }
+
+  /** Sets (or clears, with null) a tag's colour. */
+  async setColor(tag: string, hue: number | null): Promise<void> {
+    const colors = new Map(this.snapshot.colors);
+    const t = cleanTag(tag);
+    if (hue === null) colors.delete(t);
+    else colors.set(t, Math.max(0, Math.min(7, Math.round(hue))));
+    this.replaceColors(colors);
+    await storageSet(COLORS_KEY, Object.fromEntries(colors));
+  }
+
+  /**
+   * Applies `change` to every item's tags. Returns the previous entries of the
+   * items that changed, so the edit can be undone with `restore`.
+   */
+  async transformTags(
+    change: (tags: readonly string[]) => readonly string[],
+  ): Promise<Map<string, Meta>> {
+    const before = new Map<string, Meta>();
+    const next = new Map(this.snapshot.byId);
+    for (const [id, meta] of this.snapshot.byId) {
+      const tags = cleanTags(change(meta.tags));
+      if (tags.length === meta.tags.length && tags.every((t, i) => t === meta.tags[i]))
+        continue;
+      before.set(id, meta);
+      if (tags.length || meta.note) next.set(id, { ...meta, tags });
+      else next.delete(id);
+    }
+    if (before.size) await this.write(next);
+    return before;
+  }
+
+  /** Puts back entries returned by transformTags (ids mapped through undo). */
+  async restore(
+    entries: ReadonlyMap<string, Meta>,
+    mapId: (id: string) => string = (id) => id,
+  ) {
+    const next = new Map(this.snapshot.byId);
+    for (const [id, meta] of entries) next.set(mapId(id), meta);
+    await this.write(next);
   }
 
   private async write(byId: Map<string, Meta>) {

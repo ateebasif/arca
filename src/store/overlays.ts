@@ -45,6 +45,8 @@ interface OverlayState {
   settingsOpen: boolean;
   shortcutsOpen: boolean;
   tidyOpen: boolean;
+  tagManagerOpen: boolean;
+  setTagManagerOpen(open: boolean): void;
   /** Ask Arca panel, with text to start the composer with. */
   ask: { draft: string } | null;
   /** Last Tidy up tab, so reopening the panel returns to it. */
@@ -81,6 +83,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   settingsOpen: false,
   shortcutsOpen: false,
   tidyOpen: false,
+  tagManagerOpen: false,
   tidyTab: 'duplicates',
   ask: null,
   toasts: [],
@@ -98,6 +101,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, menu: null }),
   setTidyOpen: (tidyOpen) => set({ tidyOpen, menu: null }),
   setTidyTab: (tidyTab) => set({ tidyTab }),
+  setTagManagerOpen: (tagManagerOpen) => set({ tagManagerOpen, menu: null }),
   openAsk: (draft = '') => set({ ask: { draft }, menu: null }),
   closeAsk: () => set({ ask: null }),
   toast: (message, tone = 'info', action) => {
@@ -119,6 +123,7 @@ export function resetOverlaysForTests(): void {
     settingsOpen: false,
     shortcutsOpen: false,
     tidyOpen: false,
+    tagManagerOpen: false,
     tidyTab: 'duplicates',
     ask: null,
     toasts: [],

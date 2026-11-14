@@ -43,3 +43,8 @@ export function useTags(id: string): readonly string[] {
   const meta = useMeta();
   return meta.byId.get(id)?.tags ?? NO_TAGS;
 }
+
+/** Tag colours chosen in the tag manager (re-renders when they change). */
+export function useTagColors(): ReadonlyMap<string, number> {
+  return useMeta().colors;
+}
