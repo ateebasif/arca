@@ -44,7 +44,7 @@ export function ListHeader() {
   return (
     <div
       role="row"
-      className={`grid ${LIST_COLUMNS} text-ink-muted gap-3 px-3 pb-1 text-xs`}
+      className={`grid ${LIST_COLUMNS} text-ink-muted gap-3 pr-3 pb-1 pl-10 text-xs`}
     >
       {COLUMNS.map((col) => {
         const colSort = col.sort;
@@ -137,13 +137,13 @@ export const FolderRow = memo(function FolderRow({
         if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(folder.id);
         else handlers.onKeyDown(e);
       }}
-      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} data-[selected]:bg-accent-soft relative items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} data-[selected]:bg-accent-soft relative items-center gap-3 rounded-xl pr-3 pl-10 transition-colors duration-150`}
     >
       <SelectBox
         id={folder.id}
         title={folder.title || 'Untitled'}
         variant="row"
-        className="absolute top-1/2 left-2.5 -translate-y-1/2"
+        className="absolute top-1/2 left-3 -translate-y-1/2"
       />
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
         <FolderIcon className="text-accent shrink-0" />
@@ -204,7 +204,7 @@ export const BookmarkRow = memo(function BookmarkRow({
         id={bookmark.id}
         title={title}
         variant="row"
-        className="absolute top-1/2 left-2.5 -translate-y-1/2"
+        className="absolute top-1/2 left-3 -translate-y-1/2"
       />
       <a
         ref={drag.setNodeRef}
@@ -242,7 +242,7 @@ export const BookmarkRow = memo(function BookmarkRow({
           }
           handlers.onKeyDown(e);
         }}
-        className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+        className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl pr-3 pl-10 transition-colors duration-150`}
       >
         <span role="cell" className="flex min-w-0 items-center gap-2.5">
           <Favicon url={url} title={title} size={16} />

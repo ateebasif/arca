@@ -14,7 +14,7 @@ export function SelectBox({
   title: string;
   /**
    * overlay: on a tile's coloured cover (translucent dark).
-   * row: in a list row, sitting exactly over the icon and hiding it.
+   * row: in its own column at the left of a list row (the icon stays visible).
    */
   variant?: 'overlay' | 'row';
   className?: string;
@@ -40,7 +40,7 @@ export function SelectBox({
           ? 'bg-accent-strong border-accent-strong text-white opacity-100'
           : `text-transparent ${
               variant === 'row'
-                ? 'border-ink-faint/60 bg-canvas-to hover:border-accent'
+                ? 'border-ink-faint/60 hover:border-accent bg-transparent'
                 : 'border-white/50 bg-black/35 backdrop-blur-sm'
             } ${selecting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-hover/select:opacity-100 focus-visible:opacity-100'}`
       } ${className}`}

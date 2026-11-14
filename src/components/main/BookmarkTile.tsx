@@ -97,11 +97,11 @@ export const BookmarkTile = memo(function BookmarkTile({
           id={bookmark.id}
           title={title}
           variant="row"
-          className="absolute top-1/2 left-2 -translate-y-1/2"
+          className="absolute top-1/2 left-2.5 -translate-y-1/2"
         />
         <a
           {...linkProps}
-          className="hover:bg-surface-strong flex h-10 items-center gap-2.5 rounded-xl px-2.5 pr-9 transition-colors duration-150"
+          className="hover:bg-surface-strong flex h-10 items-center gap-2.5 rounded-xl pr-9 pl-9 transition-colors duration-150"
         >
           <Favicon url={url} title={title} size={16} />
           {label ?? <span className="min-w-0 flex-1 truncate text-[13px]">{title}</span>}

@@ -51,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-B09 · Selection checkbox gets its own left column (icons stay); description placeholders never stick · `fix/select-column` · 2026-11-14
 - [x] ARC-072 · Searchable folder picker (recent first, tree, keyboard) in popup save, Edit and bulk Move; popup search shows all matches with a count, scrolling · `feature/popup-folder-picker` · 2026-11-14
 - [x] ARC-B08 · Selection checkbox placement/style in list, tiles and folder cards; bar centred over main area · `fix/select-ui` · 2026-11-14
 - [x] ARC-038 · Export: Netscape HTML (with TAGS) + Arca JSON backup, Settings → Backup, no downloads permission · `feature/export` · 2026-11-14

@@ -136,7 +136,9 @@ export async function describe(
       const items = Array.isArray(reply?.items) ? reply.items : [];
       const byN = new Map<number, string>();
       for (const it of items) {
-        const n = (it as { n?: unknown })?.n;
+        // Small models sometimes send the number as text ("3").
+        const raw = (it as { n?: unknown })?.n;
+        const n = typeof raw === 'string' ? Number(raw) : raw;
         const d = cleanDescription((it as { d?: unknown })?.d);
         if (typeof n === 'number' && Number.isInteger(n) && d) byN.set(n, d);
       }
