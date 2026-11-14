@@ -75,14 +75,24 @@ class Connection {
     const id = this.nextId++;
     this.input.write(JSON.stringify({ id, method, params, sessionId }) + '\0');
     return new Promise((res, rej) => {
-      this.pending.set(id, (msg) =>
-        msg.error
-          ? rej(new Error(`${method}: ${msg.error.message}`))
-          : res(msg.result as T),
-      );
+      // A reply that never comes (e.g. a page stuck mid-navigation) must fail
+      // the check with the call that hung, not stall the whole run.
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        const detail = JSON.stringify(params).slice(0, 160);
+        rej(new Error(`${method} got no reply in ${SEND_TIMEOUT_MS / 1000}s: ${detail}`));
+      }, SEND_TIMEOUT_MS);
+      this.pending.set(id, (msg) => {
+        clearTimeout(timer);
+        if (msg.error) rej(new Error(`${method}: ${msg.error.message}`));
+        else res(msg.result as T);
+      });
     });
   }
 }
+
+/** Longest any single DevTools call may take. */
+const SEND_TIMEOUT_MS = 60_000;
 
 export const MOD = { alt: 1, ctrl: 2, meta: 4, shift: 8 } as const;
 
