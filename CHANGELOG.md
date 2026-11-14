@@ -18,8 +18,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- Selection checkboxes: in list view they sit exactly over the row's icon and
-  replace it (subtle style, no white rings); on tiles and folder cards they sit
+- List descriptions no longer show a loading bar forever when a description
+  can't be written (Ollama busy or unavailable); those rows are just left blank.
+- Selection checkboxes: in list view and small tiles they have their own column
+  at the left (the site/folder icon stays visible); on tiles and folder cards they sit
   centred on the right of the cover, clear of the site name and favicons. The
   selection bar is centred over the main area and the list leaves room for it.
 - Ask Arca follow-ups ran a fresh keyword/meaning search on the new words, so

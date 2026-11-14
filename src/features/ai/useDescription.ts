@@ -36,12 +36,18 @@ async function flush() {
       queued.delete(r.key);
       inFlight.add(r.key);
     });
-    const { describe } = await import('./describe');
-    const result = await describe(requests, {
-      base: s.ollamaUrl,
-      chatModel: s.askModel || s.chatModel,
-      previews: s.linkPreviews,
-    });
+    let result = new Map<string, string>();
+    try {
+      const { describe } = await import('./describe');
+      result = await describe(requests, {
+        base: s.ollamaUrl,
+        chatModel: s.askModel || s.chatModel,
+        previews: s.linkPreviews,
+      });
+    } catch {
+      // Ollama unavailable or the module failed to load: leave these blank
+      // rather than showing a loading placeholder forever.
+    }
     for (const r of requests) {
       known.set(r.key, result.get(r.key) ?? '');
       inFlight.delete(r.key);
