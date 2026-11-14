@@ -800,6 +800,116 @@ check('tags: add in Edit, filter from the sidebar, find with #tag', async (page)
   })()`);
 });
 
+check('multi-select: pick, ⇧-range, bulk move into a folder, undo', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const made = await page.eval<{
+    folder: string;
+    target: string;
+    ids: string[];
+  }>(`(async () => {
+    const bm = chrome.bookmarks;
+    const folder = await bm.create({ parentId: '2', title: 'Select src' });
+    const target = await bm.create({ parentId: '2', title: 'Select dst' });
+    const ids = [];
+    for (const t of ['S1', 'S2', 'S3', 'S4']) {
+      ids.push((await bm.create({ parentId: folder.id, title: t, url: 'https://' + t.toLowerCase() + '.invalid/' })).id);
+    }
+    return { folder: folder.id, target: target.id, ids };
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('[data-folder-id="${made.folder}"]')`);
+  await page.eval(`document.querySelector('[data-folder-id="${made.folder}"]').click()`);
+  await page.waitFor(`document.querySelector('[data-bookmark-id="${made.ids[3]}"]')`);
+  // First pick via its checkbox, then ⇧-click extends the range.
+  await page.eval(`document.querySelector('[aria-label="Select S1"]').click()`);
+  await page.waitFor(`document.querySelector('[role=region][aria-label=Selection]')`);
+  await page.eval(
+    `document.querySelector('[data-select-id="${made.ids[2]}"] a, [data-select-id="${made.ids[2]}"] button:not([data-select-box])').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: true, button: 0 }))`,
+  );
+  await page.waitFor(
+    `document.querySelector('[role=region][aria-label=Selection]').textContent.includes('3 items selected')`,
+  );
+  // Clicking a selected tile toggles instead of opening a tab.
+  const tabsBefore = await page.eval<number>(
+    `chrome.tabs.query({}).then((t) => t.length)`,
+  );
+  await page.eval(
+    `document.querySelector('[data-select-id="${made.ids[3]}"] a, [data-select-id="${made.ids[3]}"] button:not([data-select-box])').click()`,
+  );
+  await page.waitFor(
+    `document.querySelector('[role=region][aria-label=Selection]').textContent.includes('4 items selected')`,
+  );
+  await sleep(200);
+  assert.equal(
+    await page.eval<number>(`chrome.tabs.query({}).then((t) => t.length)`),
+    tabsBefore,
+    'no tab opened',
+  );
+  // Un-pick S4, then move the 3 picked into "Select dst".
+  await page.eval(`document.querySelector('[aria-label="Select S4"]').click()`);
+  await page.eval(
+    `[...document.querySelectorAll('[aria-label=Selection] button')].find((b) => b.textContent === 'Move to…').click()`,
+  );
+  await page.waitFor(`document.querySelector('[aria-label="Move to folder"]')`);
+  await page.eval(`document.querySelector('[aria-label="Move to folder"]').click()`);
+  await page.waitFor(`document.querySelector('input[aria-label="Find a folder"]')`);
+  await page.eval(`document.querySelector('input[aria-label="Find a folder"]').focus()`);
+  await page.type('Select dst');
+  await page.key('Enter');
+  await page.eval(
+    `[...document.querySelectorAll('[aria-label=Selection] button')].find((b) => b.textContent.startsWith('Move 3')).click()`,
+  );
+  await page.waitFor(`!document.querySelector('[role=region][aria-label=Selection]')`);
+  const moved = await page.eval<string[]>(
+    `chrome.bookmarks.getChildren('${made.target}').then((c) => c.map((n) => n.title))`,
+  );
+  assert.deepEqual(moved, ['S1', 'S2', 'S3']);
+  await page.screenshot(`${OUT}/multi-select.png`);
+  // One undo puts all three back, in order.
+  await page.key('z', MOD.meta);
+  await page.waitFor(
+    `chrome.bookmarks.getChildren('${made.folder}').then((c) => c.map((n) => n.title).join() === 'S1,S2,S3,S4')`,
+  );
+  await page.eval(`(async () => {
+    await chrome.bookmarks.removeTree('${made.folder}');
+    await chrome.bookmarks.removeTree('${made.target}');
+  })()`);
+});
+
+check('small tiles: compact folder rows and smaller link tiles', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const folder = await page.eval<string>(`(async () => {
+    const f = await chrome.bookmarks.create({ parentId: '2', title: 'Density' });
+    await chrome.bookmarks.create({ parentId: f.id, title: 'Inner' });
+    await chrome.bookmarks.create({ parentId: f.id, title: 'Link', url: 'https://density.invalid/' });
+    return f.id;
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('[data-folder-id="${folder}"]')`);
+  await page.eval(`document.querySelector('[data-folder-id="${folder}"]').click()`);
+  await page.waitFor(`document.querySelector('[data-folder-card]')`);
+  const height = () =>
+    page.eval<number>(
+      `document.querySelector('[data-folder-card]').getBoundingClientRect().height`,
+    );
+  await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
+  await sleep(150);
+  const large = await height();
+  await page.eval(`document.querySelector('[aria-label="Small tiles"]').click()`);
+  await sleep(150);
+  const small = await height();
+  assert.ok(small < large && small <= 48, `small ${small} < large ${large}`);
+  assert.equal(
+    await page.eval<string>(
+      `document.querySelector('[aria-label="Small tiles"]').getAttribute('aria-checked')`,
+    ),
+    'true',
+  );
+  await page.screenshot(`${OUT}/small-tiles.png`);
+  await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
+  await page.eval(`chrome.bookmarks.removeTree('${folder}')`);
+});
+
 check('chrome move semantics match the test fake', async (page) => {
   const result = await page.eval<{ order: string; eventIndex: number }>(`(async () => {
     const bm = chrome.bookmarks;
