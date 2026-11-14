@@ -29,6 +29,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Tags on link tiles no longer get cut off at the bottom of the card: the folder
+  and tags now share one line.
 - Tags added in two Arca pages at the same time no longer overwrite each other.
 - Folder names from AI organize keep leading accented or non-Latin letters
   ("Éducation", "日本 News").
@@ -142,6 +144,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- AI organize: optional instructions for folder names and for tags (empty boxes use
+  the defaults shown in them). The model now suggests 1–3 tags per folder that
+  follow your rules and reuse tags you already have; edit them before applying.
 - AI organize can **let the AI decide how many folders**: it tries different
   counts (up to 60 for big libraries) on a sample of your links and keeps the one
   whose groups separate most cleanly. It's the new default; the quick estimate

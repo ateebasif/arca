@@ -48,6 +48,9 @@
 
 ## Done
 
+- [x] ARC-077 · AI organize instructions (optional, defaults shown): folder-name and tag rules saved in Settings; model suggests 1–3 tags per folder (reusing existing tags), editable in review · `feature/ai-instructions` · 2026-11-14
+- [x] ARC-B11 · Tags on link tiles clipped at the card bottom; folder and tags now share one line · `feature/ai-instructions` · 2026-11-14
+
 - [x] ARC-B10 · Audit: leaks, performance, security (24 findings, all fixed or documented in SECURITY.md); ARC-B06 closed (25/25 browser checks, new e2e for multi-select and small tiles) · `chore/audit` · 2026-11-14
 
 - [x] ARC-076 · AI organize "Let AI decide" folder count (silhouette over candidate k on a sample, async); counts up to 60 · `fix/tile-size-and-ai-k` · 2026-11-14
