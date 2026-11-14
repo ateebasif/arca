@@ -72,6 +72,9 @@ export function embeddingText(item: OrganizeItem): string {
  * groups much better with "clustering: " in front.
  */
 export function taskPrefix(model: string): string {
+  // v2 (MoE) only knows the search prefixes; using the document one also lets
+  // AI organize share cached readings with Ask Arca.
+  if (/nomic-embed-text-v2/i.test(model)) return 'search_document: ';
   return /nomic-embed/i.test(model) ? 'clustering: ' : '';
 }
 

@@ -158,6 +158,55 @@ describe('ask', () => {
     expect(seen.embedInputs.length - before).toBe(1); // only the question
   });
 
+  it('follow-ups can narrow the previous results instead of searching again', async () => {
+    fakeOllama();
+    const real = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (!String(url).endsWith('/api/chat')) return real(url as string, init);
+      const body = JSON.parse(String(init?.body));
+      const prompt = body.messages[1].content as string;
+      // A small model that picks an earlier result but mislabels it "new".
+      const earlier = [...prompt.matchAll(/^\[(\d+)\] (.*)\(shown before\)$/gm)];
+      const anime = earlier.find((m) => /AniRena/.test(m[2]!));
+      return Response.json({
+        message: {
+          content: JSON.stringify({
+            about: 'new',
+            reply: 'That one is the anime site.',
+            picks: anime ? [Number(anime[1])] : [],
+          }),
+        },
+      });
+    });
+    const first = await ask('torrent sites', [], ITEMS, [], OPTS);
+    const previous = ['b0', 'b1'];
+    const followUp = await ask(
+      'only the anime one',
+      [
+        { role: 'user', text: 'torrent sites' },
+        { role: 'arca', text: first.reply },
+      ],
+      ITEMS,
+      [],
+      { ...OPTS, previous },
+    );
+    expect(followUp.about).toBe('previous');
+    expect(followUp.ids).toEqual(['b1']);
+    // The rest of the earlier results stay available for the next follow-up.
+    expect(followUp.matches).toEqual(['b1', 'b0']);
+  });
+
+  it("follow-ups don't show instant matches (the model decides what fits)", async () => {
+    fakeOllama();
+    const onMatches = vi.fn();
+    await ask('any recipes?', [{ role: 'user', text: 'x' }], ITEMS, [], {
+      ...OPTS,
+      previous: ['b0'],
+      onMatches,
+    });
+    expect(onMatches).not.toHaveBeenCalled();
+  });
+
   it('cleans picks and replies', () => {
     expect(cleanPicks([3, 3, '2', 0, 7, 1.2, null], 5)).toEqual([2, 1]);
     expect(cleanPicks('nope', 5)).toEqual([]);
@@ -405,5 +454,36 @@ describe('Ask Arca panel', () => {
     await within(panel).findByText('These look like your torrent sites.');
     expect(models).toEqual(['llama3.2:latest']);
     expect(seen.prompts).toHaveLength(1);
+  });
+
+  it('shows reading progress in the sidebar and above the input', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    fakeOllama();
+    const real = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/api/embed')) await gate;
+      return real(url as string, init);
+    });
+    const many = Array.from({ length: 70 }, (_, i) => ({
+      title: `Link ${i}`,
+      url: `https://l${i}.dev/`,
+    }));
+    await renderWithBookmarks(<Dashboard surface="dashboard" />, { bar: many });
+    await act(() => useSettings.getState().update({ aiEnabled: true }));
+    act(() => useOverlays.getState().openAsk());
+    const panel = await screen.findByRole('dialog', { name: 'Ask Arca' });
+    expect(
+      await within(panel).findByText(/Reading your bookmarks once · 0\/70/),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: /Ask Arca/ })).toHaveTextContent(
+      'reading 0%',
+    );
+    await act(async () => release());
+    await vi.waitFor(() =>
+      expect(screen.getByRole('button', { name: /Ask Arca/ })).toHaveTextContent(
+        'find by description',
+      ),
+    );
   });
 });

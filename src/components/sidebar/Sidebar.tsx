@@ -147,10 +147,14 @@ function TidyStatus() {
 /** "find by description", or a pulse while Ask Arca is working. */
 function AskStatus() {
   const working = useAskChat((s) => s.status.kind === 'working');
-  return working ? (
-    <span className="text-accent ml-auto flex items-center gap-1.5 text-[11px]">
+  // Background read of all bookmarks (first time, or after switching models).
+  const reading = useAskChat((s) =>
+    s.index ? Math.floor((s.index.done / Math.max(1, s.index.total)) * 100) : null,
+  );
+  return reading !== null || working ? (
+    <span className="text-accent ml-auto flex items-center gap-1.5 text-[11px] tabular-nums">
       <span className="bg-accent size-1.5 animate-pulse rounded-full" aria-hidden />
-      working
+      {reading !== null ? `reading ${reading}%` : 'working'}
     </span>
   ) : (
     <span className="text-ink-faint ml-auto text-[11px]">find by description</span>

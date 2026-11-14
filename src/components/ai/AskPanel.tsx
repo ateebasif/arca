@@ -102,7 +102,6 @@ export default function AskPanel() {
             {messages.length === 0 && (
               <Intro count={items.length} onPick={(q) => submit(q)} />
             )}
-            {index && <Reading index={index} />}
             {messages.map((m, i) =>
               m.role === 'user' ? (
                 <p
@@ -129,36 +128,44 @@ export default function AskPanel() {
                   className="bg-accent size-1.5 animate-pulse rounded-full"
                   aria-hidden
                 />
-                Searching your bookmarks…
+                <span className="flex-1">
+                  {status.kind === 'working' && status.stage === 'thinking'
+                    ? `Thinking with ${askModel}…`
+                    : 'Searching your bookmarks…'}
+                </span>
+                <Button onClick={cancel}>Stop</Button>
               </p>
             )}
             {error && <OllamaHelp error={error} />}
           </div>
 
-          <form onSubmit={onSubmit} className="mt-auto flex flex-wrap gap-2 pt-1">
-            <input
-              ref={inputRef}
-              autoFocus
-              aria-label="Ask Arca"
-              className={`${inputClass} flex-1`}
-              placeholder={
-                messages.length
-                  ? 'Ask a follow-up, e.g. “only the movie ones”'
-                  : 'Describe what you remember…'
-              }
-              value={text}
-              maxLength={500}
-              onChange={(e) => setText(e.target.value)}
-            />
-            <Button variant="primary" type="submit" disabled={!text.trim() || working}>
-              Ask
-            </Button>
-            <ModelPicker
-              base={settings.ollamaUrl}
-              value={askModel}
-              onChange={(m) => void settings.update({ askModel: m })}
-            />
-          </form>
+          <div className="mt-auto flex flex-col gap-3">
+            {index && <Reading index={index} />}
+            <form onSubmit={onSubmit} className="flex flex-wrap gap-2 pt-1">
+              <input
+                ref={inputRef}
+                autoFocus
+                aria-label="Ask Arca"
+                className={`${inputClass} flex-1`}
+                placeholder={
+                  messages.length
+                    ? 'Ask a follow-up, e.g. “only the movie ones”'
+                    : 'Describe what you remember…'
+                }
+                value={text}
+                maxLength={500}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <Button variant="primary" type="submit" disabled={!text.trim() || working}>
+                Ask
+              </Button>
+              <ModelPicker
+                base={settings.ollamaUrl}
+                value={askModel}
+                onChange={(m) => void settings.update({ askModel: m })}
+              />
+            </form>
+          </div>
         </div>
       )}
     </Dialog>
@@ -251,10 +258,12 @@ function Answer({
   const [shown, setShown] = useState(MORE_STEP);
   const exists = (id: string) => !!state.nodes.get(id)?.url;
   const picks = (message.ids ?? []).filter(exists);
-  const others = (message.matches ?? []).filter(
-    (id) => exists(id) && !picks.includes(id),
-  );
-  const term = keywordTerms(question)[0];
+  // A narrowing answer shows only its picks (the rest are kept for follow-ups).
+  const others = message.narrowed
+    ? []
+    : (message.matches ?? []).filter((id) => exists(id) && !picks.includes(id));
+  // Narrowing earlier results isn't a keyword search, so no keyword link then.
+  const term = message.narrowed ? undefined : keywordTerms(question)[0];
   const list = (ids: string[]) => (
     <ul className="border-line bg-surface flex flex-col overflow-hidden rounded-xl border">
       {ids.map((id) => {
