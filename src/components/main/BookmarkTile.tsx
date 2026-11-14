@@ -96,6 +96,7 @@ export const BookmarkTile = memo(function BookmarkTile({
         <SelectBox
           id={bookmark.id}
           title={title}
+          variant="row"
           className="absolute top-1/2 left-2 -translate-y-1/2"
         />
         <a
@@ -174,7 +175,8 @@ function CoverTile({
       data-select-id={bookmark.id}
       data-selected={selected || undefined}
     >
-      <SelectBox id={bookmark.id} title={title} className="absolute top-2 left-2" />
+      {/* Top-right corner, clear of the site icon; the ⋯ button sits just left of it. */}
+      <SelectBox id={bookmark.id} title={title} className="absolute top-[22px] right-3" />
       <a
         {...linkProps}
         style={{ '--glow': cover.glow } as React.CSSProperties}
@@ -182,7 +184,7 @@ function CoverTile({
       >
         <span
           aria-hidden="true"
-          className="relative flex h-[64px] shrink-0 items-center gap-2.5 px-3"
+          className="relative flex h-[64px] shrink-0 items-center gap-2.5 pr-11 pl-3"
           style={{
             background: blocked
               ? 'linear-gradient(135deg, hsl(0 60% 36%), hsl(350 60% 24%))'
@@ -223,7 +225,7 @@ function CoverTile({
         id={bookmark.id}
         title={title}
         onCover
-        className="absolute top-2 right-2"
+        className="absolute top-[18px] right-9"
       />
     </div>
   );

@@ -51,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-B08 · Selection checkbox placement/style in list, tiles and folder cards; bar centred over main area · `fix/select-ui` · 2026-11-14
 - [x] ARC-038 · Export: Netscape HTML (with TAGS) + Arca JSON backup, Settings → Backup, no downloads permission · `feature/export` · 2026-11-14
 - [x] ARC-037 · Dead-link finder in Clean out: opt-in site access, HEAD→GET, limits, 2-week cache, broken group, update moved links (runs in the Arca tab via a store rather than the background worker) · `feature/dead-links` · 2026-11-14
 - [x] ARC-022/023/034 · Multi-select (hover checkbox, click/⇧-click while selecting, ⌘A, Esc) + bulk move, tag/untag, open all (confirm > 10), delete; one undo each · `feature/multi-select` · 2026-11-14

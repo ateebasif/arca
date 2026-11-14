@@ -57,7 +57,7 @@ export const FolderCard = memo(function FolderCard({
         ref={drop.setDropRef}
         aria-hidden="true"
         data-drop-folder={folder.id}
-        className={`relative flex h-[64px] shrink-0 items-center justify-between gap-2 px-3 transition-shadow duration-150 ${
+        className={`relative flex h-[64px] shrink-0 items-center justify-between gap-2 pr-11 pl-3 transition-shadow duration-150 ${
           drop.blocked
             ? 'shadow-[inset_0_0_0_2px_var(--color-danger)]'
             : drop.isOver
@@ -122,7 +122,7 @@ export const FolderCard = memo(function FolderCard({
       data-select-id={folder.id}
       data-selected={selected || undefined}
     >
-      <SelectBox id={folder.id} title={title} className="absolute top-2 left-2" />
+      <SelectBox id={folder.id} title={title} className="absolute top-[22px] right-3" />
       {renaming ? (
         <div className={className}>{body}</div>
       ) : (
@@ -150,7 +150,7 @@ export const FolderCard = memo(function FolderCard({
         id={folder.id}
         title={title}
         onCover
-        className="absolute top-2 right-2"
+        className="absolute top-[18px] right-9"
       />
     </div>
   );
