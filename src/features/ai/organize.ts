@@ -1,3 +1,6 @@
+import { cleanTag } from '@/src/features/tags/meta';
+import { setTags } from '@/src/features/tags/actions';
+import { getMetaStore } from '@/src/store/useMeta';
 import * as bm from '@/src/lib/bookmarks';
 import { chatJson } from '@/src/lib/ollama';
 import { mainDomain } from '@/src/lib/url';
@@ -234,10 +237,21 @@ async function targetFolder(
  * folders there that this run emptied are removed. One undo reverses it all.
  * Returns the id of the folder that holds the topics.
  */
+/** Tag for a group's folder name: "Torrent Sites" → "torrent-sites". */
+export function groupTag(name: string): string {
+  return cleanTag(name).replace(/\s+/g, '-');
+}
+
+export interface ApplyOptions {
+  /** Also tag each link with its folder's name (kept with existing tags). */
+  tag?: boolean;
+}
+
 export async function applyGroups(
   parentId: string,
   groups: readonly ProposedGroup[],
   onProgress?: (done: number, total: number) => void,
+  options: ApplyOptions = {},
 ): Promise<string> {
   const total = groups.reduce((n, g) => n + g.ids.length, 0);
   const steps: undo.UndoAction[] = [];
@@ -256,9 +270,15 @@ export async function applyGroups(
         steps.push(undo.created(folder));
       }
       used.add(folder.id);
+      const tag = options.tag ? groupTag(group.name) : '';
       for (const id of group.ids) {
         const from = await bm.getNode(id).catch(() => null);
         if (!from?.parentId || from.url === undefined) continue; // gone or changed
+        if (tag) {
+          const current = getMetaStore().tagsOf(id);
+          const step = await setTags(id, from.url, [...current, tag]);
+          if (step) steps.push(step);
+        }
         if (from.parentId === folder.id) continue; // already there
         await bm.move(id, { parentId: folder.id });
         movedFrom.add(from.parentId);

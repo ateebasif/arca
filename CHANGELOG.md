@@ -95,6 +95,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- AI organize can also tag links with their new folder's name (e.g. "Torrent
+  Sites" → `#torrent-sites`): tick "Also tag links with their folder name" in the
+  review step. Existing tags are kept, and one Undo removes the moves and the tags.
 - **Clean out** (Tidy up): suggests bookmarks that look saved on impulse:
   search-result pages, local/temporary links, one-time pages (sign-in, checkout,
   password reset…), titles that say nothing, and saves over 3 years old. With local

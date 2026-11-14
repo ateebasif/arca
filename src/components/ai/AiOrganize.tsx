@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { chooseK } from '@/src/features/ai/kmeans';
 import {
   estimateSeconds,
+  groupTag,
   type OrganizeItem,
   type Stage,
 } from '@/src/features/ai/organize';
@@ -183,6 +184,20 @@ export function AiOrganize() {
               </Button>
             </div>
           </div>
+          <label className="text-ink-muted flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              className="accent-accent"
+              checked={run.tagWithFolder}
+              onChange={(e) => run.setTagWithFolder(e.target.checked)}
+            />
+            Also tag links with their folder name
+            <span className="text-ink-faint">
+              (e.g. #
+              {groupTag(run.names[0] ?? phase.groups[0]?.name ?? 'Topic') || 'topic'};
+              kept if you move them later)
+            </span>
+          </label>
           <ul className="flex flex-col gap-2">
             {phase.groups.map((g, i) => (
               <li

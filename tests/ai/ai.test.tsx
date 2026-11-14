@@ -1,3 +1,4 @@
+import { getMetaStore, resetMetaForTests } from '@/src/store/useMeta';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dashboard } from '@/src/components/Dashboard';
@@ -5,6 +6,7 @@ import { clearEmbeddings, setEmbeddingStoreForTests } from '@/src/features/ai/em
 import { chooseK, groupMembers, kmeans, normalize } from '@/src/features/ai/kmeans';
 import {
   applyGroups,
+  groupTag,
   cleanFolderName,
   embeddingText,
   estimateSeconds,
@@ -401,6 +403,61 @@ describe('applyGroups', () => {
     expect(strip((await fake.getTree())[0]!)).toEqual(before);
   });
 
+  it('can tag links with their folder name, keeping existing tags, all in one undo', async () => {
+    undo.clearUndoForTests();
+    resetMetaForTests();
+    const fake = installFakeBookmarks({
+      bar: [
+        {
+          title: 'Imported',
+          children: [...REACT, ...FOOD].map((t) => ({
+            title: t,
+            url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+          })),
+        },
+      ],
+    });
+    const meta = getMetaStore();
+    await meta.start();
+    const id = (t: string) => fake.findByTitle(t)!.id;
+    const hooks = id(REACT[0]!);
+    await meta.setTags(hooks, 'https://x.dev/', ['favourite']);
+
+    expect(groupTag('Torrent  Sites!')).toBe('torrent-sites!');
+    await applyGroups(
+      id('Imported'),
+      [
+        { name: 'Front End', ids: REACT.map(id), samples: [] },
+        { name: 'Cooking', ids: FOOD.map(id), samples: [] },
+      ],
+      undefined,
+      { tag: true },
+    );
+    expect(meta.tagsOf(hooks)).toEqual(['favourite', 'front-end']);
+    expect(meta.tagsOf(id(FOOD[0]!))).toEqual(['cooking']);
+    expect(meta.idsWithTag('front-end')).toHaveLength(REACT.length);
+
+    expect(await undo.undoLast()).toBe(true);
+    expect(fake.findByTitle('Organized by Arca')).toBeUndefined();
+    expect(meta.tagsOf(hooks)).toEqual(['favourite']);
+    expect(meta.tagsOf(id(FOOD[0]!))).toEqual([]);
+  });
+
+  it('does not tag unless asked', async () => {
+    undo.clearUndoForTests();
+    resetMetaForTests();
+    const fake = installFakeBookmarks({
+      bar: FOOD.map((t) => ({
+        title: t,
+        url: `https://${t.length}.dev/${t.replace(/\W/g, '')}`,
+      })),
+    });
+    await applyGroups('1', [
+      { name: 'Cooking', ids: FOOD.map((t) => fake.findByTitle(t)!.id), samples: [] },
+    ]);
+    expect(getMetaStore().allTags()).toEqual([]);
+  });
+
   it('re-organizing never nests another "Organized by Arca"', async () => {
     undo.clearUndoForTests();
     const fake = installFakeBookmarks({
@@ -507,10 +564,17 @@ describe('AI organize panel', () => {
     const frontendBox = within(panel).getByRole('checkbox', { name: 'Include Frontend' });
     await userEvent.click(frontendBox);
     await userEvent.click(
+      within(panel).getByRole('checkbox', {
+        name: /Also tag links with their folder name/,
+      }),
+    );
+    await userEvent.click(
       within(panel).getByRole('button', { name: /^Apply 1 folders/ }),
     );
     await vi.waitFor(() => expect(fake.findByTitle('Recipes')).toBeDefined());
     expect(fake.childIds(fake.findByTitle('Recipes')!.id)).toHaveLength(5);
+    // The renamed folder's name is the tag.
+    await vi.waitFor(() => expect(getMetaStore().idsWithTag('recipes')).toHaveLength(5));
     expect(fake.findByTitle('Frontend')).toBeUndefined();
   });
 

@@ -42,6 +42,9 @@ interface AiRunState {
   folderId: string | null;
   folderTitle: string;
   groupsWanted: number; // 0 = auto
+  /** Also tag links with their new folder's name when applying. */
+  tagWithFolder: boolean;
+  setTagWithFolder(on: boolean): void;
   names: Record<number, string>;
   skipped: Set<number>;
   setGroupsWanted(n: number): void;
@@ -70,8 +73,10 @@ const initial = {
 export const useAiRun = create<AiRunState>()((set, get) => ({
   ...initial,
   groupsWanted: 0,
+  tagWithFolder: false,
 
   setGroupsWanted: (groupsWanted) => set({ groupsWanted }),
+  setTagWithFolder: (tagWithFolder) => set({ tagWithFolder }),
   setName: (index, name) => set((s) => ({ names: { ...s.names, [index]: name } })),
   setIncluded: (index, included) =>
     set((s) => {
@@ -147,7 +152,7 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
   discard: () => set({ ...initial, skipped: new Set() }),
 
   async apply() {
-    const { phase, names, skipped, folderId } = get();
+    const { phase, names, skipped, folderId, tagWithFolder } = get();
     if (phase.kind !== 'review' || !folderId) return;
     const chosen = phase.groups
       .map((g, i) => ({ ...g, name: (names[i] ?? g.name).trim() || g.name }))
@@ -156,8 +161,11 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
     set({ phase: { kind: 'applying', done: 0, total } });
     try {
       const { applyGroups } = await import('@/src/features/ai/organize');
-      await applyGroups(folderId, chosen, (done) =>
-        set({ phase: { kind: 'applying', done, total } }),
+      await applyGroups(
+        folderId,
+        chosen,
+        (done) => set({ phase: { kind: 'applying', done, total } }),
+        { tag: tagWithFolder },
       );
       set({ phase: { kind: 'done', count: chosen.length } });
     } catch (e) {
@@ -178,5 +186,10 @@ export const useAiRun = create<AiRunState>()((set, get) => ({
 export function resetAiRun(): void {
   controller?.abort();
   controller = null;
-  useAiRun.setState({ ...initial, skipped: new Set(), groupsWanted: 0 });
+  useAiRun.setState({
+    ...initial,
+    skipped: new Set(),
+    groupsWanted: 0,
+    tagWithFolder: false,
+  });
 }

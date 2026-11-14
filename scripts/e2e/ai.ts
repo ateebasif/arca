@@ -172,6 +172,10 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       );
       await sleep(300);
       await page.screenshot(`${out}/ai-review.png`);
+      // Also tag links with their folder name.
+      await page.eval(
+        `[...document.querySelectorAll('[role=dialog] label')].find((l) => l.textContent.includes('Also tag links')).querySelector('input').click()`,
+      );
       await page.eval(
         `[...document.querySelectorAll('[role=dialog] button')].find((b) => b.textContent.startsWith('Apply')).click()`,
       );
@@ -193,6 +197,10 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       })()`);
       assert.equal(tree.root, TITLES.length, 'every link moved into a topic folder');
       assert.equal(tree.left, 0);
+      const tagged = await page.eval<number>(
+        `chrome.storage.local.get('meta').then(({ meta }) => Object.values(meta ?? {}).filter((m) => m.tags?.length).length)`,
+      );
+      assert.equal(tagged, TITLES.length, 'every link tagged with its folder name');
       // Undo (⌘Z) puts everything back.
       await page.key('Escape');
       await page.key('z', 4);
