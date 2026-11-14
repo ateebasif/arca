@@ -156,6 +156,7 @@ export function TagView({ tag }: { tag: string }) {
                 }
                 preview={folderPreview(state, f)}
                 onOpen={openFolder}
+                density={density}
               />
             ))}
           </div>

@@ -149,3 +149,87 @@ export function groupMembers(
     .filter((g) => g.length > 0)
     .sort((a, b) => b.length - a.length);
 }
+
+/**
+ * Folder counts worth trying for `n` links: from a handful up to about one
+ * folder per 8 links, capped at 60.
+ */
+export function candidateKs(n: number): number[] {
+  const max = Math.max(4, Math.min(60, Math.floor(n / 8)));
+  const steps = [4, 6, 8, 10, 12, 15, 18, 22, 26, 30, 36, 42, 50, 60];
+  const ks = steps.filter((k) => k <= max && k < n);
+  return ks.length ? ks : [Math.max(2, Math.min(n, 4))];
+}
+
+/** Mean silhouette (cosine distance) of a clustering: higher = cleaner groups. */
+export function silhouette(
+  vectors: readonly Float32Array[],
+  assignment: Int32Array,
+): number {
+  const n = vectors.length;
+  if (n < 3) return 0;
+  const clusters = new Map<number, number[]>();
+  assignment.forEach((c, i) => clusters.set(c, [...(clusters.get(c) ?? []), i]));
+  if (clusters.size < 2) return 0;
+  let total = 0;
+  for (let i = 0; i < n; i++) {
+    const vi = vectors[i];
+    const own = assignment[i] ?? 0;
+    if (!vi) continue;
+    let a = 0;
+    let b = Infinity;
+    for (const [c, members] of clusters) {
+      let sum = 0;
+      let count = 0;
+      for (const j of members) {
+        const vj = vectors[j];
+        if (j === i || !vj) continue;
+        sum += 1 - dot(vi, vj);
+        count++;
+      }
+      if (!count) continue;
+      const mean = sum / count;
+      if (c === own) a = mean;
+      else b = Math.min(b, mean);
+    }
+    if ((clusters.get(own)?.length ?? 0) <= 1 || b === Infinity) continue;
+    total += (b - a) / Math.max(a, b);
+  }
+  return total / n;
+}
+
+/**
+ * Lets the data decide how many folders: clusters a sample at each candidate
+ * count and keeps the one whose groups separate most cleanly (silhouette),
+ * preferring more folders when scores are nearly equal.
+ */
+export async function chooseKFromData(
+  vectors: readonly Float32Array[],
+  { sample = 240, seed = 7 }: { sample?: number; seed?: number } = {},
+): Promise<{ k: number; scores: Array<[number, number]> }> {
+  const n = vectors.length;
+  const ks = candidateKs(n);
+  // A fixed random sample keeps this fast on big libraries (and repeatable).
+  const random = rng(seed);
+  const idx = [...vectors.keys()];
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j] ?? 0, idx[i] ?? 0];
+  }
+  const picked = idx
+    .slice(0, Math.min(sample, n))
+    .flatMap((i) => (vectors[i] ? [vectors[i]] : []));
+  const scores: Array<[number, number]> = [];
+  for (const k of ks.filter((k) => k < picked.length)) {
+    scores.push([
+      k,
+      silhouette(picked, kmeans(picked, k, { seed, iterations: 20 }).assignment),
+    ]);
+    // Let the page breathe between tries (this runs on the main thread).
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  if (!scores.length) return { k: chooseK(n), scores };
+  const best = Math.max(...scores.map(([, s]) => s));
+  const k = Math.max(...scores.filter(([, s]) => s >= best - 0.01).map(([k]) => k));
+  return { k, scores };
+}

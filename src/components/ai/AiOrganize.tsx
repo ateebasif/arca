@@ -77,7 +77,7 @@ export function AiOrganize() {
         base: settings.ollamaUrl,
         embedModel: settings.embedModel,
         chatModel: settings.chatModel,
-        groups: run.groupsWanted || undefined,
+        groups: run.groupsWanted === -1 ? 'ai' : run.groupsWanted || undefined,
       },
     );
 
@@ -119,12 +119,15 @@ export function AiOrganize() {
               value={run.groupsWanted}
               onChange={(e) => run.setGroupsWanted(Number(e.target.value))}
             >
-              <option value={0}>Auto ({auto})</option>
-              {[4, 6, 8, 10, 12, 15, 20, 25, 30].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
+              <option value={-1}>Let AI decide</option>
+              <option value={0}>Quick estimate ({auto})</option>
+              {[4, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60]
+                .filter((n) => n < items.length)
+                .map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
             </select>
           </label>
           <Button

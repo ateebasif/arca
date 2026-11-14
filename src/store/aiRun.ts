@@ -33,7 +33,7 @@ export interface RunOptions {
   base: string;
   embedModel: string;
   chatModel: string;
-  groups?: number;
+  groups?: number | 'ai';
 }
 
 interface AiRunState {
@@ -41,7 +41,8 @@ interface AiRunState {
   /** Folder the run was started in; suggestions are applied there. */
   folderId: string | null;
   folderTitle: string;
-  groupsWanted: number; // 0 = auto
+  /** -1 = let AI decide, 0 = quick estimate, else a fixed number of folders. */
+  groupsWanted: number;
   /** Also tag links with their new folder's name when applying. */
   tagWithFolder: boolean;
   setTagWithFolder(on: boolean): void;
@@ -72,7 +73,7 @@ const initial = {
 
 export const useAiRun = create<AiRunState>()((set, get) => ({
   ...initial,
-  groupsWanted: 0,
+  groupsWanted: -1,
   tagWithFolder: false,
 
   setGroupsWanted: (groupsWanted) => set({ groupsWanted }),
@@ -189,7 +190,7 @@ export function resetAiRun(): void {
   useAiRun.setState({
     ...initial,
     skipped: new Set(),
-    groupsWanted: 0,
+    groupsWanted: -1,
     tagWithFolder: false,
   });
 }
