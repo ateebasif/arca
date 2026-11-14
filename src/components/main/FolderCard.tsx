@@ -22,6 +22,8 @@ interface FolderCardProps {
   /** First few bookmarks inside, shown as a favicon stack. */
   preview: BNode[];
   onOpen(id: string): void;
+  /** Small tiles: a compact row like small bookmark tiles. */
+  density?: 'comfortable' | 'compact';
 }
 
 const plural = (n: number, word: string) =>
@@ -34,6 +36,7 @@ export const FolderCard = memo(function FolderCard({
   subfolders,
   preview,
   onOpen,
+  density = 'comfortable',
 }: FolderCardProps) {
   const selected = useSelection((s) => s.ids.has(folder.id));
   const tags = useTags(folder.id);
@@ -50,6 +53,71 @@ export const FolderCard = memo(function FolderCard({
   const meta = [plural(count, 'link'), subfolders > 0 && plural(subfolders, 'folder')]
     .filter(Boolean)
     .join(' · ');
+
+  if (density === 'compact') {
+    return (
+      <div
+        className="group relative rounded-xl data-[selected]:ring-2 data-[selected]:ring-accent"
+        ref={drag.setNodeRef}
+        style={drag.style}
+        data-select-id={folder.id}
+        data-selected={selected || undefined}
+      >
+        <SelectBox
+          id={folder.id}
+          title={title}
+          variant="row"
+          className="absolute top-1/2 left-2.5 -translate-y-1/2"
+        />
+        <button
+          type="button"
+          onClick={() => !renaming && onOpen(folder.id)}
+          data-folder-card={folder.id}
+          aria-label={`${title}, ${meta}`}
+          {...(renaming ? {} : dragHandle)}
+          onContextMenu={handlers.onContextMenu}
+          onKeyDown={(e) => {
+            dragKeyDown?.(e);
+            if (isDragActive()) {
+              if (e.key === 'Enter') e.preventDefault();
+              return;
+            }
+            if (!e.defaultPrevented && !renaming) handlers.onKeyDown(e);
+          }}
+          className="hover:bg-surface-strong flex h-10 w-full items-center rounded-xl pr-9 pl-9 text-left transition-colors duration-150"
+        >
+          <span
+            ref={drop.setDropRef}
+            data-drop-folder={folder.id}
+            className={`flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-lg ${
+              drop.blocked
+                ? 'shadow-[inset_0_0_0_2px_var(--color-danger)]'
+                : drop.isOver
+                  ? 'shadow-[inset_0_0_0_2px_var(--color-accent)]'
+                  : ''
+            }`}
+          >
+            <FolderIcon className="text-accent shrink-0" />
+            {renaming ? (
+              <InlineRename
+                id={folder.id}
+                initial={folder.title}
+                className="h-7 text-[13px]"
+              />
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
+                {title}
+              </span>
+            )}
+            <span className="text-ink-faint shrink-0 text-xs tabular-nums">
+              {count.toLocaleString()}
+            </span>
+          </span>
+        </button>
+        <MoreButton id={folder.id} title={title} className="absolute top-1.5 right-1.5" />
+      </div>
+    );
+  }
 
   const body = (
     <>

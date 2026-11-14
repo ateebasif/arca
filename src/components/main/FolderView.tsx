@@ -148,7 +148,7 @@ function FolderContents() {
       <div className="flex flex-col gap-6">
         {folders.length > 0 && (
           <section aria-label="Folders">
-            <ul className={gridClass('comfortable')}>
+            <ul className={gridClass(density)}>
               {folders.map((folder, i) => (
                 <li key={folder.id} data-tile="" style={stagger(i)}>
                   <FolderCard
@@ -160,6 +160,7 @@ function FolderContents() {
                     }
                     preview={folderPreview(state, folder)}
                     onOpen={openFolder}
+                    density={density}
                   />
                 </li>
               ))}

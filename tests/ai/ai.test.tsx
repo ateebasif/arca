@@ -662,3 +662,33 @@ describe('AI organize panel', () => {
     expect(useAiRun.getState().phase.kind).toBe('ready');
   });
 });
+
+describe('letting the data decide the number of folders', () => {
+  /** n points around each of `k` random directions in 32 dimensions. */
+  function blobs(k: number, n: number, seed = 1) {
+    let s = seed;
+    const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647) * 2 - 1;
+    const centres = Array.from({ length: k }, () => Array.from({ length: 32 }, rand));
+    return centres.flatMap((c) =>
+      Array.from({ length: n }, () => normalize(c.map((x) => x + rand() * 0.15))),
+    );
+  }
+
+  it('finds the natural number of groups', async () => {
+    const { chooseKFromData, candidateKs } = await import('@/src/features/ai/kmeans');
+    expect(candidateKs(1919)).toEqual([
+      4, 6, 8, 10, 12, 15, 18, 22, 26, 30, 36, 42, 50, 60,
+    ]);
+    expect(candidateKs(40)).toEqual([4]);
+    expect((await chooseKFromData(blobs(10, 30))).k).toBe(10);
+    expect((await chooseKFromData(blobs(6, 40))).k).toBe(6);
+  });
+
+  it('is quick enough on a big library', async () => {
+    const { chooseKFromData } = await import('@/src/features/ai/kmeans');
+    const many = blobs(20, 100); // 2,000 vectors
+    const t = performance.now();
+    await chooseKFromData(many);
+    expect(performance.now() - t).toBeLessThan(4000);
+  });
+});

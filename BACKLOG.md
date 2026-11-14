@@ -48,6 +48,8 @@
 
 ## Done
 
+- [x] ARC-076 · AI organize "Let AI decide" folder count (silhouette over candidate k on a sample, async); counts up to 60 · `fix/tile-size-and-ai-k` · 2026-11-14
+- [x] ARC-B10 · Small tiles ignored folders (folder grid always large) · `fix/tile-size-and-ai-k` · 2026-11-14
 - [x] ARC-062 · "Related by meaning" in search results: cache-only bookmark vectors, query-only embed, debounced, AI code lazy · `feature/search-meaning` · 2026-11-14
 - [x] ARC-029 · "Add page/link to Arca…" context menu → popup save box (title, folder picker, tags); validated 2-minute handoff · `feature/add-to-arca-menu` · 2026-11-14
 - [x] ARC-033 · Tag manager: search, rename/merge (incl. look-alikes), colours (`tagColors`, validated), delete, view; one undo each · `feature/tag-manager` · 2026-11-14

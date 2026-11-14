@@ -6,7 +6,7 @@ import { chatJson } from '@/src/lib/ollama';
 import { mainDomain } from '@/src/lib/url';
 import * as undo from '../undo/undo';
 import { embedTexts } from './embedTexts';
-import { chooseK, groupMembers, kmeans } from './kmeans';
+import { chooseK, chooseKFromData, groupMembers, kmeans } from './kmeans';
 
 /**
  * "AI organize": groups bookmarks by meaning, entirely on this computer.
@@ -53,7 +53,8 @@ export interface PlanOptions {
   embedModel: string;
   chatModel: string;
   /** Number of groups; defaults to chooseK(items). */
-  groups?: number;
+  /** Number of folders: a count, 'ai' to let the data decide, or omit for a quick estimate. */
+  groups?: number | 'ai';
   onProgress?: OnProgress;
   signal?: AbortSignal;
 }
@@ -174,7 +175,12 @@ export async function planGroups(
   const vectors = await embedAll(items, opts);
   throwIfAborted(opts.signal);
   opts.onProgress?.('grouping', 0, 1);
-  const k = Math.min(opts.groups ?? chooseK(items.length), items.length);
+  const k = Math.min(
+    opts.groups === 'ai'
+      ? (await chooseKFromData(vectors)).k
+      : (opts.groups ?? chooseK(items.length)),
+    items.length,
+  );
   const clustering = kmeans(vectors, k);
   const members = groupMembers(vectors, clustering);
   opts.onProgress?.('grouping', 1, 1);

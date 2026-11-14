@@ -18,6 +18,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- "Small tiles" now applies to folders too (compact folder rows), so the
+  Large/Small switch visibly changes views that are mostly folders.
 - The folder picker's search box now gets focus as soon as it opens (it could
   stay on the button, so typing went nowhere).
 - List descriptions no longer show a loading bar forever when a description
@@ -110,6 +112,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- AI organize can **let the AI decide how many folders**: it tries different
+  counts (up to 60 for big libraries) on a sample of your links and keeps the one
+  whose groups separate most cleanly. It's the new default; the quick estimate
+  and fixed counts (now up to 60) are still there.
 - **Related by meaning** in search results (local AI on): links close in meaning
   to what you typed that the keyword search missed, from the readings Ask Arca
   already cached. Only your query is sent to the local model, so it's quick
