@@ -25,6 +25,8 @@ export interface AskMessage {
   fromModel?: boolean;
   /** A follow-up that narrowed the previous results (no new search). */
   narrowed?: boolean;
+  /** Why each pick fits, by bookmark id. */
+  reasons?: Record<string, string>;
 }
 
 export type AskStatus =
@@ -67,6 +69,15 @@ const strings = (v: unknown, max: number): string[] | undefined =>
     ? v.filter((x): x is string => typeof x === 'string' && x.length <= 64).slice(0, max)
     : undefined;
 
+function parseReasons(v: unknown): Record<string, string> | undefined {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [id, why] of Object.entries(v).slice(0, 40)) {
+    if (id.length <= 64 && typeof why === 'string') out[id] = why.slice(0, 160);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 /** Messages saved in this tab, validated like anything read from storage. */
 export function parseSaved(raw: unknown): { messages: AskMessage[]; open: boolean } {
   const empty = { messages: [], open: false };
@@ -87,6 +98,7 @@ export function parseSaved(raw: unknown): { messages: AskMessage[]; open: boolea
       matches: strings(x.matches, 60),
       fromModel: x.fromModel === false ? false : undefined,
       narrowed: x.narrowed === true ? true : undefined,
+      reasons: parseReasons(x.reasons),
     });
   }
   return { messages, open: r.open === true };
@@ -226,6 +238,7 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
         matches: answer.matches,
         fromModel: answer.fromModel,
         narrowed: answer.about === 'previous' || undefined,
+        reasons: answer.reasons,
       };
       set((s) => ({
         messages: s.messages.some((m) => m.id === answerId)
