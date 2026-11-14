@@ -23,6 +23,8 @@ export interface AskMessage {
   pending?: boolean;
   /** False when the chat model failed and only matches are shown. */
   fromModel?: boolean;
+  /** A follow-up that narrowed the previous results (no new search). */
+  narrowed?: boolean;
 }
 
 export type AskStatus =
@@ -84,6 +86,7 @@ export function parseSaved(raw: unknown): { messages: AskMessage[]; open: boolea
       ids: strings(x.ids, 40),
       matches: strings(x.matches, 60),
       fromModel: x.fromModel === false ? false : undefined,
+      narrowed: x.narrowed === true ? true : undefined,
     });
   }
   return { messages, open: r.open === true };
@@ -175,6 +178,9 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
       role: m.role,
       text: m.text,
     }));
+    // What the last answer showed (its picks first), for follow-up questions.
+    const last = [...get().messages].reverse().find((m) => m.role === 'arca');
+    const previous = last ? (last.matches ?? last.ids ?? []).slice(0, 20) : [];
     controller = new AbortController();
     const signal = controller.signal;
     set((s) => ({
@@ -199,6 +205,7 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
         ...opts,
         signal,
         onStage: stage,
+        previous,
         // Matches show right away; the chat model's answer fills in after.
         onMatches: (matches) => {
           if (signal.aborted) return;
@@ -218,6 +225,7 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
         ids: answer.ids,
         matches: answer.matches,
         fromModel: answer.fromModel,
+        narrowed: answer.about === 'previous' || undefined,
       };
       set((s) => ({
         messages: s.messages.some((m) => m.id === answerId)

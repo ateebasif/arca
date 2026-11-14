@@ -32,16 +32,28 @@ export interface AskOptions {
   onStage?(stage: 'reading' | 'searching' | 'thinking'): void;
   /** Called as soon as the matches are known, before the chat model answers. */
   onMatches?(ids: string[]): void;
+  /**
+   * Bookmarks shown in the previous answer (picks first). When set, the
+   * question is a follow-up: the model sees these first and decides whether
+   * it's about them ("which would you pick", "only the movie ones") or a new
+   * search.
+   */
+  previous?: readonly string[];
 }
 
 export interface AskAnswer {
   reply: string;
   /** Bookmark ids, best first. Always a subset of the items passed in. */
   ids: string[];
-  /** Every match (keyword and meaning), best first; ids above come first. */
+  /**
+   * Every match (keyword and meaning), best first; ids above come first. For
+   * an answer that narrowed earlier results, the rest of those results.
+   */
   matches: string[];
   /** False when the chat model failed and these are the closest matches only. */
   fromModel: boolean;
+  /** Whether a follow-up was about the previous results or a new search. */
+  about: 'previous' | 'new';
 }
 
 /** How many links the chat model looks at (keeps its prompt, and wait, short). */
@@ -167,6 +179,26 @@ const ASK_SCHEMA = {
   required: ['reply', 'picks'],
 };
 
+const FOLLOW_UP_SCHEMA = {
+  type: 'object',
+  properties: {
+    about: { type: 'string', enum: ['previous', 'new'] },
+    reply: { type: 'string' },
+    picks: { type: 'array', items: { type: 'integer' } },
+  },
+  required: ['about', 'reply', 'picks'],
+};
+
+const FOLLOW_UP_RULES =
+  ' This message follows earlier results. Candidates marked "(shown before)" are ' +
+  'what you showed last time; the rest are new matches for this message. If the ' +
+  'message is about the earlier results (choosing, narrowing, comparing: "which ' +
+  'would you pick", "only the movie ones", "the second one"), set "about" to ' +
+  '"previous" and pick only from the "(shown before)" ones. If it asks for something ' +
+  'different or for more ("something else", "any about cooking?"), set "about" to ' +
+  '"new" and pick from the new ones, not repeating earlier results. When asked for ' +
+  'your pick or the best one, pick one to three and say briefly why.';
+
 const ASK_SYSTEM =
   'You help someone find bookmarks they saved but only vaguely remember. You get ' +
   'their message and a numbered list of candidate bookmarks from their own browser ' +
@@ -223,9 +255,11 @@ export async function ask(
       ids: [],
       matches: [],
       fromModel: false,
+      about: 'new',
     };
   }
   opts.onStage?.('reading');
+  const followUp = !!opts.previous?.length;
   const { order: semantic, scores } = await semanticRank(
     items,
     retrievalQuery(question, history),
@@ -233,12 +267,19 @@ export async function ask(
     MATCHES,
   );
   const keyword = new Set(keywordHits);
+  const indexOf = new Map(items.map((it, i) => [it.id, i]));
+  const shownBefore = (opts.previous ?? []).flatMap((id) => {
+    const i = indexOf.get(id);
+    return i === undefined ? [] : [i];
+  });
+  const before = new Set(shownBefore);
   // Meaning matches that are clearly closer than a typical bookmark, mixed with
   // plain keyword matches so neither crowds the other out.
   const close = keepClose(semantic, scores, keyword);
   const order: number[] = [];
   const add = (i: number | undefined) => {
-    if (i !== undefined && !order.includes(i) && items[i]) order.push(i);
+    if (i !== undefined && !order.includes(i) && !before.has(i) && items[i])
+      order.push(i);
   };
   for (
     let k = 0;
@@ -249,18 +290,25 @@ export async function ask(
     add(keywordHits[k]);
   }
   const idOf = (i: number) => items[i]?.id ?? '';
-  const matches = order.map(idOf);
-  opts.onMatches?.(matches);
-  const candidates = order
-    .slice(0, CANDIDATES)
-    .flatMap((i) => (items[i] ? [items[i]] : []));
+  const fresh = order.map(idOf);
+  // A follow-up may be about the earlier results, so only the model can say
+  // what to show; a first question shows its matches straight away.
+  if (!followUp) opts.onMatches?.(fresh);
+  const pool = followUp
+    ? [
+        ...shownBefore.slice(0, 14),
+        ...order.slice(0, CANDIDATES - Math.min(14, shownBefore.length)),
+      ]
+    : order.slice(0, CANDIDATES);
+  const candidates = pool.flatMap((i) => (items[i] ? [items[i]] : []));
   throwIfAborted(opts.signal);
   if (candidates.length === 0) {
     return {
       reply: 'I couldn’t find anything that fits.',
       ids: [],
-      matches,
+      matches: fresh,
       fromModel: false,
+      about: 'new',
     };
   }
   opts.onStage?.('thinking');
@@ -275,36 +323,61 @@ export async function ask(
   const prompt =
     (earlier ? `Earlier in this conversation:\n${earlier}\n\n` : '') +
     `Their message: ${question.slice(0, 500)}\n\nCandidates:\n` +
-    candidates.map((it, n) => candidateLine(n + 1, it)).join('\n');
+    pool
+      .map((i, n) => {
+        const item = items[i];
+        if (!item) return '';
+        return candidateLine(n + 1, item) + (before.has(i) ? ' (shown before)' : '');
+      })
+      .join('\n');
 
   try {
     const result = (await chatJson(
       opts.base,
       opts.chatModel,
-      ASK_SYSTEM,
+      followUp ? ASK_SYSTEM + FOLLOW_UP_RULES : ASK_SYSTEM,
       prompt,
-      ASK_SCHEMA,
-    )) as { reply?: unknown; picks?: unknown } | null;
-    const picks = cleanPicks(result?.picks, candidates.length);
+      followUp ? FOLLOW_UP_SCHEMA : ASK_SCHEMA,
+    )) as { about?: unknown; reply?: unknown; picks?: unknown } | null;
+    const picked = cleanPicks(result?.picks, pool.length).map((n) => pool[n] ?? -1);
+    // Earlier results were chosen for the earlier question, so meaning scores
+    // for this message don't apply to them; new picks are checked as usual.
+    const closeNew = new Set(
+      keepClose(
+        picked.filter((i) => !before.has(i)),
+        scores,
+        keyword,
+      ),
+    );
+    const kept = picked.filter((i) => before.has(i) || closeNew.has(i));
+    // Small models mislabel "about", so go by what they actually picked:
+    // only earlier results means the answer narrowed them.
+    const about: 'previous' | 'new' =
+      followUp &&
+      (kept.length ? kept.every((i) => before.has(i)) : result?.about === 'previous')
+        ? 'previous'
+        : 'new';
+    const ids = kept.flatMap((i) => (items[i] ? [items[i].id] : []));
     const reply =
       cleanReply(result?.reply) ||
-      (picks.length ? 'Here’s what I found.' : 'I couldn’t find anything that fits.');
-    const kept = keepClose(
-      picks.map((i) => order[i] ?? -1),
-      scores,
-      keyword,
+      (ids.length ? 'Here’s what I found.' : 'I couldn’t find anything that fits.');
+    // Narrowing earlier results shows just the picks; a new search lists its
+    // other matches under them.
+    // (When narrowing, the earlier results stay in `matches` behind the picks so
+    // the next follow-up can still choose among them; the panel shows picks only.)
+    const rest = (about === 'previous' ? shownBefore.map(idOf) : fresh).filter(
+      (id) => !ids.includes(id),
     );
-    const ids = kept.flatMap((i) => (items[i] ? [items[i].id] : []));
-    const rest = matches.filter((id) => !ids.includes(id));
-    return { reply, ids, matches: [...ids, ...rest], fromModel: true };
+    return { reply, ids, matches: [...ids, ...rest], fromModel: true, about };
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e;
     // Chat model unavailable: still show the closest matches by meaning.
     return {
       reply: 'I couldn’t reach the chat model, but these are the closest matches.',
       ids: [],
-      matches,
+      matches: fresh,
       fromModel: false,
+      about: 'new',
     };
   }
 }
