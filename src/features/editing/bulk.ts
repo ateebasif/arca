@@ -1,7 +1,7 @@
 import * as bm from '@/src/lib/bookmarks';
 import { openUrls } from '@/src/lib/tabs';
 import { getMetaStore } from '@/src/store/useMeta';
-import { setTags } from '../tags/actions';
+import { sameTags, setTagsMany } from '../tags/actions';
 import { ungroupSteps } from './actions';
 import * as undo from '../undo/undo';
 
@@ -75,24 +75,20 @@ export async function retagMany(
 ): Promise<number> {
   const meta = getMetaStore();
   await meta.start();
-  const steps: undo.UndoAction[] = [];
+  const entries: Array<{ id: string; url: string; tags: string[] }> = [];
   for (const id of ids) {
     const node = await bm.getNode(id).catch(() => null);
     if (!node) continue;
     const current = meta.tagsOf(id);
-    const next = [...current.filter((t) => !remove.includes(t)), ...add];
-    const step = await setTags(id, node.url ?? '', next);
-    if (step) steps.push(step);
+    const tags = [...current.filter((t) => !remove.includes(t)), ...add];
+    if (!sameTags(current, tags)) entries.push({ id, url: node.url ?? '', tags });
   }
-  if (steps.length) {
-    undo.record(
-      undo.combine(
-        `Changed tags on ${steps.length} ${steps.length === 1 ? 'item' : 'items'}`,
-        steps,
-      ),
-    );
+  const step = await setTagsMany(entries);
+  if (step) {
+    const n = entries.length;
+    undo.record({ ...step, label: `Changed tags on ${n} ${n === 1 ? 'item' : 'items'}` });
   }
-  return steps.length;
+  return step ? entries.length : 0;
 }
 
 /** Web URLs of the selected bookmarks (folders and blocked links skipped). */

@@ -194,9 +194,31 @@ export class MetaStore {
     await this.write(next);
   }
 
-  private async write(byId: Map<string, Meta>) {
+  private writing: Promise<void> = Promise.resolve();
+
+  /**
+   * Shows `byId` at once, then stores only what changed, merged into what is
+   * in storage now: another Arca page may have written since our last
+   * update arrived, and a whole-object write would wipe its edit.
+   */
+  private write(byId: Map<string, Meta>): Promise<void> {
+    const prev = this.snapshot.byId;
+    const changed = new Map<string, Meta | null>();
+    for (const [id, meta] of byId) if (prev.get(id) !== meta) changed.set(id, meta);
+    for (const id of prev.keys()) if (!byId.has(id)) changed.set(id, null);
     this.replace(byId);
-    await storageSet(META_KEY, Object.fromEntries(byId));
+    if (!changed.size) return this.writing;
+    this.writing = this.writing
+      .catch(() => {})
+      .then(async () => {
+        const stored = parseMeta(await storageGet<unknown>(META_KEY, {}));
+        for (const [id, meta] of changed) {
+          if (meta) stored.set(id, meta);
+          else stored.delete(id);
+        }
+        await storageSet(META_KEY, Object.fromEntries(stored));
+      });
+    return this.writing;
   }
 
   tagsOf(id: string): string[] {
@@ -205,13 +227,22 @@ export class MetaStore {
 
   /** Sets an item's tags (url is kept so they can re-link if ids change). */
   async setTags(id: string, url: string, tags: readonly string[]): Promise<void> {
+    await this.setTagsMany([{ id, url, tags }]);
+  }
+
+  /** Sets tags on many items with a single storage write. */
+  async setTagsMany(
+    entries: ReadonlyArray<{ id: string; url: string; tags: readonly string[] }>,
+  ): Promise<void> {
     const next = new Map(this.snapshot.byId);
-    const clean = cleanTags(tags);
-    const current = next.get(id);
-    if (clean.length || current?.note) {
-      next.set(id, { ...current, tags: clean, url: url || current?.url || '' });
-    } else {
-      next.delete(id);
+    for (const { id, url, tags } of entries) {
+      const clean = cleanTags(tags);
+      const current = next.get(id);
+      if (clean.length || current?.note) {
+        next.set(id, { ...current, tags: clean, url: url || current?.url || '' });
+      } else {
+        next.delete(id);
+      }
     }
     await this.write(next);
   }
