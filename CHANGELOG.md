@@ -95,6 +95,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Backup** (Settings): export all bookmarks as a standard HTML bookmarks file
+  any browser can import (tags included, Bookmarks bar marked as the toolbar), or
+  as an Arca JSON backup with the full tree and tags. Saved through a normal
+  download link, so no extra permission is needed.
 - **Broken links** (Tidy up → Clean out, opt-in): checks every link with a HEAD
   request (GET if refused), no cookies or referrer, nothing downloaded, 8 s
   timeout, 6 at a time and 2 per site. Broken links (404/410/server errors/sites

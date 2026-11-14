@@ -28,7 +28,6 @@
 - [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
 - [ ] ARC-033 · Tag manager: rename, merge, delete, colors · Phase 3 · P1
 - [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
-- [ ] ARC-038 · Export: Netscape HTML + Arca JSON (with tags/notes) · Phase 3 · P1
 - [ ] ARC-039 · Import: Netscape HTML / Arca JSON into folder, preview, dup warnings · Phase 3 · P1
 - [ ] ARC-040 · Release v1.0.0 (v0.3.0 if more work is planned before 1.0) · Phase 3 · P0
 
@@ -52,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-038 · Export: Netscape HTML (with TAGS) + Arca JSON backup, Settings → Backup, no downloads permission · `feature/export` · 2026-11-14
 - [x] ARC-037 · Dead-link finder in Clean out: opt-in site access, HEAD→GET, limits, 2-week cache, broken group, update moved links (runs in the Arca tab via a store rather than the background worker) · `feature/dead-links` · 2026-11-14
 - [x] ARC-022/023/034 · Multi-select (hover checkbox, click/⇧-click while selecting, ⌘A, Esc) + bulk move, tag/untag, open all (confirm > 10), delete; one undo each · `feature/multi-select` · 2026-11-14
 - [x] ARC-070 · AI organize: optional tag per group (folder name), merged with existing tags, one undo · `feature/organize-tags` · 2026-11-14
