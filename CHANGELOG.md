@@ -88,6 +88,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Ask Arca ranks its picks (1, 2, 3…) with a few words on why each fits, and
+  "which would you pick?" style follow-ups show up to five ranked options.
 - **Ungroup** a folder (right-click or ⋯ → Ungroup): everything inside moves up to
   where the folder was, in order, and the empty folder is removed. One Undo puts
   it back.

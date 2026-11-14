@@ -264,12 +264,19 @@ function Answer({
     : (message.matches ?? []).filter((id) => exists(id) && !picks.includes(id));
   // Narrowing earlier results isn't a keyword search, so no keyword link then.
   const term = message.narrowed ? undefined : keywordTerms(question)[0];
-  const list = (ids: string[]) => (
+  const list = (ids: string[], ranked = false) => (
     <ul className="border-line bg-surface flex flex-col overflow-hidden rounded-xl border">
-      {ids.map((id) => {
+      {ids.map((id, i) => {
         const node = state.nodes.get(id);
         return node ? (
-          <ResultRow key={id} node={node} state={state} onReveal={onClose} />
+          <ResultRow
+            key={id}
+            node={node}
+            state={state}
+            onReveal={onClose}
+            rank={ranked ? i + 1 : undefined}
+            why={message.reasons?.[id]}
+          />
         ) : null;
       })}
     </ul>
@@ -287,7 +294,7 @@ function Answer({
       ) : (
         message.text && <p className="text-[13px] leading-relaxed">{message.text}</p>
       )}
-      {picks.length > 0 && list(picks)}
+      {picks.length > 0 && list(picks, true)}
       {others.length > 0 && (
         <>
           {(picks.length > 0 || !message.pending) && (
@@ -329,10 +336,16 @@ function ResultRow({
   node,
   state,
   onReveal,
+  rank,
+  why,
 }: {
   node: NonNullable<ReturnType<BookmarkSnapshot['nodes']['get']>>;
   state: BookmarkSnapshot;
   onReveal(): void;
+  /** Position in the AI's ranking (picks only). */
+  rank?: number;
+  /** The AI's few words on why this one fits. */
+  why?: string;
 }) {
   const url = node.url ?? '';
   const title = node.title || displayHost(url) || url;
@@ -355,9 +368,20 @@ function ResultRow({
         onKeyDown={(e) => e.key === 'Enter' && !link.href && link.onActivate?.(e)}
         className="hover:bg-hover flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2"
       >
+        {rank !== undefined && (
+          <span
+            aria-label={`#${rank}`}
+            className={`grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold tabular-nums ${
+              rank === 1 ? 'bg-accent-strong text-white' : 'bg-hover text-ink-muted'
+            }`}
+          >
+            {rank}
+          </span>
+        )}
         <Favicon url={url} title={title} size={16} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13px]">{title}</span>
+          {why && <span className="text-accent block truncate text-[11px]">{why}</span>}
           <span className="text-ink-faint block truncate text-[11px]">
             {displayHost(url)}
             {path.length > 0 && ` · ${compactPath(path.join(' / '))}`}

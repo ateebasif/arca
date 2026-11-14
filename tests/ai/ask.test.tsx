@@ -4,6 +4,7 @@ import { Dashboard } from '@/src/components/Dashboard';
 import {
   ask,
   cleanPicks,
+  cleanReasons,
   cleanReply,
   keepClose,
   queryText,
@@ -207,9 +208,50 @@ describe('ask', () => {
     expect(onMatches).not.toHaveBeenCalled();
   });
 
+  it('"which would you pick" ranks up to five, with reasons for the model\'s picks', async () => {
+    fakeOllama();
+    const real = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (!String(url).endsWith('/api/chat')) return real(url as string, init);
+      const prompt = JSON.parse(String(init?.body)).messages[1].content as string;
+      const anime = [...prompt.matchAll(/^\[(\d+)\] AniRena.*\(shown before\)$/gm)][0];
+      return Response.json({
+        message: {
+          content: JSON.stringify({
+            about: 'previous',
+            reply: 'I would go with AniRena.',
+            picks: [{ n: Number(anime![1]), why: 'Anime\u202E focused' }],
+          }),
+        },
+      });
+    });
+    const answer = await ask(
+      'which would you pick?',
+      [{ role: 'user', text: 'torrents' }],
+      ITEMS,
+      [],
+      {
+        ...OPTS,
+        previous: ['b0', 'b1', 'b2', 'b3', 'b4', 'b5'],
+      },
+    );
+    expect(answer.ids).toEqual(['b1', 'b0', 'b2', 'b3', 'b4']);
+    expect(answer.reasons).toEqual({ b1: 'Anime focused' });
+  });
+
   it('cleans picks and replies', () => {
     expect(cleanPicks([3, 3, '2', 0, 7, 1.2, null], 5)).toEqual([2, 1]);
     expect(cleanPicks('nope', 5)).toEqual([]);
+    expect(cleanPicks([{ n: 2, why: 'x' }, { n: 9 }, { why: 'y' }], 5)).toEqual([1]);
+    expect([
+      ...cleanReasons(
+        [
+          { n: 2, why: '  short  reason ' },
+          { n: 2, why: 'dup' },
+        ],
+        5,
+      ),
+    ]).toEqual([[1, 'short reason']]);
     expect(cleanReply('a​b\u0007c')).toBe('a b c');
     expect(cleanReply(42)).toBe('');
     expect(cleanReply('x'.repeat(600))).toHaveLength(500);
