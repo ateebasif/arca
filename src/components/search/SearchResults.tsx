@@ -1,6 +1,11 @@
 import { memo, useEffect, useRef } from 'react';
 import { openResult } from '@/src/features/search/actions';
-import { highlightParts, type SearchResult } from '@/src/features/search/search';
+import {
+  buildIndex,
+  highlightParts,
+  type SearchResult,
+} from '@/src/features/search/search';
+import { useMeaningSearch } from '@/src/features/ai/useMeaningSearch';
 import {
   RESULT_LIMIT,
   resultId,
@@ -103,6 +108,7 @@ export function SearchResults() {
           ))}
         </ul>
       )}
+      <MeaningSection query={query} exclude={results.map((r) => r.entry.node.id)} />
       <p className="text-ink-faint text-center text-[11px]">
         ↑↓ to move · Enter to open · ⌘Enter new tab · ⌥Enter show in folder · Esc to clear
       </p>
@@ -205,5 +211,70 @@ function Chip({
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * "Related by meaning": bookmarks close in meaning to the query that the
+ * keyword search didn't find, from the readings Ask Arca already cached.
+ */
+function MeaningSection({ query, exclude }: { query: string; exclude: string[] }) {
+  const state = useBookmarks();
+  const { ids, loading, covered, on } = useMeaningSearch(query, exclude);
+  if (!on) return null;
+  const index = buildIndex(state);
+  const byId = new Map(index.map((e) => [e.node.id, e]));
+  const entries = ids.flatMap((id) => {
+    const e = byId.get(id);
+    return e ? [e] : [];
+  });
+  if (!loading && entries.length === 0) {
+    return covered < 0.5 ? (
+      <p className="text-ink-faint text-center text-[11px]">
+        Meaning matches appear here once Ask Arca has read your bookmarks.
+      </p>
+    ) : null;
+  }
+  return (
+    <section aria-label="Related by meaning" className="flex flex-col gap-1">
+      <p className="text-ink-faint flex items-center gap-1.5 px-1 text-[11px] font-medium tracking-wide uppercase">
+        <SparkleIcon width={12} height={12} className="text-accent" /> Related by meaning
+        {loading && (
+          <span
+            className="bg-accent ml-1 size-1.5 animate-pulse rounded-full"
+            aria-hidden
+          />
+        )}
+      </p>
+      <ul className="flex flex-col gap-px">
+        {entries.map((entry) => {
+          const url = entry.node.url ?? '';
+          return (
+            <li
+              key={entry.node.id}
+              data-meaning-result={entry.node.id}
+              onClick={(e) =>
+                openResult(
+                  { entry, score: 0, copies: [] },
+                  e.altKey ? 'reveal' : e.metaKey || e.ctrlKey ? 'new-tab' : 'open',
+                )
+              }
+              className="hover:bg-surface-strong flex h-12 cursor-pointer items-center gap-3 rounded-xl px-3"
+            >
+              <span className="grid size-6 shrink-0 place-items-center">
+                <Favicon url={url} title={entry.title} size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px]">{entry.title}</span>
+                <span className="text-ink-faint block truncate text-[11px]">
+                  {entry.hostLc}
+                  {entry.path ? ` · ${compactPath(entry.path)}` : ''}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
