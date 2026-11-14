@@ -1,3 +1,5 @@
+import { useSelection } from '@/src/store/selection';
+import { SelectBox } from '../select/SelectBox';
 import { useSettings } from '@/src/store/settings';
 import { useDescription, useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useTags } from '@/src/store/useMeta';
@@ -102,6 +104,7 @@ export const FolderRow = memo(function FolderRow({
   );
   const handlers = itemHandlers(folder);
   const tall = useDescriptionsOn();
+  const selected = useSelection((s) => s.ids.has(folder.id));
   const drag = useDragItem(folder);
   const drop = useFolderDrop(folder.id, 'row');
   const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
@@ -119,6 +122,8 @@ export const FolderRow = memo(function FolderRow({
       role="row"
       tabIndex={0}
       data-folder-row={folder.id}
+      data-select-id={folder.id}
+      data-selected={selected || undefined}
       onClick={() => !renaming && onOpen(folder.id)}
       onContextMenu={handlers.onContextMenu}
       onKeyDown={(e) => {
@@ -132,8 +137,13 @@ export const FolderRow = memo(function FolderRow({
         if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(folder.id);
         else handlers.onKeyDown(e);
       }}
-      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+      className={`group grid ${LIST_COLUMNS} ${drop.isOver ? (drop.blocked ? 'ring-danger ring-2' : 'ring-accent bg-accent-soft ring-2') : ''} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} data-[selected]:bg-accent-soft relative items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
     >
+      <SelectBox
+        id={folder.id}
+        title={folder.title || 'Untitled'}
+        className="absolute top-1/2 left-1.5 -translate-y-1/2"
+      />
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
         <FolderIcon className="text-accent shrink-0" />
         {renaming ? (
@@ -179,88 +189,100 @@ export const BookmarkRow = memo(function BookmarkRow({
   const description = useDescription(bookmark.id, bookmark.title, url);
   const handlers = itemHandlers(bookmark);
   const drag = useDragItem(bookmark);
+  const selected = useSelection((s) => s.ids.has(bookmark.id));
   const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
     onKeyDown?: (e: React.KeyboardEvent) => void;
   };
   return (
-    <a
-      ref={drag.setNodeRef}
-      style={drag.style}
-      {...dragHandle}
-      draggable={false}
-      role="row"
-      href={link.href}
-      tabIndex={0}
-      // The preview card shows this when previews are on; don't stack a tooltip on it.
-      title={renaming || previews ? undefined : `${title}\n${url}`}
-      data-bookmark-id={bookmark.id}
-      data-blocked={link.blocked || undefined}
-      onClick={(e) => {
-        if (renaming) e.preventDefault();
-        else link.onActivate?.(e);
-      }}
-      onContextMenu={handlers.onContextMenu}
-      onKeyDown={(e) => {
-        dragKeyDown?.(e);
-        if (e.defaultPrevented) return;
-        // Mid-drag, keys belong to the drag: also stop Enter following the link.
-        if (isDragActive()) {
-          if (e.key === 'Enter') e.preventDefault();
-          return;
-        }
-        if (
-          e.key === 'Enter' &&
-          !renaming &&
-          link.onActivate &&
-          e.target === e.currentTarget
-        ) {
-          link.onActivate?.(e);
-          return;
-        }
-        handlers.onKeyDown(e);
-      }}
-      className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
+    <div
+      className="group/select relative rounded-xl data-[selected]:bg-accent-soft"
+      data-select-id={bookmark.id}
+      data-selected={selected || undefined}
     >
-      <span role="cell" className="flex min-w-0 items-center gap-2.5">
-        <Favicon url={url} title={title} size={16} />
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="flex min-w-0 items-center gap-2.5">
-            {renaming ? (
-              <InlineRename id={bookmark.id} initial={bookmark.title} className="h-7" />
-            ) : (
-              <span className="truncate">{title}</span>
-            )}
-            <RowTags id={bookmark.id} />
-          </span>
-          {tall &&
-            (description === undefined ? (
-              <span
-                className="bg-hover mt-1 h-2 w-40 max-w-full animate-pulse rounded"
-                aria-hidden
-              />
-            ) : (
-              description && (
-                <span className="text-ink-faint truncate text-[11px]" data-description>
-                  {description}
-                </span>
-              )
-            ))}
-        </span>
-      </span>
-      <span role="cell" className="text-ink-muted truncate text-xs">
-        {url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
-      </span>
-      <span role="cell" className="text-ink-faint truncate text-xs">
-        {folderPath}
-      </span>
-      <span
-        role="cell"
-        className="text-ink-muted flex items-center justify-between text-xs tabular-nums"
+      <SelectBox
+        id={bookmark.id}
+        title={title}
+        className="absolute top-1/2 left-1.5 -translate-y-1/2 group-hover/select:opacity-100"
+      />
+      <a
+        ref={drag.setNodeRef}
+        style={drag.style}
+        {...dragHandle}
+        draggable={false}
+        role="row"
+        href={link.href}
+        tabIndex={0}
+        // The preview card shows this when previews are on; don't stack a tooltip on it.
+        title={renaming || previews ? undefined : `${title}\n${url}`}
+        data-bookmark-id={bookmark.id}
+        data-blocked={link.blocked || undefined}
+        onClick={(e) => {
+          if (renaming) e.preventDefault();
+          else link.onActivate?.(e);
+        }}
+        onContextMenu={handlers.onContextMenu}
+        onKeyDown={(e) => {
+          dragKeyDown?.(e);
+          if (e.defaultPrevented) return;
+          // Mid-drag, keys belong to the drag: also stop Enter following the link.
+          if (isDragActive()) {
+            if (e.key === 'Enter') e.preventDefault();
+            return;
+          }
+          if (
+            e.key === 'Enter' &&
+            !renaming &&
+            link.onActivate &&
+            e.target === e.currentTarget
+          ) {
+            link.onActivate?.(e);
+            return;
+          }
+          handlers.onKeyDown(e);
+        }}
+        className={`group grid ${LIST_COLUMNS} hover:bg-surface-strong ${tall ? 'h-[52px]' : 'h-10'} items-center gap-3 rounded-xl px-3 transition-colors duration-150`}
       >
-        {bookmark.dateAdded ? dateFormat.format(bookmark.dateAdded) : ''}
-        <MoreButton id={bookmark.id} title={title} />
-      </span>
-    </a>
+        <span role="cell" className="flex min-w-0 items-center gap-2.5">
+          <Favicon url={url} title={title} size={16} />
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="flex min-w-0 items-center gap-2.5">
+              {renaming ? (
+                <InlineRename id={bookmark.id} initial={bookmark.title} className="h-7" />
+              ) : (
+                <span className="truncate">{title}</span>
+              )}
+              <RowTags id={bookmark.id} />
+            </span>
+            {tall &&
+              (description === undefined ? (
+                <span
+                  className="bg-hover mt-1 h-2 w-40 max-w-full animate-pulse rounded"
+                  aria-hidden
+                />
+              ) : (
+                description && (
+                  <span className="text-ink-faint truncate text-[11px]" data-description>
+                    {description}
+                  </span>
+                )
+              ))}
+          </span>
+        </span>
+        <span role="cell" className="text-ink-muted truncate text-xs">
+          {url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+        </span>
+        <span role="cell" className="text-ink-faint truncate text-xs">
+          {folderPath}
+        </span>
+        <span
+          role="cell"
+          className="text-ink-muted flex items-center justify-between text-xs tabular-nums"
+        >
+          {bookmark.dateAdded ? dateFormat.format(bookmark.dateAdded) : ''}
+          <MoreButton id={bookmark.id} title={title} />
+        </span>
+      </a>
+    </div>
   );
 });
 

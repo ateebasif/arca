@@ -17,8 +17,6 @@
 
 ### Phase 2 – Management
 
-- [ ] ARC-022 · Multi-select: ⌘-click, ⇧-click, hover checkbox · Phase 2 · P1
-- [ ] ARC-023 · Bulk actions: move, delete, open all (warn > 10) · Phase 2 · P1
 - [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
 - [ ] ARC-026 · Home view: Recently added (12) + Most visited, each hideable · Phase 2 · P1
 - [ ] ARC-029 · Background worker: "Add to Arca…" context menu · Phase 2 · P2
@@ -29,7 +27,6 @@
 - [ ] ARC-031b · Notes on bookmarks (tags done in ARC-031) · Phase 3 · P1
 - [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
 - [ ] ARC-033 · Tag manager: rename, merge, delete, colors · Phase 3 · P1
-- [ ] ARC-034 · Bulk add/remove tag · Phase 3 · P2
 - [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
 - [ ] ARC-037 · Dead-link finder: optional permission, worker, cache, cancel · Phase 3 · P1
 - [ ] ARC-038 · Export: Netscape HTML + Arca JSON (with tags/notes) · Phase 3 · P1
@@ -56,6 +53,7 @@
 
 ## Done
 
+- [x] ARC-022/023/034 · Multi-select (hover checkbox, click/⇧-click while selecting, ⌘A, Esc) + bulk move, tag/untag, open all (confirm > 10), delete; one undo each · `feature/multi-select` · 2026-11-14
 - [x] ARC-070 · AI organize: optional tag per group (folder name), merged with existing tags, one undo · `feature/organize-tags` · 2026-11-14
 - [x] ARC-027 · Settings (dialog), stored in `chrome.storage.local`, validated · built across earlier items · 2026-11-14
 - [x] ARC-028 · Keyboard shortcuts, `?` sheet, ⌥⇧B popup command · built across earlier items · 2026-11-14
@@ -112,6 +110,10 @@
 - [x] ARC-001 · Repo + git setup, guides, CLAUDE.md, backlog · `main` (initial commit) · 2026-11-13
 
 ## Known Issues / Bugs
+
+- [ ] ARC-B06 · Full e2e not yet re-run for ARC-069/070/multi-select (deferred at the user's request); `bun run e2e:ai` stalled once in its first AI step and needs a look · P1
+- [ ] ARC-B07 · New Tab initial JS is ~428 KB, over the 400 KB budget (React + app growth); options: Preact compat, or lazy-load more of the dashboard · P2
+- [ ] ARC-071 · Drag a multi-selection together (today drag moves one item) · P3
 
 ## Tech Debt / Risks to Verify
 

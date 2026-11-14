@@ -1,3 +1,5 @@
+import { useSelection } from '@/src/store/selection';
+import { SelectBox } from '../select/SelectBox';
 import { useTags } from '@/src/store/useMeta';
 import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
@@ -37,6 +39,7 @@ export const BookmarkTile = memo(function BookmarkTile({
   const handlers = itemHandlers(bookmark);
   const link = bookmarkLinkProps(url);
   const drag = useDragItem(bookmark);
+  const selected = useSelection((s) => s.ids.has(bookmark.id));
   const { onKeyDown: dragKeyDown, ...dragHandle } = (renaming ? {} : drag.handle) as {
     onKeyDown?: (e: React.KeyboardEvent) => void;
   };
@@ -83,7 +86,18 @@ export const BookmarkTile = memo(function BookmarkTile({
 
   if (density === 'compact') {
     return (
-      <div className="group relative" ref={drag.setNodeRef} style={drag.style}>
+      <div
+        className="group relative rounded-xl data-[selected]:ring-2 data-[selected]:ring-accent"
+        ref={drag.setNodeRef}
+        style={drag.style}
+        data-select-id={bookmark.id}
+        data-selected={selected || undefined}
+      >
+        <SelectBox
+          id={bookmark.id}
+          title={title}
+          className="absolute top-1/2 left-2 -translate-y-1/2"
+        />
         <a
           {...linkProps}
           className="hover:bg-surface-strong flex h-10 items-center gap-2.5 rounded-xl px-2.5 pr-9 transition-colors duration-150"
@@ -151,8 +165,16 @@ function CoverTile({
 }: CoverTileProps) {
   const cover = useCover(url, title);
   const tags = useTags(bookmark.id);
+  const selected = useSelection((s) => s.ids.has(bookmark.id));
   return (
-    <div className="group relative" ref={setNodeRef} style={dragStyle}>
+    <div
+      className="group relative rounded-(--radius-tile) data-[selected]:ring-2 data-[selected]:ring-accent"
+      ref={setNodeRef}
+      style={dragStyle}
+      data-select-id={bookmark.id}
+      data-selected={selected || undefined}
+    >
+      <SelectBox id={bookmark.id} title={title} className="absolute top-2 left-2" />
       <a
         {...linkProps}
         style={{ '--glow': cover.glow } as React.CSSProperties}

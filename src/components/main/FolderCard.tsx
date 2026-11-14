@@ -1,3 +1,5 @@
+import { useSelection } from '@/src/store/selection';
+import { SelectBox } from '../select/SelectBox';
 import { useTags } from '@/src/store/useMeta';
 import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
@@ -33,6 +35,7 @@ export const FolderCard = memo(function FolderCard({
   preview,
   onOpen,
 }: FolderCardProps) {
+  const selected = useSelection((s) => s.ids.has(folder.id));
   const tags = useTags(folder.id);
   const renaming = useOverlays(
     (s) => s.renamingId === folder.id && s.renameIn === 'main',
@@ -112,7 +115,14 @@ export const FolderCard = memo(function FolderCard({
     'border-line bg-surface flex h-[144px] w-full flex-col overflow-hidden rounded-(--radius-tile) border shadow-(--shadow-tile) backdrop-blur-md transition-[transform,box-shadow,border-color] duration-200 ease-(--ease-out-soft) hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[0_16px_36px_-16px_var(--color-accent)] focus-visible:-translate-y-0.5';
 
   return (
-    <div className="group relative" ref={drag.setNodeRef} style={drag.style}>
+    <div
+      className="group relative rounded-(--radius-tile) data-[selected]:ring-2 data-[selected]:ring-accent"
+      ref={drag.setNodeRef}
+      style={drag.style}
+      data-select-id={folder.id}
+      data-selected={selected || undefined}
+    >
+      <SelectBox id={folder.id} title={title} className="absolute top-2 left-2" />
       {renaming ? (
         <div className={className}>{body}</div>
       ) : (
