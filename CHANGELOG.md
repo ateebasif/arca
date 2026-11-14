@@ -78,6 +78,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Mini windows can become a normal tab: while one is open, a small bar in Arca
+  offers **Open here** (or close). In the mini window itself, right-click →
+  **Open in main window**, or press ⌥⇧O. Mini windows now open as a peek on the
+  right side of the screen. Ask Arca results and previews follow the "Open links
+  in" setting too.
 - **Ask Arca** (sidebar, or "Ask Arca" in search results): describe a bookmark the
   way you remember it ("I had some torrent sites saved somewhere") and get your
   real bookmarks back, with a short answer. Follow-ups refine it ("only the movie

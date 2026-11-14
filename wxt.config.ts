@@ -48,6 +48,10 @@ export default defineConfig({
         suggested_key: { default: 'Alt+Shift+B' },
         description: 'Open Arca',
       },
+      'open-in-main-window': {
+        suggested_key: { default: 'Alt+Shift+O' },
+        description: 'Move an Arca mini window into your main window',
+      },
     },
   }),
 });
