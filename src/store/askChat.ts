@@ -51,6 +51,8 @@ interface AskChatState {
   error: OllamaError | null;
   /** Starts reading bookmarks in the background so the first answer is quick. */
   warm(items: AskItem[], opts: AskSendOptions): void;
+  /** Stops reading the library (panel closed, AI turned off). */
+  stopWarming(): void;
   send(
     question: string,
     items: AskItem[],
@@ -181,6 +183,14 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
         if (!abort.signal.aborted) set({ index: null });
       });
     warming = { key, done, abort };
+  },
+
+  stopWarming() {
+    // A question in progress needs the reading; let it finish.
+    if (!warming || get().status.kind === 'working') return;
+    warming.abort.abort();
+    warming = null;
+    set({ index: null });
   },
 
   async send(question, items, keywordHits, opts) {

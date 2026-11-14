@@ -3,7 +3,8 @@
 /**
  * Spherical k-means on unit vectors (cosine similarity), with a seeded
  * k-means++ start so the same input always gives the same groups.
- * Pure math, no dependencies: ~4,000 × 768 dims runs in well under a second.
+ * Pure math, no dependencies. `kmeansAsync` slices the work so big libraries
+ * with large embedding models don't freeze the page.
  */
 
 export function normalize(v: ArrayLike<number>): Float32Array {
@@ -46,8 +47,42 @@ export interface Clustering {
 export function kmeans(
   vectors: Float32Array[],
   k: number,
-  { seed = 42, iterations = 30 } = {},
+  opts: { seed?: number; iterations?: number } = {},
 ): Clustering {
+  const steps = kmeansSteps(vectors, k, opts);
+  for (;;) {
+    const step = steps.next();
+    if (step.done) return step.value;
+  }
+}
+
+/** Roughly how many multiply-adds to do between pauses (~10–20 ms). */
+const WORK_PER_SLICE = 2e7;
+
+/**
+ * Same as `kmeans`, but gives the page a chance to paint and handle input
+ * between slices of work (a 5,000 × 2,560-dim library is seconds of maths),
+ * and stops when `signal` is aborted.
+ */
+export async function kmeansAsync(
+  vectors: Float32Array[],
+  k: number,
+  opts: { seed?: number; iterations?: number; signal?: AbortSignal } = {},
+): Promise<Clustering> {
+  const steps = kmeansSteps(vectors, k, opts);
+  for (;;) {
+    const step = steps.next();
+    if (step.done) return step.value;
+    await new Promise((r) => setTimeout(r, 0));
+    if (opts.signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
+  }
+}
+
+function* kmeansSteps(
+  vectors: Float32Array[],
+  k: number,
+  { seed = 42, iterations = 30 }: { seed?: number; iterations?: number } = {},
+): Generator<void, Clustering> {
   const n = vectors.length;
   const kk = Math.max(1, Math.min(k, n));
   const random = rng(seed);
@@ -55,7 +90,12 @@ export function kmeans(
   const centroids: Float32Array[] = first ? [Float32Array.from(first)] : [];
   // k-means++: pick each next centre far from existing ones.
   const best = new Float64Array(n).fill(Infinity);
+  const dims = vectors[0]?.length ?? 0;
+  // Rows per slice in the assignment loop.
+  const rowsPerSlice = Math.max(1, Math.floor(WORK_PER_SLICE / Math.max(1, kk * dims)));
+  const seedsPerSlice = Math.max(1, Math.floor(WORK_PER_SLICE / Math.max(1, n * dims)));
   while (centroids.length < kk) {
+    if (centroids.length % seedsPerSlice === 0) yield;
     const last = centroids[centroids.length - 1]!;
     let total = 0;
     for (let i = 0; i < n; i++) {
@@ -76,10 +116,10 @@ export function kmeans(
   }
 
   const assignment = new Int32Array(n).fill(-1);
-  const dims = vectors[0]?.length ?? 0;
   for (let iter = 0; iter < iterations; iter++) {
     let changed = 0;
     for (let i = 0; i < n; i++) {
+      if (i % rowsPerSlice === 0) yield;
       let bestC = 0;
       let bestSim = -Infinity;
       for (let c = 0; c < centroids.length; c++) {

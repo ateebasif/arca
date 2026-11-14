@@ -151,6 +151,7 @@ export async function semanticRank(
     base: opts.base,
     model: opts.embedModel,
     signal: opts.signal,
+    persist: false,
   });
   const scores = new Float32Array(docs.length);
   if (!query) return { order: [], scores };
@@ -379,6 +380,8 @@ export async function ask(
       followUp ? ASK_SYSTEM + FOLLOW_UP_RULES : ASK_SYSTEM,
       prompt,
       followUp ? FOLLOW_UP_SCHEMA : ASK_SCHEMA,
+      400,
+      opts.signal,
     )) as { about?: unknown; reply?: unknown; picks?: unknown } | null;
     const picked = cleanPicks(result?.picks, pool.length).map((n) => pool[n] ?? -1);
     const reasonFor = new Map(

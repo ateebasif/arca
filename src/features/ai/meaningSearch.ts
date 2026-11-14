@@ -1,4 +1,4 @@
-import { cacheKey, memoryVectors, readCached, rememberVector } from './embedCache';
+import { readManyCached } from './embedCache';
 import { embedTexts, similarity } from './embedTexts';
 import { docText, keepClose, queryText, type AskItem } from './ask';
 import { normalize } from './kmeans';
@@ -20,24 +20,12 @@ export async function cachedVectors(
   items: readonly AskItem[],
   model: string,
 ): Promise<{ vectors: (Float32Array | null)[]; missing: number }> {
-  let missing = 0;
-  const vectors = await Promise.all(
-    items.map(async (it) => {
-      const text = docText(model, it);
-      const key = cacheKey(model, text);
-      const hit = memoryVectors.get(key);
-      if (hit) return hit;
-      const stored = await readCached(model, text);
-      if (!stored) {
-        missing++;
-        return null;
-      }
-      const v = normalize(stored);
-      rememberVector(key, v);
-      return v;
-    }),
+  const vectors = await readManyCached(
+    model,
+    items.map((it) => docText(model, it)),
+    normalize,
   );
-  return { vectors, missing };
+  return { vectors, missing: vectors.filter((v) => !v).length };
 }
 
 /**
@@ -52,12 +40,14 @@ export async function meaningMatches(
   limit = 8,
 ): Promise<{ ids: string[]; covered: number }> {
   const { vectors, missing } = await cachedVectors(items, opts.embedModel);
+  if (opts.signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
   const covered = items.length ? (items.length - missing) / items.length : 0;
   if (missing === items.length) return { ids: [], covered: 0 };
   const [q] = await embedTexts([queryText(opts.embedModel, query)], {
     base: opts.base,
     model: opts.embedModel,
     signal: opts.signal,
+    persist: false,
   });
   if (!q) return { ids: [], covered };
   const scores = new Float32Array(items.length);

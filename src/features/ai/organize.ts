@@ -1,12 +1,12 @@
 import { cleanTag } from '@/src/features/tags/meta';
-import { setTags } from '@/src/features/tags/actions';
+import { setTagsMany } from '@/src/features/tags/actions';
 import { getMetaStore } from '@/src/store/useMeta';
 import * as bm from '@/src/lib/bookmarks';
 import { chatJson } from '@/src/lib/ollama';
 import { mainDomain } from '@/src/lib/url';
 import * as undo from '../undo/undo';
 import { embedTexts } from './embedTexts';
-import { chooseK, chooseKFromData, groupMembers, kmeans } from './kmeans';
+import { chooseK, chooseKFromData, groupMembers, kmeansAsync } from './kmeans';
 
 /**
  * "AI organize": groups bookmarks by meaning, entirely on this computer.
@@ -98,7 +98,7 @@ export function cleanFolderName(raw: unknown, fallback: string): string {
   }
   name = name
     .replace(/[\\/:*?"<>|`]+/g, ' ')
-    .replace(/^\W+|[\s.]+$/g, '')
+    .replace(/^[^\p{L}\p{N}]+|[\s.]+$/gu, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 40)
@@ -160,6 +160,8 @@ async function nameGroup(items: OrganizeItem[], opts: PlanOptions): Promise<stri
       NAME_SYSTEM,
       `Bookmarks:\n${list}`,
       NAME_SCHEMA,
+      400,
+      opts.signal,
     );
     return cleanFolderName((reply as { name?: unknown })?.name, topSite);
   } catch {
@@ -181,7 +183,7 @@ export async function planGroups(
       : (opts.groups ?? chooseK(items.length)),
     items.length,
   );
-  const clustering = kmeans(vectors, k);
+  const clustering = await kmeansAsync(vectors, k, { signal: opts.signal });
   const members = groupMembers(vectors, clustering);
   opts.onProgress?.('grouping', 1, 1);
 
@@ -269,6 +271,8 @@ export async function applyGroups(
     const folders = before.filter((c) => c.url === undefined);
     const used = new Set<string>();
     const movedFrom = new Set<string>();
+    // Tags are written once at the end (one storage write, not one per link).
+    const tagging: Array<{ id: string; url: string; tags: string[] }> = [];
     for (const group of groups) {
       let folder = folders.find((f) => !used.has(f.id) && sameName(f.title, group.name));
       if (!folder) {
@@ -281,9 +285,7 @@ export async function applyGroups(
         const from = await bm.getNode(id).catch(() => null);
         if (!from?.parentId || from.url === undefined) continue; // gone or changed
         if (tag) {
-          const current = getMetaStore().tagsOf(id);
-          const step = await setTags(id, from.url, [...current, tag]);
-          if (step) steps.push(step);
+          tagging.push({ id, url: from.url, tags: [...getMetaStore().tagsOf(id), tag] });
         }
         if (from.parentId === folder.id) continue; // already there
         await bm.move(id, { parentId: folder.id });
@@ -294,6 +296,8 @@ export async function applyGroups(
         onProgress?.(++done, total);
       }
     }
+    const tagStep = await setTagsMany(tagging);
+    if (tagStep) steps.push(tagStep);
     // Old topic folders this run emptied (a re-organize) go away.
     for (const folder of folders) {
       if (used.has(folder.id) || !movedFrom.has(folder.id)) continue;
