@@ -666,6 +666,64 @@ check('tree follows bookmark changes made outside Arca', async (page) => {
   })()`);
 });
 
+check('mini window: opens small, "Open here" moves it into this window', async (page) => {
+  const server = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<!doctype html><title>Mini page</title><h1>Mini page</h1>');
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address() as AddressInfo;
+  const url = `http://127.0.0.1:${port}/`;
+  try {
+    const origin = await page.eval<string>('location.origin');
+    const id = await page.eval<string>(`(async () => {
+      await chrome.storage.local.set({ settings: { openIn: 'window' } });
+      return (await chrome.bookmarks.create({ parentId: '1', title: 'Mini page', url: '${url}' })).id;
+    })()`);
+    await page.navigate(`${origin}/dashboard.html`);
+    await page.waitFor(`document.querySelector('[data-folder-id="1"]')`);
+    await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+    await page.waitFor(`document.querySelector('[data-bookmark-id="${id}"]')`);
+    // A plain click on the tile opens it the way Settings says: a mini window.
+    await page.click(`[data-bookmark-id="${id}"]`);
+    const popups = () =>
+      page.eval<number>(
+        `chrome.windows.getAll({ windowTypes: ['popup'] }).then((w) => w.length)`,
+      );
+    for (let i = 0; i < 50 && (await popups()) === 0; i++) await sleep(100);
+    assert.equal(await popups(), 1, 'a mini (popup) window opened');
+    await page.eval(`window.dispatchEvent(new Event('focus'))`);
+    await page.waitFor(
+      `[...document.querySelectorAll('[aria-label="Mini windows"] button')].some((b) => b.textContent === 'Open here')`,
+      5000,
+    );
+    await sleep(300);
+    await page.screenshot(`${OUT}/mini-window-bar.png`);
+    const before = await page.eval<number>(
+      `chrome.tabs.query({ currentWindow: true }).then((t) => t.length)`,
+    );
+    await page.eval(
+      `[...document.querySelectorAll('[aria-label="Mini windows"] button')].find((b) => b.textContent === 'Open here').click()`,
+    );
+    for (let i = 0; i < 50 && (await popups()) > 0; i++) await sleep(100);
+    assert.equal(await popups(), 0, 'mini window closed');
+    const tabs = await page.eval<string[]>(
+      `chrome.tabs.query({ currentWindow: true }).then((t) => t.map((x) => x.url || x.pendingUrl))`,
+    );
+    assert.equal(tabs.length, before + 1, 'opened as a tab in this window');
+    assert.ok(tabs.includes(url), `with the same page (${tabs.join(', ')})`);
+    await page.waitFor(`!document.querySelector('[aria-label="Mini windows"]')`, 5000);
+    await page.eval(`(async () => {
+      await chrome.storage.local.set({ settings: {} });
+      await chrome.bookmarks.remove('${id}');
+      const extra = await chrome.tabs.query({ url: '${url}' });
+      await chrome.tabs.remove(extra.map((t) => t.id));
+    })()`);
+  } finally {
+    server.close();
+  }
+});
+
 check('chrome move semantics match the test fake', async (page) => {
   const result = await page.eval<{ order: string; eventIndex: number }>(`(async () => {
     const bm = chrome.bookmarks;

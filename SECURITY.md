@@ -62,6 +62,14 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   and rendered as plain text. The conversation is kept in memory only.
 - Embeddings are cached in IndexedDB (private to Arca) and can be cleared in Settings.
 
+### Mini windows
+
+- Arca remembers the ids of the windows it opened as mini windows and only ever
+  acts on those; other popups are never touched.
+- "Open in main window" re-checks the page's URL with the same rules as any link
+  before reopening it as a tab. The right-click item is only shown while an Arca
+  mini window is focused. No content scripts or host permissions are involved.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.

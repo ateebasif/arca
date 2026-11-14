@@ -1,3 +1,4 @@
+import { MiniWindowBar } from './mini/MiniWindowBar';
 import { useEffect, useState } from 'react';
 import { DndProvider } from '@/src/features/dnd/DndProvider';
 import { undoLast } from '@/src/features/undo/undo';
@@ -131,6 +132,7 @@ export function Dashboard({ surface }: DashboardProps) {
         </main>
         <OverlayHost />
         <PreviewController />
+        <MiniWindowBar />
       </div>
     </DndProvider>
   );
