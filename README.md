@@ -1,152 +1,237 @@
 # Arca
 
-A bookmark dashboard extension for Ardia and other Chromium browsers. Arca turns your
-real browser bookmarks into a fast, visual, fully editable dashboard on your New Tab,
-with search, folders, and quick editing. Every change is a real bookmark change, and all
-data stays on your machine.
+**Your real browser bookmarks as a fast, visual dashboard, with optional local AI
+to organize and find them.**
+
+Arca is a Manifest V3 extension for Chromium browsers (Chrome, Brave, Edge, Arc, Dia,
+Ardia). It turns your bookmarks into an editable dashboard on the New Tab page. Every
+change in Arca is a real bookmark change, so your browser's sync, other devices and
+other tools all stay in step. Nothing is uploaded anywhere: no accounts, no analytics,
+no servers.
 
 > _Arca_ (Latin): a chest where valuables were kept.
 
-**Status:** Phase 1 (core) complete, pre-release. See [BACKLOG.md](BACKLOG.md) and
-[CHANGELOG.md](CHANGELOG.md).
+![Arca dashboard](docs/screenshots/dashboard.png)
 
-## What it does
+| Search                                 | List view with tags (light theme)             |
+| -------------------------------------- | --------------------------------------------- |
+| ![Search](docs/screenshots/search.png) | ![List view](docs/screenshots/list-light.png) |
 
-- **Dashboard**: sidebar folder tree, folder cards and bookmark tiles with
-  brand-coloured covers (or a sortable list), breadcrumbs, back/forward.
-- **All links view**: every link inside a folder and its subfolders in one grid,
-  each labelled with its folder.
-- **Search** (⌘K or `/`): fuzzy over titles, URLs and folders; copies of the same
-  page fold into one result ("in N folders").
-- **Editing**: add, edit, rename (F2), delete, all undoable (⌘Z or the toast's
-  Undo).
-- **Drag & drop**: reorder tiles, drop on a folder card's top band, a sidebar
-  folder or a breadcrumb to move. Keyboard: Space, arrows, Space.
-- **Broken links** (opt-in): find dead or moved links and fix or remove them.
-- **Clean out**: finds impulse saves (old searches, local links, one-time pages,
-  optional AI review) to archive or delete, all undoable.
-- **Tidy up**: remove duplicates (keeps the best copy), remove empty folders,
-  sort a folder for real, group links into per-site folders. Local and undoable.
-- **AI organize** (opt-in, local only): groups links by topic with your own
-  [Ollama](https://ollama.com) models and suggests folder names; you review
-  before anything moves, and one Undo reverses it. See _Local AI_ below.
-- **Ask Arca** (opt-in, local only): describe a bookmark you half remember and
-  Arca finds it, with follow-up questions to narrow it down.
-- **Mini windows**: open links as a small peek window; move one into your main
-  window with **Open here**, right-click → Open in main window, or ⌥⇧O.
-- **Multi-select**: tick items (or ⇧-click, ⌘A) to move, tag, open or delete them
-  together.
-- **Tags**: tag bookmarks and folders, filter by tag from the sidebar, or search
-  `#tag`.
-- **Descriptions** (local AI): a one-line summary under each title in list view.
-- **Backup**: export everything as an HTML bookmarks file or a JSON backup with
-  tags (Settings → Backup).
-- **Add to Arca…**: right-click any page or link to save it with a folder and
-  tags.
-- **Open links in**: same tab, new tab, background tab or a mini window.
-- **Link previews** (opt-in): hover a bookmark for a card you can scroll, with an
-  excerpt, headings and quick-open buttons. Fetched once without cookies,
-  cached for a week.
-- **Popup** (⌥⇧B): search, bookmark this tab, most visited, recently added,
-  folder shortcuts, Tidy up.
-- **Dark-first design** with System / Light / Dark, subtle motion (off under
-  "Reduce motion").
+## Features
 
-Private by design: no analytics, no accounts, no remote code, and no network requests
-unless you turn on link previews or local AI (which only talks to Ollama on this computer). See [SECURITY.md](SECURITY.md).
+**Browse and edit**
 
-## Local AI (optional)
+- Sidebar folder tree, folder cards and bookmark tiles with brand-coloured covers,
+  small tiles, or a sortable list. Breadcrumbs, back/forward.
+- **All links** view: every link inside a folder and its subfolders in one grid.
+- Add, edit, rename (F2), delete, all undoable (⌘Z or the toast's Undo).
+- **Drag & drop**: reorder, or drop onto a folder card, a sidebar folder or a
+  breadcrumb to move. Works from the keyboard too (Space, arrows, Space).
+- **Multi-select**: tick items (⇧-click for a range, ⌘A for all) to move, tag, open,
+  ungroup or delete them together.
+- **Tags** on bookmarks and folders, with colours, a tag manager (rename, merge,
+  delete) and `#tag` search.
 
-Arca can use [Ollama](https://ollama.com) on this computer to organize bookmarks. No
-Docker, no vector database, no cloud: Ollama embeds each link's title, site and folder,
-Arca clusters the vectors itself and caches them in the browser, and a small chat model
-names each group.
+**Find**
 
-1. Pull models (any embedder and chat model work; these are the recommended ones):
-   `ollama pull qwen3-embedding:4b` (best grouping; about 90 ms per link on the first
-   run) or `nomic-embed-text` (about 10 ms per link, rougher groups), and
-   `ollama pull llama3.2` for names.
-2. Let Arca talk to Ollama (Ollama blocks browser extensions by default). Use your
-   extension ID from the extensions page; Settings → Local AI shows the exact command:
-   `launchctl setenv OLLAMA_ORIGINS "chrome-extension://<arca-id>"`, then quit and
-   reopen Ollama.
-3. Settings → Local AI → turn on (the browser asks to allow `localhost:11434`), pick
-   models.
-4. Open a folder → Tidy up → AI organize → Suggest folders → review → Apply.
-5. Or click **Ask Arca** in the sidebar (or "Ask Arca" in search results) and
-   describe what you're looking for. The first question reads every bookmark once
-   (cached); after that, answers take a few seconds.
+- **Search** (⌘K or `/`): fuzzy over titles, addresses and folders, under 50 ms with
+  5,000 bookmarks. Copies of the same page fold into one result.
+- **Link previews** (opt-in): hover for a card with the page's excerpt and headings.
+- **Ask Arca** (local AI): describe a bookmark you half remember ("that Mac app for
+  downloading videos") and Arca finds it, with follow-up questions.
+- **Related by meaning** (local AI): search results include pages that match what
+  you mean, not just the words you typed.
+
+**Tidy up**
+
+- Remove duplicates (keeps the best copy) and empty folders, sort a folder for real,
+  group links into per-site folders.
+- **Broken links** (opt-in): find dead or moved links, then fix or remove them.
+- **Clean out**: finds impulse saves (old searches, local addresses, one-time pages)
+  to archive or delete.
+- **AI organize** (local AI): groups links by topic, names the folders and suggests
+  tags, following your own rules if you write any. You review everything before
+  anything moves, and one Undo reverses it. Works on one folder or all your bookmarks.
+
+**Everywhere else**
+
+- **Popup** (⌥⇧B): quick search, bookmark this tab, most visited, recently added.
+- **Right-click → Add to Arca…** on any page or link, with folder and tags.
+- **Mini windows**: open a link in a small peek window, then move it into your main
+  window with one click.
+- **Import and export**: HTML (any browser) and an Arca JSON backup with tags.
+- Dark-first design with System / Light / Dark themes; motion respects "Reduce motion".
+
+## Install
+
+Arca isn't in a web store yet. Build it and load it unpacked; it takes about two
+minutes.
+
+1. Install [bun](https://bun.sh) (or use Node 20+ with pnpm), then:
+
+   ```bash
+   git clone https://github.com/<your-account>/arca.git
+   cd arca
+   bun install
+   bun run build
+   ```
+
+   The extension is written to `.output/chrome-mv3`.
+
+2. Open your browser's extensions page: `chrome://extensions` (Edge:
+   `edge://extensions`, Brave: `brave://extensions`).
+3. Turn on **Developer mode**, click **Load unpacked** and choose
+   `.output/chrome-mv3`.
+4. Open a new tab. Chrome asks whether to keep the New Tab change: choose **Keep it**.
+5. Optional: pin Arca from the puzzle-piece menu so the popup is one click away.
+
+After pulling updates, run `bun run build` again and click the reload icon on Arca's
+card in the extensions page.
+
+**Arc, Dia and Ardia**: these browsers open their own command bar on ⌘T instead of
+a New Tab page. Open Arca from the toolbar icon or the popup (⌥⇧B), or type "Arca" in
+the command bar, and keep that tab pinned. Arca's own Settings also offer a minimal
+search page or a redirect as the New Tab.
+
+## Local AI setup (optional)
+
+The AI features run on **your own computer** with [Ollama](https://ollama.com). No
+API keys, no cloud, no Docker. Arca only ever talks to `localhost`, and it rejects any
+other address even if one is typed in.
+
+**What runs where**
+
+- An **embedding model** turns each bookmark's title and site into numbers. Arca
+  groups and searches those itself and caches them in the browser, so only new or
+  edited bookmarks are read again.
+- A small **chat model** names folders, suggests tags and answers Ask Arca. It only
+  sees short lists of titles and sites, and it can only pick from your real bookmarks.
+
+### 1. Install Ollama and pull two models
+
+Download Ollama from [ollama.com/download](https://ollama.com/download), start it,
+then in a terminal:
+
+```bash
+ollama pull nomic-embed-text   # embeddings: fast (~10 ms per bookmark)
+ollama pull llama3.2           # chat: folder names, tags, Ask Arca (2 GB)
+```
+
+Other good choices: `qwen3-embedding:4b` groups more accurately but is about 9× slower
+on the first read; `phi3` or `gemma2:2b` as smaller chat models. Any Ollama embedding
+and chat model works.
+
+### 2. Let Arca talk to Ollama
+
+Ollama blocks browser extensions by default. Allow Arca by its extension ID, which
+is shown on its card in `chrome://extensions`. If Ollama refuses, Arca's Settings →
+Local AI shows the exact command with your ID filled in, ready to copy.
+
+**macOS** (Ollama app):
+
+```bash
+launchctl setenv OLLAMA_ORIGINS "chrome-extension://YOUR_ARCA_ID"
+```
+
+Then quit Ollama from the menu bar and open it again. This resets when the Mac
+restarts; run it again if Arca says Ollama refused the request.
+
+**Windows**: run this in PowerShell, then quit Ollama from the tray and start it again:
+
+```powershell
+setx OLLAMA_ORIGINS "chrome-extension://YOUR_ARCA_ID"
+```
+
+**Linux** (systemd service): run `sudo systemctl edit ollama.service`, add the lines
+below, then run `sudo systemctl restart ollama`.
+
+```ini
+[Service]
+Environment="OLLAMA_ORIGINS=chrome-extension://YOUR_ARCA_ID"
+```
+
+**Running `ollama serve` yourself:**
+
+```bash
+OLLAMA_ORIGINS="chrome-extension://YOUR_ARCA_ID" ollama serve
+```
+
+### 3. Turn it on in Arca
+
+Settings → **Local AI** → turn it on. The browser asks to let Arca reach
+`localhost:11434`; allow it. Pick your embedding and chat models, then click **Test
+connection**.
+
+### 4. Use it
+
+- **AI organize**: open a folder → **Tidy up** → **AI organize** → **Suggest
+  folders**. Choose "This folder" or "All bookmarks", and let the AI decide how many
+  folders or pick a number. Open **Instructions for the AI** to set your own rules
+  for folder names and tags (for example "Use one word per folder" or "Always add a
+  tag for the year"). Rename, untick or edit tags in the review, then **Apply**.
+- **Ask Arca**: click **Ask Arca** in the sidebar and describe what you're looking
+  for. The first question reads your bookmarks once (a minute or two for a few
+  thousand); after that, answers take a few seconds.
+- **List descriptions**: switch to list view to see a one-line summary under each
+  title (can be turned off in Settings).
+
+![AI organize](docs/screenshots/ai-organize.png)
+
+**Troubleshooting**
+
+| Arca says                  | Do this                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
+| Can't reach Ollama         | Start the Ollama app (or `ollama serve`).                           |
+| Ollama refused the request | Set `OLLAMA_ORIGINS` as in step 2, then restart Ollama.             |
+| Model not found            | `ollama pull <model>`, or pick an installed model in Settings.      |
+| First run is slow          | Normal: every bookmark is read once. Later runs only read new ones. |
+
+## Privacy and security
+
+- Bookmarks stay in your browser. Arca makes **no network requests** unless you turn
+  on link previews or the broken-link check (both ask for permission first) or local
+  AI (which only reaches Ollama on `localhost`).
+- No analytics, no accounts, no remote code; a strict Content Security Policy blocks
+  inline and remote scripts.
+- Links that can run code (`javascript:`, `data:`) are never opened or rendered as
+  links.
+- Other extensions and websites can't message, frame or read Arca.
+
+Details and the threat model: [SECURITY.md](SECURITY.md).
 
 ## Keyboard shortcuts
 
 Press `?` in the dashboard for the full list. Highlights: ⌘K search, `[` / `]`
-back/forward, ⌥↑ parent folder, F2 rename, Delete or ⌘⌫ delete, ⌘Z undo, ⌘\ sidebar.
-Arca avoids shortcuts browsers use (⌘N, ⌘T, ⌘[).
-
-## Install (load unpacked)
-
-Build first:
-
-```bash
-bun install
-bun run build
-```
-
-This writes the extension to `.output/chrome-mv3`.
-
-### Chrome, Brave, Edge, Dia
-
-1. Open `chrome://extensions` (Edge: `edge://extensions`).
-2. Turn on **Developer mode** (top right).
-3. Click **Load unpacked** and choose the `.output/chrome-mv3` folder.
-4. Open a new tab. Chrome asks whether to keep the New Tab change; choose **Keep it**.
-5. Optional: pin Arca from the puzzle-piece menu so the popup is one click away.
-
-After rebuilding, click the reload icon on Arca's card in `chrome://extensions`.
-
-### Ardia
-
-Verified by hand in Ardia 0.2.46 (Chromium 157) on 2026-11-13:
-
-1. Open `ardia://extensions`, turn on **Developer mode**, click **Load unpacked** and pick
-   `.output/chrome-mv3`. Arca loads and reads your bookmarks (tested with ~4,000).
-2. Ardia shows one **Warning**: `'externally_connectable' specifies neither 'matches' nor
-'ids'; nothing will be able to connect`. That is intended: it's the setting that stops
-   other extensions and websites from talking to Arca (see SECURITY.md).
-3. **⌘T opens Ardia's command bar, not a New Tab page**, so the New Tab override doesn't
-   show there. Open Arca instead by typing "Arca" in the command bar (**Arca — Open
-   Extension**), then keep that tab in Ardia's sidebar so the dashboard is one click away.
-   The popup (⌥⇧B) is the quick-search entry point.
-
-### Getting your browser's New Tab back
-
-Browsers don't let extensions switch their New Tab override off at runtime. Arca's
-Settings offer a **minimal search page** or a **redirect to a URL** instead; to get the
-browser's own New Tab back, disable Arca in the extensions page.
+back/forward, ⌥↑ parent folder, F2 rename, ⌘⌫ delete, ⌘Z undo, ⌘\ sidebar, ⌥⇧B popup.
 
 ## Development
 
-Requires [bun](https://bun.sh) and Node 20+.
-
 ```bash
-bun run dev        # dev build with HMR in a Chromium window
+bun run dev        # dev build with hot reload in a Chromium window
 bun run build      # production build in .output/chrome-mv3
-bun run zip        # packaged zip
-bun run test       # unit + component tests (Vitest, fake browser APIs)
-bun run lint       # ESLint
-bun run typecheck  # tsc
-bun run e2e        # real-Chrome smoke + security checks (after `bun run build`)
+bun run zip        # packaged zip for a store upload
+bun run test       # unit and component tests (Vitest, fake browser APIs)
+bun run lint       # ESLint, including security rules
+bun run typecheck  # TypeScript
 bun run security   # static checks on the built manifest, CSP and bundle
+bun run e2e        # real-Chrome checks (after a build): speed, editing, security
+bun run e2e:ai     # adds checks against real Ollama models (optional)
 ```
 
-`bun run e2e` loads the built extension into headless Google Chrome with a throwaway
-profile (via the DevTools `Extensions.loadUnpacked` command; branded Chrome ignores
-`--load-extension`). It checks rendering, search speed with 5,000 bookmarks, editing
-round-trips, New Tab modes, the popup and virtualization, and saves screenshots to
-`.e2e/`. Set `CHROME_PATH` to use another Chromium binary.
+Stack: [WXT](https://wxt.dev), React 19, TypeScript, Tailwind CSS 4, Zustand, dnd-kit,
+TanStack Virtual. `bun run e2e` loads the built extension into headless Chrome with a
+throwaway profile; set `CHROME_PATH` to use another Chromium binary. To refresh the
+screenshots above, run `bun run build && bun scripts/screenshots.ts`.
 
-## Docs
+Project docs: [CHANGELOG.md](CHANGELOG.md), [BACKLOG.md](BACKLOG.md), the product spec
+[arca-prd.md](arca-prd.md), and git conventions in [docs/git/](docs/git/).
 
-- Product spec: [arca-prd.md](arca-prd.md)
-- Working agreement for contributors and agents: [CLAUDE.md](CLAUDE.md)
-- Git conventions: [docs/git/](docs/git/)
+## Contributing
+
+Issues and pull requests are welcome. Please run `bun run lint`, `bun run typecheck`,
+`bun run test`, `bun run build`, `bun run security` and `bun run e2e` before opening a
+pull request, and follow the commit style in [docs/git/](docs/git/).
+
+## License
+
+[MIT](LICENSE) © 2026 Ateeb Asif. Free to use, modify and share.

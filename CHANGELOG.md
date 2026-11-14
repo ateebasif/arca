@@ -145,6 +145,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Public README with screenshots, install steps and a Local AI setup guide for
+  macOS, Windows and Linux; MIT license; `scripts/screenshots.ts` regenerates the
+  README images from a sample library.
 - **Import** (Settings → Backup): bookmarks exported from any browser (HTML) or an
   Arca backup (JSON) go into a new folder after a preview; duplicates are skipped
   by default, tags are kept, and one Undo removes the whole import.
