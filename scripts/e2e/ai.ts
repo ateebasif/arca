@@ -50,7 +50,9 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
     for (let i = 0; i < 40; i++) {
       try {
         tags = (await (
-          await fetch(`http://127.0.0.1:${PORT}/api/tags`)
+          await fetch(`http://127.0.0.1:${PORT}/api/tags`, {
+            signal: AbortSignal.timeout(2000),
+          })
         ).json()) as typeof tags;
         break;
       } catch {
@@ -60,10 +62,12 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
     const names = (tags.models ?? []).map((m) => m.name);
     if (!names.includes(EMBED) || !names.includes(CHAT)) return 'skipped';
 
+    console.log('    … AI 0/4 temporary Ollama up; launching Chrome');
     const browser = await launch({ grantSiteAccess: true });
     try {
       const page = await browser.open('newtab.html');
       await page.setViewport(1280, 860, true);
+      console.log('    … AI 0/4 seeding test bookmarks');
       const folder = await page.eval<string>(`(async () => {
         const f = await chrome.bookmarks.create({ parentId: '1', title: 'AI Lab' });
         for (const [title, url] of ${JSON.stringify(TITLES)}) await chrome.bookmarks.create({ parentId: f.id, title, url });
