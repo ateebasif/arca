@@ -51,6 +51,7 @@
 
 ## Done
 
+- [x] ARC-072 · Searchable folder picker (recent first, tree, keyboard) in popup save, Edit and bulk Move; popup search shows all matches with a count, scrolling · `feature/popup-folder-picker` · 2026-11-14
 - [x] ARC-B08 · Selection checkbox placement/style in list, tiles and folder cards; bar centred over main area · `fix/select-ui` · 2026-11-14
 - [x] ARC-038 · Export: Netscape HTML (with TAGS) + Arca JSON backup, Settings → Backup, no downloads permission · `feature/export` · 2026-11-14
 - [x] ARC-037 · Dead-link finder in Clean out: opt-in site access, HEAD→GET, limits, 2-week cache, broken group, update moved links (runs in the Arca tab via a store rather than the background worker) · `feature/dead-links` · 2026-11-14

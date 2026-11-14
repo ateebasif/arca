@@ -1,3 +1,4 @@
+import { pickFolder } from '../helpers/folderPicker';
 import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
@@ -77,10 +78,7 @@ describe('multi-select', () => {
     await userEvent.click(box('Gamma'));
     await screen.findByRole('region', { name: 'Selection' });
     await userEvent.click(within(bar()).getByRole('button', { name: 'Move to…' }));
-    await userEvent.selectOptions(
-      within(bar()).getByRole('combobox', { name: 'Move to folder' }),
-      fake.findByTitle('Target')!.id,
-    );
+    await pickFolder(bar(), 'Move to folder', 'Target');
     await userEvent.click(within(bar()).getByRole('button', { name: 'Move 2 items' }));
     const target = fake.findByTitle('Target')!.id;
     await vi.waitFor(() => expect(fake.childIds(target)).toHaveLength(2));

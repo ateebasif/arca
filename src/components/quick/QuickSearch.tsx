@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import { highlightParts, search, type SearchResult } from '@/src/features/search/search';
 import { defaultDisposition, openSafely } from '@/src/features/open';
@@ -9,6 +9,8 @@ import { Favicon } from '../main/Favicon';
 
 interface QuickSearchProps {
   limit: number;
+  /** Scroll the results (about ten rows tall) and show how many matched. */
+  scroll?: boolean;
   placeholder?: string;
   /** Called after a result opens (the popup closes itself). */
   onOpened?(): void;
@@ -26,6 +28,7 @@ interface QuickSearchProps {
  */
 export function QuickSearch({
   limit,
+  scroll = false,
   placeholder = 'Search bookmarks',
   onOpened,
   onOpenFolder,
@@ -45,6 +48,12 @@ export function QuickSearch({
     [state, query, limit, onOpenFolder],
   );
   const typedUrl = results.length === 0 ? normalizeInputUrl(query) : null;
+  const listRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    listRef.current
+      ?.querySelector(`#${CSS.escape(`${listId}-${active}`)}`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [active, listId]);
 
   const open = async (result: SearchResult, disposition: OpenDisposition) => {
     const { node } = result.entry;
@@ -103,12 +112,24 @@ export function QuickSearch({
           className="placeholder:text-ink-faint min-w-0 flex-1 bg-transparent text-sm outline-none"
         />
       </div>
+      {query.trim() && scroll && results.length > 0 && (
+        <p className="text-ink-faint mt-2 px-1 text-[11px]" aria-live="polite">
+          {results.length >= limit
+            ? `${limit.toLocaleString()}+ results`
+            : `${results.length.toLocaleString()} ${results.length === 1 ? 'result' : 'results'}`}
+        </p>
+      )}
       {query.trim() && (
         <ul
+          ref={listRef}
           id={listId}
           role="listbox"
           aria-label="Results"
-          className="mt-2 flex flex-col gap-px"
+          className={`flex flex-col gap-px ${
+            scroll
+              ? 'mt-1 max-h-[452px] overflow-y-auto overscroll-contain pr-0.5'
+              : 'mt-2'
+          }`}
         >
           {results.map((result, index) => {
             const { entry } = result;
@@ -125,7 +146,7 @@ export function QuickSearch({
                     e.metaKey || e.ctrlKey ? 'background' : defaultDisposition(),
                   )
                 }
-                className={`flex h-11 items-center gap-3 rounded-lg px-3 ${
+                className={`flex h-11 shrink-0 items-center gap-3 rounded-lg px-3 ${
                   index === active ? 'bg-surface-strong shadow-(--shadow-tile)' : ''
                 }`}
               >

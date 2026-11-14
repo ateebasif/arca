@@ -138,6 +138,29 @@ export function folderOptions(
   return out;
 }
 
+export interface FolderEntry {
+  id: string;
+  title: string;
+  depth: number;
+  /** Parent path, e.g. "Bookmarks bar / Organized by Arca". */
+  path: string;
+}
+
+/** Every folder in tree order with depth and parent path (for pickers). */
+export function folderList(state: BookmarkSnapshot, excludeId?: string): FolderEntry[] {
+  const out: FolderEntry[] = [];
+  const visit = (id: string, depth: number, parents: string[]) => {
+    const node = state.nodes.get(id);
+    if (!node?.childIds) return;
+    if (excludeId && isWithin(state, id, excludeId)) return;
+    const title = node.title || 'Untitled';
+    out.push({ id, title, depth, path: parents.join(' / ') });
+    node.childIds.forEach((c) => visit(c, depth + 1, [...parents, title]));
+  };
+  state.rootIds.forEach((id) => visit(id, 0, []));
+  return out;
+}
+
 export interface LinkInFolder {
   node: BNode;
   /** Folder the bookmark lives in. */
