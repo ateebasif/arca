@@ -1,3 +1,4 @@
+import { useTagColors } from '@/src/store/useMeta';
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { cleanTag } from '@/src/features/tags/meta';
 import { CloseIcon } from '../icons';
@@ -16,6 +17,7 @@ export function TagInput({
   onChange(tags: string[]): void;
   suggestions: readonly string[];
 }) {
+  const colors = useTagColors();
   const [draft, setDraft] = useState('');
   const listId = useId();
   const add = (raw: string) => {
@@ -45,7 +47,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            style={tagStyle(tag)}
+            style={tagStyle(tag, colors)}
             className="flex items-center gap-0.5 rounded-full py-0.5 pr-1 pl-2 text-xs font-medium"
           >
             #{tag}
@@ -87,7 +89,7 @@ export function TagInput({
             <button
               key={t}
               type="button"
-              style={tagStyle(t)}
+              style={tagStyle(t, colors)}
               className="rounded-full px-2 py-0.5 text-[11px] opacity-80 hover:opacity-100"
               onClick={() => add(t)}
             >

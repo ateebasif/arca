@@ -1,3 +1,4 @@
+import { useOverlays } from '@/src/store/overlays';
 import { useMemo, useState } from 'react';
 import { tagStyle } from '@/src/features/tags/style';
 import { getMetaStore, useMeta } from '@/src/store/useMeta';
@@ -19,19 +20,28 @@ export function TagList() {
   const shown = all ? tags : tags.slice(0, SHOW);
   return (
     <section aria-label="Tags" className="px-2 pb-4">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="text-ink-faint hover:text-ink-muted flex w-full items-center gap-1 px-2 py-1 text-[11px] font-medium tracking-wide uppercase"
-      >
-        <ChevronRight
-          width={10}
-          height={10}
-          className={`transition-transform ${open ? 'rotate-90' : ''}`}
-        />
-        Tags
-      </button>
+      <div className="flex items-center">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="text-ink-faint hover:text-ink-muted flex min-w-0 flex-1 items-center gap-1 px-2 py-1 text-[11px] font-medium tracking-wide uppercase"
+        >
+          <ChevronRight
+            width={10}
+            height={10}
+            className={`transition-transform ${open ? 'rotate-90' : ''}`}
+          />
+          Tags
+        </button>
+        <button
+          type="button"
+          onClick={() => useOverlays.getState().setTagManagerOpen(true)}
+          className="text-ink-faint hover:text-ink hover:bg-hover rounded-md px-1.5 py-0.5 text-[11px]"
+        >
+          Manage
+        </button>
+      </div>
       {open && (
         <ul className="flex flex-col gap-px">
           {shown.map(({ tag, count }) => (
@@ -47,7 +57,7 @@ export function TagList() {
                 }`}
               >
                 <span
-                  style={tagStyle(tag)}
+                  style={tagStyle(tag, meta.colors)}
                   className="grid size-4 shrink-0 place-items-center rounded text-[10px] font-semibold"
                   aria-hidden
                 >

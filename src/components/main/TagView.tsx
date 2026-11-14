@@ -1,3 +1,4 @@
+import { useTagColors } from '@/src/store/useMeta';
 import { useViewIds } from '@/src/store/selection';
 import { useDescriptionsOn } from '@/src/features/ai/useDescription';
 import { useMemo } from 'react';
@@ -15,12 +16,13 @@ import { VirtualRows } from './Virtual';
 
 /** Breadcrumb stand-in while a tag is shown: "#tag" with a way out. */
 export function TagCrumb({ tag }: { tag: string }) {
+  const colors = useTagColors();
   const clear = () => useUi.getState().setTagFilter(null);
   return (
     <div className="flex min-w-0 items-center gap-2 overflow-hidden text-[15px]">
       <span className="text-ink-muted shrink-0 max-lg:hidden">Tagged</span>
       <span
-        style={tagStyle(tag)}
+        style={tagStyle(tag, colors)}
         className="max-w-[16rem] min-w-16 truncate rounded-full px-2.5 py-0.5 font-medium"
       >
         #{tag}

@@ -110,6 +110,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Tag manager** (sidebar → Tags → Manage): find, rename (renaming to an existing
+  tag merges them), merge several checked tags into one, recolour (8 colours,
+  shown everywhere tags appear), delete a tag from every item, or jump to its
+  items. It also spots look-alike tags (react / reactjs / React.js) and merges
+  them in one click. Every change is one undo.
 - Selection bar: **Select all** (everything in the folder or view, including rows
   not yet scrolled into view) once one item is picked, and **Ungroup** for the
   selected folders (several at once, asks first; one undo).

@@ -117,7 +117,7 @@ export function SelectionBar() {
                       key={t}
                       type="button"
                       aria-label={`Remove tag ${t} from selected`}
-                      style={tagStyle(t)}
+                      style={tagStyle(t, meta.colors)}
                       disabled={busy}
                       onClick={() => void run(() => retagMany(list, [], [t]), false)}
                       className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"

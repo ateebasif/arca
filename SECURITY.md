@@ -88,6 +88,8 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   final address are kept, in IndexedDB, for two weeks.
 - At most 6 requests at once and 2 per site.
 
+- Tag colours (`tagColors`) are validated the same way: known tags only, slots 0–7.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.
