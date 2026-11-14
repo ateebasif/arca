@@ -29,6 +29,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- "Related by meaning" search results can be reached with ↑↓ and opened with Enter.
 - Tags on link tiles no longer get cut off at the bottom of the card: the folder
   and tags now share one line.
 - Tags added in two Arca pages at the same time no longer overwrite each other.

@@ -1,4 +1,5 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { useMeaningResults } from '@/src/store/meaningResults';
 import { openResult } from '@/src/features/search/actions';
 import {
   buildIndex,
@@ -36,9 +37,8 @@ export function SearchResults() {
   const askArca = () => useOverlays.getState().openAsk(query.trim());
 
   useEffect(() => {
-    listRef.current
-      ?.querySelector(`#${resultId(active)}`)
-      ?.scrollIntoView({ block: 'nearest' });
+    // Meaning matches live outside the keyword list, so look in the document.
+    document.getElementById(resultId(active))?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
   return (
@@ -108,7 +108,13 @@ export function SearchResults() {
           ))}
         </ul>
       )}
-      <MeaningSection query={query} exclude={results.map((r) => r.entry.node.id)} />
+      <MeaningSection
+        query={query}
+        exclude={results.map((r) => r.entry.node.id)}
+        offset={results.length}
+        active={active}
+        onHover={setActive}
+      />
       <p className="text-ink-faint text-center text-[11px]">
         ↑↓ to move · Enter to open · ⌘Enter new tab · ⌥Enter show in folder · Esc to clear
       </p>
@@ -218,16 +224,38 @@ function Chip({
  * "Related by meaning": bookmarks close in meaning to the query that the
  * keyword search didn't find, from the readings Ask Arca already cached.
  */
-function MeaningSection({ query, exclude }: { query: string; exclude: string[] }) {
+function MeaningSection({
+  query,
+  exclude,
+  offset,
+  active,
+  onHover,
+}: {
+  query: string;
+  exclude: string[];
+  /** Keyword results before these, for keyboard positions. */
+  offset: number;
+  active: number;
+  onHover(index: number): void;
+}) {
   const state = useBookmarks();
   const { ids, loading, covered, on } = useMeaningSearch(query, exclude);
+  const entries = useMemo(() => {
+    if (!on) return [];
+    const byId = new Map(buildIndex(state).map((e) => [e.node.id, e]));
+    return ids.flatMap((id) => {
+      const e = byId.get(id);
+      return e ? [e] : [];
+    });
+  }, [on, ids, state]);
+  // Share them with the search box so ↑↓ and Enter reach them.
+  useEffect(() => {
+    useMeaningResults
+      .getState()
+      .set(entries.map((entry) => ({ entry, score: 0, copies: [] })));
+    return () => useMeaningResults.getState().set([]);
+  }, [entries]);
   if (!on) return null;
-  const index = buildIndex(state);
-  const byId = new Map(index.map((e) => [e.node.id, e]));
-  const entries = ids.flatMap((id) => {
-    const e = byId.get(id);
-    return e ? [e] : [];
-  });
   if (!loading && entries.length === 0) {
     return covered < 0.5 ? (
       <p className="text-ink-faint text-center text-[11px]">
@@ -246,12 +274,18 @@ function MeaningSection({ query, exclude }: { query: string; exclude: string[] }
           />
         )}
       </p>
-      <ul className="flex flex-col gap-px">
-        {entries.map((entry) => {
+      <ul className="flex flex-col gap-px" role="listbox" aria-label="Related by meaning">
+        {entries.map((entry, i) => {
           const url = entry.node.url ?? '';
+          const index = offset + i;
+          const isActive = index === active;
           return (
             <li
               key={entry.node.id}
+              id={resultId(index)}
+              role="option"
+              aria-selected={isActive}
+              onMouseMove={() => !isActive && onHover(index)}
               data-meaning-result={entry.node.id}
               onClick={(e) =>
                 openResult(
@@ -259,7 +293,9 @@ function MeaningSection({ query, exclude }: { query: string; exclude: string[] }
                   e.altKey ? 'reveal' : e.metaKey || e.ctrlKey ? 'new-tab' : 'open',
                 )
               }
-              className="hover:bg-surface-strong flex h-12 cursor-pointer items-center gap-3 rounded-xl px-3"
+              className={`flex h-12 cursor-pointer items-center gap-3 rounded-xl px-3 ${
+                isActive ? 'bg-surface-strong shadow-(--shadow-tile)' : ''
+              }`}
             >
               <span className="grid size-6 shrink-0 place-items-center">
                 <Favicon url={url} title={entry.title} size={20} />

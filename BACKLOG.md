@@ -45,6 +45,8 @@
 
 ## Done
 
+- [x] ARC-075 · "Related by meaning" results join ↑↓ / Enter navigation after the keyword results · `feature/meaning-keyboard` · 2026-11-14
+
 - [x] ARC-039 · Import: Netscape HTML (any browser) / Arca JSON backup into a new folder; preview with counts, duplicates skipped by default, code links left out, tags kept, one undo; store ignores the event flood and reloads once · `feature/import` · 2026-11-14
 
 - [x] ARC-060 · AI organize "All bookmarks" scope: one pool across roots, results in Other bookmarks / Organized by Arca, Bookmarks bar opt-in (folder cap 60 from ARC-076) · `feature/organize-all-bookmarks` · 2026-11-14
@@ -123,8 +125,6 @@
 - [x] ARC-001 · Repo + git setup, guides, CLAUDE.md, backlog · `main` (initial commit) · 2026-11-13
 
 ## Known Issues / Bugs
-
-- [ ] ARC-075 · "Related by meaning" results aren't in the ↑↓ keyboard navigation yet (click only) · P3
 
 - [ ] ARC-B07 · New Tab initial JS is 437 KB, over the 400 KB budget. Measured 2026-11-14: react-dom (production build) is 242 KB of it, dnd-kit ~50 KB, TanStack Virtual ~20 KB; paint is still 28–32 ms FCP / 35–40 ms interactive at 5,000 bookmarks. Fix needs a decision: Preact compat (new dependency, ~-150 KB) or loading drag & drop after first paint (risky refactor) · P2
 - [ ] ARC-071 · Drag a multi-selection together (today drag moves one item) · P3
