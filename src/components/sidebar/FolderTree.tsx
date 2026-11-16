@@ -7,6 +7,7 @@ import { folderCounts, getPath } from '@/src/store/selectors';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { BarIcon, ChevronRight, FolderIcon } from '../icons';
+import { FolderGlyph } from '../FolderGlyph';
 import { InlineRename } from '../overlays/InlineRename';
 
 interface Row {
@@ -210,7 +211,11 @@ const TreeRow = memo(function TreeRow({
       >
         <ChevronRight width={12} height={12} />
       </span>
-      <Icon className={`shrink-0 ${selected ? 'text-accent' : ''}`} />
+      <FolderGlyph
+        id={node.id}
+        fallback={Icon}
+        className={`shrink-0 ${selected ? 'text-accent' : ''}`}
+      />
       {renaming ? (
         <InlineRename id={node.id} initial={node.title} className="h-6" />
       ) : (

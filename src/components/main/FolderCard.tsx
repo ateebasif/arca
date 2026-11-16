@@ -8,7 +8,7 @@ import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
-import { FolderIcon } from '../icons';
+import { FolderGlyph } from '../FolderGlyph';
 import { InlineRename } from '../overlays/InlineRename';
 import { Favicon } from './Favicon';
 import { MoreButton } from './MoreButton';
@@ -97,7 +97,7 @@ export const FolderCard = memo(function FolderCard({
                   : ''
             }`}
           >
-            <FolderIcon className="text-accent shrink-0" />
+            <FolderGlyph id={folder.id} className="text-accent shrink-0" />
             {renaming ? (
               <InlineRename
                 id={folder.id}
@@ -138,7 +138,7 @@ export const FolderCard = memo(function FolderCard({
         }}
       >
         <span className="bg-accent-strong grid size-9 shrink-0 place-items-center rounded-[10px] text-white shadow-sm transition-transform duration-200 ease-(--ease-out-soft) group-hover:scale-105">
-          <FolderIcon width={18} height={18} />
+          <FolderGlyph id={folder.id} size={18} />
         </span>
         {drop.isOver && (
           <span className="bg-surface-strong text-ink animate-pop absolute inset-x-2 bottom-1.5 rounded-md px-2 py-0.5 text-center text-[11px] font-medium">

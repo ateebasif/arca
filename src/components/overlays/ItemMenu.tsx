@@ -82,6 +82,11 @@ export function ItemMenu({ menu }: { menu: MenuState }) {
     ...(isFolder
       ? [
           {
+            label: 'Icon…',
+            disabled: locked,
+            run: () => useOverlays.getState().setIconFor(node.id),
+          },
+          {
             label: 'Ungroup',
             disabled: locked || (node.childIds?.length ?? 0) === 0,
             run: () => void ungroupFolder(node.id),

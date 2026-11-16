@@ -47,6 +47,9 @@ interface OverlayState {
   tidyOpen: boolean;
   tagManagerOpen: boolean;
   setTagManagerOpen(open: boolean): void;
+  /** Folder whose icon is being chosen. */
+  iconFor: string | null;
+  setIconFor(id: string | null): void;
   /** Ask Arca panel, with text to start the composer with. */
   ask: { draft: string } | null;
   /** Last Tidy up tab, so reopening the panel returns to it. */
@@ -84,6 +87,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   shortcutsOpen: false,
   tidyOpen: false,
   tagManagerOpen: false,
+  iconFor: null,
   tidyTab: 'duplicates',
   ask: null,
   toasts: [],
@@ -102,6 +106,7 @@ export const useOverlays = create<OverlayState>()((set) => ({
   setTidyOpen: (tidyOpen) => set({ tidyOpen, menu: null }),
   setTidyTab: (tidyTab) => set({ tidyTab }),
   setTagManagerOpen: (tagManagerOpen) => set({ tagManagerOpen, menu: null }),
+  setIconFor: (iconFor) => set({ iconFor, menu: null }),
   openAsk: (draft = '') => set({ ask: { draft }, menu: null }),
   closeAsk: () => set({ ask: null }),
   toast: (message, tone = 'info', action) => {
@@ -124,6 +129,7 @@ export function resetOverlaysForTests(): void {
     shortcutsOpen: false,
     tidyOpen: false,
     tagManagerOpen: false,
+    iconFor: null,
     tidyTab: 'duplicates',
     ask: null,
     toasts: [],

@@ -22,9 +22,6 @@
 
 ### Phase 4 – Later
 
-- [ ] ARC-042 · Saved searches · Phase 4 · P3
-- [ ] ARC-043 · Custom folder icons · Phase 4 · P3
-
 ### Tooling
 
 ## Ideas (unscoped)
@@ -36,6 +33,9 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-042 · Saved searches: Save search (text + filters) from results; sidebar list to run or forget; synced across tabs · `feature/saved-searches` · 2026-11-16
+- [x] ARC-043 · Custom folder icons: folder menu → Icon… (30 choices or any single emoji), shown in tree, cards and list · `feature/saved-searches` · 2026-11-16
 
 - [x] ARC-032b · Metadata cleanup: tags/notes of deleted bookmarks are marked gone (not counted), kept 1 hour for undo in any tab, then removed unless this tab can still undo; fixes a new tab pruning tags another tab could restore · `chore/small-improvements` · 2026-11-16
 - [x] ARC-078 · Layout prefs (view, density, sort, scope, sidebar) follow changes made in other open Arca tabs; folder and tree stay per tab · `chore/small-improvements` · 2026-11-16

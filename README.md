@@ -31,6 +31,7 @@ no servers.
 - **Multi-select**: tick items (⇧-click for a range, ⌘A for all) to move, tag, open,
   ungroup or delete them together.
 - **Notes** on bookmarks: why you saved it, searchable and shown in previews.
+- **Folder icons**: give any folder an emoji.
 - **Tags** on bookmarks and folders, with colours, a tag manager (rename, merge,
   delete) and `#tag` search.
 
@@ -38,6 +39,8 @@ no servers.
 
 - **Search** (⌘K or `/`): fuzzy over titles, addresses and folders, under 50 ms with
   5,000 bookmarks. Copies of the same page fold into one result.
+- **Filters and saved searches**: narrow results by tag, note, duplicates or broken
+  links, and save a search to the sidebar.
 - **Link previews** (opt-in): hover for a card with the page's excerpt and headings.
 - **Ask Arca** (local AI): describe a bookmark you half remember ("that Mac app for
   downloading videos") and Arca finds it, with follow-up questions.

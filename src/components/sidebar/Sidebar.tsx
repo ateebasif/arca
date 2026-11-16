@@ -14,6 +14,7 @@ import {
 import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
 import { TagList } from './TagList';
+import { SavedSearchList } from './SavedSearchList';
 
 export function Sidebar() {
   const width = useUi((s) => s.sidebarWidth);
@@ -43,6 +44,7 @@ export function Sidebar() {
       <nav className="min-h-0 flex-1 overflow-y-auto">
         <HomeRow />
         <FolderTree />
+        <SavedSearchList />
         <TagList />
       </nav>
       <div className="px-2 pb-1.5">

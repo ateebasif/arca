@@ -13,7 +13,8 @@ import { displayHost } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
 import { useUi, type SortMode } from '@/src/store/ui';
-import { ChevronRight, FolderIcon } from '../icons';
+import { ChevronRight } from '../icons';
+import { FolderGlyph } from '../FolderGlyph';
 import { InlineRename } from '../overlays/InlineRename';
 import { Favicon } from './Favicon';
 import { MoreButton } from './MoreButton';
@@ -146,7 +147,7 @@ export const FolderRow = memo(function FolderRow({
         className="absolute top-1/2 left-3 -translate-y-1/2"
       />
       <div role="cell" className="flex min-w-0 items-center gap-2.5">
-        <FolderIcon className="text-accent shrink-0" />
+        <FolderGlyph id={folder.id} className="text-accent shrink-0" />
         {renaming ? (
           <InlineRename id={folder.id} initial={folder.title} className="h-7" />
         ) : (
