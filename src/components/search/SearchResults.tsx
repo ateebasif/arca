@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useMeaningResults } from '@/src/store/meaningResults';
 import { useBrokenLinks } from '@/src/store/brokenLinks';
+import { useSavedSearches } from '@/src/store/savedSearches';
 import { getMetaStore, useMeta } from '@/src/store/useMeta';
 import { openResult } from '@/src/features/search/actions';
 import {
@@ -68,6 +69,7 @@ export function SearchResults() {
             <SparkleIcon /> Ask Arca
           </button>
         )}
+        <SaveSearchButton />
         <span className="text-ink-faint ml-auto" aria-live="polite">
           {results.length === RESULT_LIMIT
             ? `Top ${RESULT_LIMIT} results`
@@ -380,5 +382,26 @@ function FilterChips() {
         Broken
       </Chip>
     </>
+  );
+}
+
+/** Saves the current search (text + filters) to the sidebar. */
+function SaveSearchButton() {
+  const query = useUi((s) => s.query);
+  const filters = useUi((s) => s.filters);
+  const list = useSavedSearches((s) => s.list);
+  const saved = list.some(
+    (s) =>
+      s.query === query.trim() && JSON.stringify(s.filters) === JSON.stringify(filters),
+  );
+  return (
+    <button
+      type="button"
+      disabled={saved}
+      onClick={() => void useSavedSearches.getState().save(query, query, filters)}
+      className="text-ink-muted hover:text-ink hover:bg-hover rounded-full px-2.5 py-1 disabled:opacity-60"
+    >
+      {saved ? 'Saved ✓' : 'Save search'}
+    </button>
   );
 }

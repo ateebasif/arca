@@ -133,6 +133,12 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
   preview says how many).
 - Everything goes into one new folder; one Undo removes it.
 
+### Saved searches and folder icons
+
+- Stored in `chrome.storage.local` (`savedSearches`, `folderIcons`) and validated on
+  read: ids must look like bookmark ids, search text and names are length-capped,
+  and a folder icon must be exactly one emoji. Both render as plain text.
+
 ### How links open
 
 - **Web URLs** (`http`, `https`, `ftp`) are real links.

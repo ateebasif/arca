@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import {
   AskPanel,
   TagManager,
+  FolderIconPicker,
   EditDialog,
   SettingsDialog,
   ShortcutsDialog,
@@ -24,6 +25,7 @@ export function OverlayHost() {
   const tidyOpen = useOverlays((s) => s.tidyOpen);
   const ask = useOverlays((s) => s.ask);
   const tagManagerOpen = useOverlays((s) => s.tagManagerOpen);
+  const iconFor = useOverlays((s) => s.iconFor);
   return (
     <>
       <Suspense fallback={null}>
@@ -41,6 +43,11 @@ export function OverlayHost() {
       {tagManagerOpen && (
         <Suspense fallback={null}>
           <TagManager />
+        </Suspense>
+      )}
+      {iconFor && (
+        <Suspense fallback={null}>
+          <FolderIconPicker id={iconFor} />
         </Suspense>
       )}
       {ask && (

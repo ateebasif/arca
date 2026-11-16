@@ -152,6 +152,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Saved searches**: save a search with its filters and run it again from the
+  sidebar.
+- **Folder icons**: give any folder an emoji (folder menu → Icon…).
 - View, density and sort changes apply to every open Arca tab.
 - Drag a **multi-selection** onto a folder to move everything selected at once.
 - **Open tabs panel**: see this window's tabs beside your bookmarks; drag one onto a
