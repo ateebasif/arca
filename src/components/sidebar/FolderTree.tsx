@@ -1,5 +1,13 @@
-import { memo, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { useFolderDrop } from '@/src/features/dnd/hooks';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
+import { useFolderDrop, useTreeDrag } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import type { BNode, BookmarkSnapshot } from '@/src/store/bookmarkStore';
 import { useOverlays } from '@/src/store/overlays';
@@ -168,9 +176,20 @@ const TreeRow = memo(function TreeRow({
   const renaming = useOverlays((s) => s.renamingId === node.id && s.renameIn === 'tree');
   const handlers = itemHandlers(node);
   const drop = useFolderDrop(node.id, 'tree', hasChildFolders && !expanded);
+  const { setDragRef, pointer, isDragging } = useTreeDrag(node);
+  const setRefs = useCallback(
+    (el: HTMLLIElement | null) => {
+      drop.setDropRef(el);
+      setDragRef(el);
+    },
+    // Both setters are stable for this row.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   return (
     <li
-      ref={drop.setDropRef}
+      ref={setRefs}
+      {...(renaming ? {} : pointer)}
       data-drop-folder={node.id}
       role="treeitem"
       aria-level={depth + 1}
@@ -185,7 +204,7 @@ const TreeRow = memo(function TreeRow({
       }
       onContextMenu={handlers.onContextMenu}
       onKeyDown={handlers.onKeyDown}
-      className={`group flex h-8 items-center gap-1.5 rounded-lg pr-2 text-[13px] outline-offset-[-2px] transition-colors duration-150 select-none ${
+      className={`group flex h-8 items-center gap-1.5 rounded-lg pr-2 text-[13px] ${isDragging ? 'opacity-40' : ''} outline-offset-[-2px] transition-colors duration-150 select-none ${
         drop.isOver
           ? drop.blocked
             ? 'ring-danger ring-2 ring-inset'

@@ -34,6 +34,8 @@
 
 ## Done
 
+- [x] ARC-081 · Drag folders from the sidebar tree onto any folder (tree, cards, breadcrumbs), undoable; mouse only · `feature/tree-drag` · 2026-11-16
+
 - [x] ARC-079 · Arca logo/title goes to Home; click the open folder's name in the breadcrumb to rename it inline (browser folders stay locked) · `feature/home-link-crumb-rename` · 2026-11-16
 
 - [x] ARC-042 · Saved searches: Save search (text + filters) from results; sidebar list to run or forget; synced across tabs · `feature/saved-searches` · 2026-11-16
@@ -153,5 +155,5 @@
 - Sidebar tree and search results are not virtualized (tree shows only expanded folders; search caps at 50). Revisit if someone has thousands of folders.
 - `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
 - e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.
-- Drag & drop: dragging folders _from_ the sidebar tree isn't supported yet (drag their cards instead). Reordering is disabled when a sort other than Manual is active, since the shown order isn't the browser order.
+- Drag & drop: sidebar tree folders can be dragged with the mouse (ARC-081); keyboard drag stays on folder cards. Reordering is disabled when a sort other than Manual is active, since the shown order isn't the browser order.
 - Links are no longer natively draggable (to other apps / the tab strip) because the browser's link drag cancels dnd-kit's pointer drag.
