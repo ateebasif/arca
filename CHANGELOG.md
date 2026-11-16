@@ -33,6 +33,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Undoing a delete in one Arca tab could lose the item's tags and note if another
+  Arca tab had been opened meanwhile. Deleted items' tags and notes are now kept
+  for an hour (and as long as Undo can bring them back) before being cleaned up.
 - "Related by meaning" search results can be reached with ↑↓ and opened with Enter.
 - Tags on link tiles no longer get cut off at the bottom of the card: the folder
   and tags now share one line.
@@ -149,6 +152,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- View, density and sort changes apply to every open Arca tab.
 - Drag a **multi-selection** onto a folder to move everything selected at once.
 - **Open tabs panel**: see this window's tabs beside your bookmarks; drag one onto a
   folder (or click Bookmark) to save it; tabs you've already saved are marked.

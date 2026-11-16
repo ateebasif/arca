@@ -18,7 +18,6 @@
 
 ### Phase 3 – Power tools
 
-- [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
 - [ ] ARC-040 · Release v1.0.0 (v0.3.0 if more work is planned before 1.0) · Phase 3 · P0
 
 ### Phase 4 – Later
@@ -32,12 +31,14 @@
 
 - Ardia Peek / Little Ardia: Ardia only handles Peek clicks on web pages (its page script skips extension pages) and has no extension or AppleScript API for Little Ardia. Revisit if Ardia adds one.
 
-- AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Consider minSize 2 for small sets.
+- AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Tried minSize 2 for < 20 links (2026-11-16): it splits topics when the folder count is a quick estimate, so it's not worth it without better k selection for tiny sets.
 
-- Sync UI prefs (view, density, sort) live across open Arca tabs via `onStorageChange`.
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-032b · Metadata cleanup: tags/notes of deleted bookmarks are marked gone (not counted), kept 1 hour for undo in any tab, then removed unless this tab can still undo; fixes a new tab pruning tags another tab could restore · `chore/small-improvements` · 2026-11-16
+- [x] ARC-078 · Layout prefs (view, density, sort, scope, sidebar) follow changes made in other open Arca tabs; folder and tree stay per tab · `chore/small-improvements` · 2026-11-16
 
 - [x] ARC-071 · Drag a multi-selection onto a folder: all selected items move in one undo (items that can't go there are skipped); drag preview shows +N · `feature/drag-selection` · 2026-11-16
 

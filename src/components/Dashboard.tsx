@@ -2,9 +2,11 @@ import { lazy, Suspense } from 'react';
 import { useSelection } from '@/src/store/selection';
 import { SelectionController } from './select/SelectionController';
 import { askPanelWasOpen } from '@/src/store/askChat';
-import { relinkMetaOnce } from '@/src/store/useMeta';
+import { relinkMetaOnce, scheduleMetaCleanup } from '@/src/store/useMeta';
+import { canRestoreDeleted } from '@/src/features/undo/undo';
+import { getBookmarkStore } from '@/src/store/useBookmarks';
 import { MiniWindowBar } from './mini/MiniWindowBar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DndProvider } from '@/src/features/dnd/DndProvider';
 import { undoLast } from '@/src/features/undo/undo';
 import { isTyping, useHotkeys } from '@/src/lib/hotkeys';
@@ -79,6 +81,14 @@ export function Dashboard({ surface }: DashboardProps) {
   useEffect(() => preloadOverlays(), []);
   useEffect(() => {
     if (state.ready) void relinkMetaOnce(state);
+  }, [state]);
+  // Bookmarks were deleted (here or elsewhere): tidy up their tags and notes later.
+  const nodeCount = useRef(0);
+  useEffect(() => {
+    if (!state.ready) return;
+    if (nodeCount.current && state.nodes.size < nodeCount.current)
+      scheduleMetaCleanup(() => getBookmarkStore().getSnapshot(), canRestoreDeleted);
+    nodeCount.current = state.nodes.size;
   }, [state]);
   // Came back to this tab (e.g. after opening an Ask Arca result here): reopen the chat.
   useEffect(() => {
