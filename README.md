@@ -213,7 +213,7 @@ Details and the threat model: [SECURITY.md](SECURITY.md). Privacy policy:
 ## Keyboard shortcuts
 
 Press `?` in the dashboard for the full list. Highlights: ⌘K search, `[` / `]`
-back/forward, ⌥↑ parent folder, F2 rename, ⌘⌫ delete, ⌘Z undo, ⌘\ sidebar, ⌥⇧B popup.
+back/forward, ⌥↑ parent folder, N / ⇧N new bookmark / folder, F2 rename, ⌘⌫ delete, ⌘Z undo, ⌘\ sidebar, ⌥⇧B popup.
 
 ## Development
 

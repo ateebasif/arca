@@ -160,6 +160,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Press **N** for a new bookmark or **⇧N** for a new folder in the open folder.
 - A build that leaves your browser's own New Tab alone (`bun run build:no-newtab`).
 - Drag folders straight from the sidebar tree into another folder.
 - Privacy policy (PRIVACY.md) and Chrome Web Store listing material in docs/store/.

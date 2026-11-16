@@ -48,6 +48,14 @@ export function Dashboard({ surface }: DashboardProps) {
   const searching = useUi((s) => s.query.trim().length > 0);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
 
+  /** New bookmark or folder in the open folder (the Bookmarks bar from Home). */
+  const createIn = (kind: 'bookmark' | 'folder') => {
+    const ui = useUi.getState();
+    const open = !ui.home && state.nodes.get(ui.currentFolderId);
+    const parentId = open && open.id !== '0' ? open.id : (state.rootIds[0] ?? '1');
+    useOverlays.getState().openEditor({ mode: 'create', kind, parentId });
+  };
+
   useHotkeys({
     'mod+\\': () => toggleSidebar(),
     '[': () => useUi.getState().goBack(),
@@ -59,6 +67,9 @@ export function Dashboard({ surface }: DashboardProps) {
       if (parent && parent !== '0') ui.openFolder(parent);
     },
     '?': () => useOverlays.getState().setShortcutsOpen(true),
+    // ⌘N / ⇧⌘N belong to the browser (new window), so plain N / ⇧N add here.
+    n: () => createIn('bookmark'),
+    'shift+n': () => createIn('folder'),
     // In text fields ⌘Z keeps undoing typing; elsewhere it undoes the last action.
     'mod+z': (e) => {
       if (isTyping(e.target)) return false;
