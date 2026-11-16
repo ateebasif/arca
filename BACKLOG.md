@@ -10,15 +10,9 @@
 
 ### Phase 1 – Core
 
-- [ ] ARC-019 · Release v0.1.0 · Phase 1 · P0
-
 ### Phase 2 – Management
 
-- [ ] ARC-030 · Release v0.2.0 · Phase 2 · P0
-
 ### Phase 3 – Power tools
-
-- [ ] ARC-040 · Release v1.0.0 (v0.3.0 if more work is planned before 1.0) · Phase 3 · P0
 
 ### Phase 4 – Later
 
@@ -31,6 +25,8 @@
 - AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Tried minSize 2 for < 20 links (2026-11-16): it splits topics when the folder count is a quick estimate, so it's not worth it without better k selection for tiny sets.
 
 ## Done
+
+- [x] ARC-040 · Release v1.0.0: first public release (Phases 1–3 shipped together; ARC-019 v0.1.0 and ARC-030 v0.2.0 folded into it) · `release/1.0.0` · 2026-11-16
 
 - [x] ARC-085 · `N` / `⇧N` add a bookmark / folder in the open folder (Bookmarks bar from Home); ignored while typing; listed in the shortcuts dialog · `feature/n-shortcuts` · 2026-11-16
 - [x] ARC-084 · ⇧-drag a bookmark to drag the real link out (tab strip, other windows, other apps); plain drag still moves it inside Arca. ⌥ isn't possible: Chrome never starts a link drag with Alt held · `feature/alt-drag-links` · 2026-11-16
