@@ -4,7 +4,8 @@ import { errorMessage } from '@/src/features/editing/actions';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import * as undo from '@/src/features/undo/undo';
 import * as bm from '@/src/lib/bookmarks';
-import { setTags } from '@/src/features/tags/actions';
+import { setNote, setTags } from '@/src/features/tags/actions';
+import { NOTE_MAX } from '@/src/features/tags/meta';
 import { useOverlays, type EditorState } from '@/src/store/overlays';
 import { getMetaStore, useMeta } from '@/src/store/useMeta';
 import { TagInput } from '../tags/TagInput';
@@ -31,6 +32,9 @@ export function EditDialog({ editor }: { editor: EditorState }) {
   const meta = useMeta();
   const [tags, setTagList] = useState<string[]>(() =>
     existing ? (meta.byId.get(existing.id)?.tags ?? []) : [],
+  );
+  const [note, setNoteText] = useState(() =>
+    existing ? (meta.byId.get(existing.id)?.note ?? '') : '',
   );
   const knownTags = useMemo(
     () =>
@@ -66,6 +70,7 @@ export function EditDialog({ editor }: { editor: EditorState }) {
       if (!existing) {
         const node = await bm.create({ parentId, title: finalTitle, url: finalUrl });
         await setTags(node.id, finalUrl ?? '', tags);
+        await setNote(node.id, finalUrl ?? '', note);
         undo.record(undo.created(node));
       } else {
         const steps: undo.UndoAction[] = [];
@@ -90,6 +95,8 @@ export function EditDialog({ editor }: { editor: EditorState }) {
         }
         const tagStep = await setTags(existing.id, finalUrl ?? existing.url ?? '', tags);
         if (tagStep) steps.push(tagStep);
+        const noteStep = await setNote(existing.id, finalUrl ?? existing.url ?? '', note);
+        if (noteStep) steps.push(noteStep);
         if (steps.length) undo.record(undo.combine(`Edited “${finalTitle}”`, steps));
       }
       close();
@@ -177,6 +184,18 @@ export function EditDialog({ editor }: { editor: EditorState }) {
         {!locked && (
           <Field label="Tags">
             <TagInput value={tags} onChange={setTagList} suggestions={knownTags} />
+          </Field>
+        )}
+        {!locked && (
+          <Field label="Note">
+            <textarea
+              className={`${inputClass} min-h-16 resize-y py-2 leading-relaxed`}
+              rows={3}
+              maxLength={NOTE_MAX}
+              value={note}
+              placeholder="Why you saved it, what to remember… (searchable)"
+              onChange={(e) => setNoteText(e.target.value)}
+            />
           </Field>
         )}
         {formError && (

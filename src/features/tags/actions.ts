@@ -1,4 +1,5 @@
 import { getMetaStore } from '@/src/store/useMeta';
+import { cleanNote } from './meta';
 import * as undo from '../undo/undo';
 
 export const sameTags = (a: readonly string[], b: readonly string[]) =>
@@ -41,5 +42,22 @@ export async function setTagsMany(
       store.setTagsMany(
         changes.map((c) => ({ id: undo.resolveId(c.id), url: c.url, tags: c.before })),
       ),
+  };
+}
+
+/** Sets an item's note and returns an undo step (or null when unchanged). */
+export async function setNote(
+  id: string,
+  url: string,
+  note: string,
+): Promise<undo.UndoAction | null> {
+  const store = getMetaStore();
+  await store.start();
+  const before = store.noteOf(id);
+  if (before === cleanNote(note)) return null;
+  await store.setNote(id, url, note);
+  return {
+    label: 'Changed note',
+    undo: () => store.setNote(undo.resolveId(id), url, before),
   };
 }

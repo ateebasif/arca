@@ -21,13 +21,18 @@ export function BackupSettings() {
     const meta = getMetaStore();
     await meta.start();
     const tagsOf = (id: string) => meta.tagsOf(id);
+    const noteOf = (id: string) => meta.noteOf(id);
     const tree = await getTree();
     if (kind === 'html') {
-      downloadText(exportFileName('html'), toNetscapeHtml(tree, tagsOf), 'text/html');
+      downloadText(
+        exportFileName('html'),
+        toNetscapeHtml(tree, tagsOf, noteOf),
+        'text/html',
+      );
     } else {
       downloadText(
         exportFileName('json'),
-        JSON.stringify(toArcaBackup(tree, tagsOf), null, 2),
+        JSON.stringify(toArcaBackup(tree, tagsOf, new Date(), noteOf), null, 2),
         'application/json',
       );
     }

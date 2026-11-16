@@ -1,7 +1,8 @@
 import * as bm from '@/src/lib/bookmarks';
 import { classifyUrl } from '@/src/lib/url';
-import { cleanTags } from '@/src/features/tags/meta';
+import { cleanNote, cleanTags } from '@/src/features/tags/meta';
 import { setTagsMany } from '@/src/features/tags/actions';
+import { getMetaStore } from '@/src/store/useMeta';
 import { normalizeUrl } from '@/src/features/tidy/normalize';
 import * as undo from '../undo/undo';
 
@@ -17,6 +18,7 @@ export interface ImportNode {
   title: string;
   url?: string;
   tags?: string[];
+  note?: string;
   children?: ImportNode[];
 }
 
@@ -66,7 +68,7 @@ class Builder {
     return true;
   }
 
-  link(title: unknown, url: unknown, tags: unknown): ImportNode | null {
+  link(title: unknown, url: unknown, tags: unknown, note?: unknown): ImportNode | null {
     const href = typeof url === 'string' ? url.trim() : '';
     if (!href || href.length > MAX_URL || classifyUrl(href) === 'blocked') {
       this.blocked++;
@@ -75,10 +77,12 @@ class Builder {
     if (!this.take()) return null;
     this.links++;
     const clean = cleanTags(Array.isArray(tags) ? tags : []);
+    const text = cleanNote(note);
     return {
       title: cleanTitle(title),
       url: href,
       ...(clean.length ? { tags: clean } : {}),
+      ...(text ? { note: text } : {}),
     };
   }
 
@@ -117,7 +121,12 @@ export function parseNetscapeHtml(html: string): ParsedImport {
       if (!head) continue;
       if (head.tagName === 'A') {
         const tags = (head.getAttribute('tags') ?? '').split(',');
-        const node = b.link(head.textContent, head.getAttribute('href'), tags);
+        // A description (<DD>) follows the link; the parser may nest it or not.
+        const dd =
+          Array.from(dt.children).find((c) => c.tagName === 'DD') ??
+          (dt.nextElementSibling?.tagName === 'DD' ? dt.nextElementSibling : null);
+        const note = dd ? noteText(dd) : '';
+        const node = b.link(head.textContent, head.getAttribute('href'), tags, note);
         if (node) out.push(node);
         continue;
       }
@@ -131,6 +140,17 @@ export function parseNetscapeHtml(html: string): ParsedImport {
     return out;
   };
   return b.result('html', walk(top, 0));
+}
+
+/** Text of a <DD> description, with <BR> as line breaks (never rendered as HTML). */
+function noteText(dd: Element): string {
+  let out = '';
+  for (const n of Array.from(dd.childNodes)) {
+    if (n.nodeType === 3) out += n.textContent ?? '';
+    else if ((n as Element).tagName === 'BR') out += '\n';
+    else if ((n as Element).tagName !== 'DL') out += n.textContent ?? '';
+  }
+  return out;
 }
 
 /** Arca's own JSON backup (Settings → Backup). */
@@ -155,11 +175,12 @@ export function parseArcaBackup(text: string): ParsedImport {
         title?: unknown;
         url?: unknown;
         tags?: unknown;
+        note?: unknown;
         children?: unknown;
       };
       const node =
         typeof n.url === 'string'
-          ? b.link(n.title, n.url, n.tags)
+          ? b.link(n.title, n.url, n.tags, n.note)
           : b.folder(
               n.title,
               Array.isArray(n.children) ? walk(n.children, depth + 1) : [],
@@ -228,6 +249,7 @@ export async function importInto(
   let links = 0;
   let skipped = 0;
   const tagging: Array<{ id: string; url: string; tags: string[] }> = [];
+  const notes: Array<{ id: string; url: string; note: string }> = [];
   const walk = async (nodes: ImportNode[], into: string) => {
     for (const n of nodes) {
       if (n.url) {
@@ -238,6 +260,7 @@ export async function importInto(
           have?.add(key);
           links++;
           if (n.tags?.length) tagging.push({ id: created.id, url: n.url, tags: n.tags });
+          if (n.note) notes.push({ id: created.id, url: n.url, note: n.note });
         }
       } else {
         const folder = await bm.create({ parentId: into, title: n.title });
@@ -251,6 +274,9 @@ export async function importInto(
   } finally {
     // Even a partial import is one undo.
     const tagStep = await setTagsMany(tagging).catch(() => null);
+    // Notes are on the new bookmarks only; removing the folder on undo drops them.
+    const meta = getMetaStore();
+    if (notes.length) await meta.setNotes(notes).catch(() => {});
     undo.record({
       label: `Imported ${links.toLocaleString()} ${links === 1 ? 'bookmark' : 'bookmarks'}`,
       async undo() {

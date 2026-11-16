@@ -79,6 +79,34 @@ export function cleanTags(raw: unknown): string[] {
   return [...new Set(raw.map(cleanTag).filter(Boolean))].slice(0, MAX_TAGS);
 }
 
+export const NOTE_MAX = 2000;
+
+/**
+ * A note as stored and shown: control, zero-width and bidi characters
+ * removed (line breaks kept), trimmed, capped at NOTE_MAX.
+ */
+export function cleanNote(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  let out = '';
+  for (const ch of raw.slice(0, NOTE_MAX * 2)) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (c === 0x0a) out += '\n';
+    else if (
+      c < 0x20 ||
+      c === 0x7f ||
+      (c >= 0x200b && c <= 0x200f) ||
+      (c >= 0x202a && c <= 0x202e) ||
+      (c >= 0x2066 && c <= 0x2069)
+    )
+      out += c === 0x09 ? ' ' : '';
+    else out += ch;
+  }
+  return out
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, NOTE_MAX);
+}
+
 /** Validates stored metadata; anything malformed is dropped. */
 export function parseMeta(raw: unknown): Map<string, Meta> {
   const out = new Map<string, Meta>();
@@ -87,7 +115,7 @@ export function parseMeta(raw: unknown): Map<string, Meta> {
     if (!/^[\w-]{1,64}$/.test(id) || !value || typeof value !== 'object') continue;
     const v = value as Record<string, unknown>;
     const tags = cleanTags(v.tags);
-    const note = typeof v.note === 'string' ? v.note.slice(0, 2000) : undefined;
+    const note = cleanNote(v.note) || undefined;
     if (!tags.length && !note) continue;
     out.set(id, {
       tags,
@@ -228,6 +256,35 @@ export class MetaStore {
   /** Sets an item's tags (url is kept so they can re-link if ids change). */
   async setTags(id: string, url: string, tags: readonly string[]): Promise<void> {
     await this.setTagsMany([{ id, url, tags }]);
+  }
+
+  noteOf(id: string): string {
+    return this.snapshot.byId.get(id)?.note ?? '';
+  }
+
+  /** Sets (or clears, with '') an item's note; its tags are kept. */
+  async setNote(id: string, url: string, note: string): Promise<void> {
+    await this.setNotes([{ id, url, note }]);
+  }
+
+  /** Sets notes on many items with a single storage write. */
+  async setNotes(
+    entries: ReadonlyArray<{ id: string; url: string; note: string }>,
+  ): Promise<void> {
+    const next = new Map(this.snapshot.byId);
+    for (const { id, url, note } of entries) {
+      const clean = cleanNote(note);
+      const current = next.get(id);
+      const tags = current?.tags ?? [];
+      if (clean || tags.length) {
+        const entry: Meta = { tags, url: url || current?.url || '' };
+        if (clean) entry.note = clean;
+        next.set(id, entry);
+      } else {
+        next.delete(id);
+      }
+    }
+    await this.write(next);
   }
 
   /** Sets tags on many items with a single storage write. */

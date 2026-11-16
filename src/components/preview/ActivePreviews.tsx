@@ -1,5 +1,6 @@
 import { placeCard, type Placement } from './placement';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { getMetaStore } from '@/src/store/useMeta';
 import { createPortal } from 'react-dom';
 import { compactPath } from '@/src/features/tidy/normalize';
 import { openSafely } from '@/src/features/open';
@@ -192,6 +193,7 @@ function PreviewCard({
     .map((n) => n.title || 'Untitled')
     .join(' / ');
   const host = displayHost(url);
+  const note = getMetaStore().noteOf(id);
   const open = (how: OpenDisposition) => {
     onDone();
     void openSafely(url, how);
@@ -237,6 +239,14 @@ function PreviewCard({
                   ? preview.title || node?.title || host
                   : node?.title || host}
               </p>
+              {note && (
+                <p
+                  className="bg-accent-soft text-ink rounded-lg px-2.5 py-2 text-xs leading-relaxed whitespace-pre-line"
+                  data-preview-note
+                >
+                  {note}
+                </p>
+              )}
               {preview.status === 'error' && (
                 <p className="text-ink-muted text-xs">No preview available for {host}.</p>
               )}

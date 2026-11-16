@@ -93,6 +93,9 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
 
 ### Tags
 
+- Notes are stored with tags, cleaned on write and read (control, zero-width and bidi
+  characters removed, line breaks kept, 2,000 characters max) and rendered as plain
+  text. HTML export escapes them; import reads `<DD>` text only.
 - Edits from several Arca pages at once merge per item (each write re-reads storage
   and changes only its own items), and bulk tagging is one write.
 - Stored in `chrome.storage.local` under `meta`, validated on every read: ids must
