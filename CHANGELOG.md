@@ -162,6 +162,8 @@ All notable changes to this project are documented here. The format follows
 
 - Press **N** for a new bookmark or **⇧N** for a new folder in the open folder.
 - A build that leaves your browser's own New Tab alone (`bun run build:no-newtab`).
+- **⇧-drag** a bookmark to drag the link out of Arca into the tab strip, another
+  window or another app.
 - Drag folders straight from the sidebar tree into another folder.
 - Privacy policy (PRIVACY.md) and Chrome Web Store listing material in docs/store/.
 - Click the Arca logo to go Home; click the open folder's name in the header to

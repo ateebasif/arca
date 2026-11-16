@@ -81,3 +81,46 @@ export function useTreeDrag(node: BNode) {
     isDragging: drag.isDragging,
   };
 }
+
+type PointerHandler = (e: React.PointerEvent<HTMLElement>) => void;
+
+/**
+ * Holding ⇧ (Shift) while you start dragging a bookmark hands the drag to the
+ * browser, so the link can go to the tab strip, another window or another
+ * app. (Not ⌥: Chrome never starts a link drag with Alt held.) The link is
+ * only made draggable for that one ⇧-press, so ordinary drags stay entirely
+ * with dnd-kit. Blocked links (no safe href) are never draggable.
+ */
+export function withNativeLinkDrag<T extends { onPointerDown?: PointerHandler }>(
+  handle: T,
+  href: string | undefined,
+): T & {
+  onDragStart?: (e: React.DragEvent<HTMLElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLElement>) => void;
+} {
+  if (!href) return handle;
+  return {
+    ...handle,
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+      const el = e.currentTarget;
+      if (e.shiftKey && e.button === 0) {
+        el.draggable = true;
+        return;
+      }
+      el.draggable = false;
+      handle.onPointerDown?.(e);
+    },
+    onDragStart: (e: React.DragEvent<HTMLElement>) => {
+      if (!e.currentTarget.draggable) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.effectAllowed = 'copyLink';
+      e.dataTransfer.setData('text/uri-list', href);
+      e.dataTransfer.setData('text/plain', href);
+    },
+    onDragEnd: (e: React.DragEvent<HTMLElement>) => {
+      e.currentTarget.draggable = false;
+    },
+  };
+}

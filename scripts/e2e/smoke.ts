@@ -953,6 +953,49 @@ check('drag a folder from the sidebar tree into another folder, undo', async (pa
   })()`);
 });
 
+check('⇧-drag hands a bookmark to the browser as a real link', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const made = await page.eval<{
+    folder: string;
+    link: string;
+    other: string;
+  }>(`(async () => {
+    const f = await chrome.bookmarks.create({ parentId: '2', title: 'Alt drag' });
+    const l = await chrome.bookmarks.create({ parentId: f.id, title: 'Out', url: 'https://out.invalid/page' });
+    const o = await chrome.bookmarks.create({ parentId: f.id, title: 'Inner' });
+    return { folder: f.id, link: l.id, other: o.id };
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('[data-folder-id="${made.folder}"]')`);
+  await page.eval(`document.querySelector('[data-folder-id="${made.folder}"]').click()`);
+  await page.waitFor(`document.querySelector('[data-bookmark-id="${made.link}"]')`);
+  await sleep(300);
+  // Chrome reports what a native drag would carry instead of performing it.
+  let dragged: Array<{ mimeType: string; data: string }> = [];
+  page.onEvent('Input.dragIntercepted', (p) => {
+    dragged = ((p.data as { items?: typeof dragged }).items ?? []).slice();
+  });
+  await page.send('Input.setInterceptDrags', { enabled: true });
+  await page.drag(
+    `[data-bookmark-id="${made.link}"]`,
+    `[data-folder-card="${made.other}"] [data-drop-folder]`,
+    MOD.shift,
+  );
+  await page.send('Input.setInterceptDrags', { enabled: false });
+  assert.ok(
+    dragged.some((i) => i.data.includes('https://out.invalid/page')),
+    `native drag data: ${JSON.stringify(dragged)}`,
+  );
+  // Not moved inside Arca.
+  assert.equal(
+    await page.eval<string>(
+      `chrome.bookmarks.get('${made.link}').then(([n]) => n.parentId)`,
+    ),
+    made.folder,
+  );
+  await page.eval(`chrome.bookmarks.removeTree('${made.folder}')`);
+});
+
 check('small tiles: compact folder rows and smaller link tiles', async (page) => {
   const origin = await page.eval<string>('location.origin');
   const folder = await page.eval<string>(`(async () => {

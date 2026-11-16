@@ -5,7 +5,7 @@ import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { isDragActive } from '@/src/features/dnd/ids';
-import { useDragItem } from '@/src/features/dnd/hooks';
+import { useDragItem, withNativeLinkDrag } from '@/src/features/dnd/hooks';
 import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost, mainDomain } from '@/src/lib/url';
 import type { BNode } from '@/src/store/bookmarkStore';
@@ -44,7 +44,10 @@ export const BookmarkTile = memo(function BookmarkTile({
     onKeyDown?: (e: React.KeyboardEvent) => void;
   };
   const linkProps = {
-    ...dragHandle,
+    // dnd-kit handles dragging; ⇧-drag switches to the browser's own link drag
+    // (the helper turns draggable on for safe links).
+    draggable: false,
+    ...withNativeLinkDrag(dragHandle, renaming ? undefined : link.href),
     href: link.href,
     role: link.role,
     tabIndex: link.tabIndex,
@@ -53,8 +56,6 @@ export const BookmarkTile = memo(function BookmarkTile({
       : `${title}\n${url}${link.blocked ? '\nBlocked: Arca never opens this kind of link' : ''}`,
     'data-bookmark-id': bookmark.id,
     'data-blocked': link.blocked || undefined,
-    // dnd-kit handles dragging; the browser's native link drag would cancel it.
-    draggable: false,
     onClick: (e: React.MouseEvent) => {
       if (renaming) e.preventDefault();
       else link.onActivate?.(e);

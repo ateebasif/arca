@@ -15,6 +15,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['N  /  ⇧N', 'New bookmark / new folder here'],
   ['⌘Z', 'Undo'],
   ['Shift F10', 'Item menu'],
+  ['⇧ drag a bookmark', 'Drag the link out (tab strip, other apps)'],
   ['Esc', 'Clear search / close'],
   ['?', 'This list'],
 ];
