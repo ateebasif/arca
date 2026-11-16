@@ -5,6 +5,7 @@ import { WxtVitest } from 'wxt/testing/vitest-plugin';
 // `browser`/`chrome` API (@webext-core/fake-browser) for tests.
 export default defineConfig({
   plugins: [WxtVitest()],
+  define: { __ARCA_NO_NEWTAB__: 'false' },
   test: {
     environment: 'jsdom',
     globals: true,

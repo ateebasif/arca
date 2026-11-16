@@ -10,6 +10,8 @@
     "dev": "wxt",
     "build": "wxt build",
     "zip": "wxt zip",
+    "build:no-newtab": "ARCA_NO_NEWTAB=1 wxt build",
+    "zip:no-newtab": "ARCA_NO_NEWTAB=1 wxt zip",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

@@ -30,9 +30,9 @@
 
 - AI organize on very small folders (< ~15 links) with nomic can merge a small topic into a bigger one (min group size 3). Tried minSize 2 for < 20 links (2026-11-16): it splits topics when the folder count is a quick estimate, so it's not worth it without better k selection for tiny sets.
 
-- Build flag that omits the New Tab override for users who want the browser's own New Tab.
-
 ## Done
+
+- [x] ARC-083 · Build variant without the New Tab override (`bun run build:no-newtab` / `zip:no-newtab`, `ARCA_NO_NEWTAB=1`); Settings hides the New Tab options there · `feature/no-newtab-build` · 2026-11-16
 
 - [x] ARC-B12 · JSON backup/import dropped folder icons, folder tags and folder notes; now round-trips them · `feature/backup-folder-icons` · 2026-11-16
 - [x] ARC-080 · Prune stale AI readings: after Ask Arca reads the library, saved embeddings no bookmark produces any more (deleted/renamed) are removed for the current model · `feature/prune-embeddings` · 2026-11-16

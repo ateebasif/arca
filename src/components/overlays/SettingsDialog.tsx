@@ -55,32 +55,39 @@ export function SettingsDialog() {
       </div>
       <OpenInSetting />
       <HomeSettings />
-      <fieldset>
-        <legend className="text-ink-muted mb-2 text-xs font-medium">New Tab</legend>
-        <div className="flex flex-col gap-1.5">
-          {MODES.map((m) => (
-            <label
-              key={m.value}
-              className={`flex cursor-default items-start gap-2.5 rounded-lg border px-3 py-2 ${
-                mode === m.value ? 'border-accent/40 bg-accent-soft' : 'border-line'
-              }`}
-            >
-              <input
-                type="radio"
-                name="newtab-mode"
-                value={m.value}
-                checked={mode === m.value}
-                onChange={() => setMode(m.value)}
-                className="accent-accent mt-0.5"
-              />
-              <span>
-                <span className="block text-[13px] font-medium">{m.label}</span>
-                <span className="text-ink-muted block text-xs">{m.hint}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {__ARCA_NO_NEWTAB__ ? (
+        <p className="text-ink-faint mb-4 text-xs leading-relaxed">
+          This version of Arca leaves your browser's own New Tab alone. Open Arca from its
+          toolbar button (⌥⇧B) or the dashboard page.
+        </p>
+      ) : (
+        <fieldset>
+          <legend className="text-ink-muted mb-2 text-xs font-medium">New Tab</legend>
+          <div className="flex flex-col gap-1.5">
+            {MODES.map((m) => (
+              <label
+                key={m.value}
+                className={`flex cursor-default items-start gap-2.5 rounded-lg border px-3 py-2 ${
+                  mode === m.value ? 'border-accent/40 bg-accent-soft' : 'border-line'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="newtab-mode"
+                  value={m.value}
+                  checked={mode === m.value}
+                  onChange={() => setMode(m.value)}
+                  className="accent-accent mt-0.5"
+                />
+                <span>
+                  <span className="block text-[13px] font-medium">{m.label}</span>
+                  <span className="text-ink-muted block text-xs">{m.hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {mode === 'redirect' && (
         <div className="mt-3">
           <Field label="Redirect URL" error={error}>
