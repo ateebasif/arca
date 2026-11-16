@@ -28,7 +28,7 @@ also work in any Chromium browser (Chrome, Dia, Brave, Edge).
 
 ## 4. Project location
 
-- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/`
+- Root: the repository folder.
 - Keep every project file inside this folder. Never write files to the parent directory.
 
 ## 5. Tech stack

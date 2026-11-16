@@ -18,7 +18,7 @@ fast, visual, editable dashboard (Opera GX speed-dial style). Primary target: **
 
 ## Project location
 
-- Root: `/Users/ateebasif/Downloads/ProjectsLocal/Side-Hustle/arca/`.
+- Root: the repository folder (where this file lives).
 - Keep every project file inside this folder. Never write to the parent directory.
 
 ## Stack
