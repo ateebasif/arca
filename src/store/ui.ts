@@ -11,6 +11,20 @@ export type SortDirection = 'asc' | 'desc';
 /** Folders = the open folder's own items; all = every link inside it, flattened. */
 export type Scope = 'folders' | 'all';
 
+/** Narrowing for search results (cleared with the query). */
+export interface SearchFilters {
+  tag: string | null;
+  note: boolean;
+  duplicates: boolean;
+  broken: boolean;
+}
+export const NO_FILTERS: SearchFilters = {
+  tag: null,
+  note: false,
+  duplicates: false,
+  broken: false,
+};
+
 /** Preferences remembered across sessions. */
 export interface UiPrefs {
   view: ViewMode;
@@ -48,6 +62,8 @@ interface UiState extends UiPrefs {
   query: string;
   /** Limit search to the open folder. */
   searchInFolder: boolean;
+  filters: SearchFilters;
+  setFilters(patch: Partial<SearchFilters>): void;
   /** Highlighted search result. */
   activeResult: number;
   /** Item to scroll to and focus after "reveal in folder". */
@@ -89,6 +105,9 @@ export const useUi = create<UiState>()((set) => ({
   hydrated: false,
   query: '',
   searchInFolder: false,
+  filters: NO_FILTERS,
+  setFilters: (patch) =>
+    set((s) => ({ filters: { ...s.filters, ...patch }, activeResult: 0 })),
   activeResult: 0,
   revealId: null,
   backStack: [],
@@ -141,7 +160,13 @@ export const useUi = create<UiState>()((set) => ({
         home: false,
       };
     }),
-  setQuery: (query) => set({ query, activeResult: 0 }),
+  setQuery: (query) =>
+    set((s) => ({
+      query,
+      activeResult: 0,
+      // Filters belong to a search; a cleared search starts fresh.
+      filters: query.trim() ? s.filters : NO_FILTERS,
+    })),
   setSearchInFolder: (searchInFolder) => set({ searchInFolder, activeResult: 0 }),
   setActiveResult: (activeResult) => set({ activeResult }),
   reveal: (id, folderId) =>
@@ -237,6 +262,7 @@ export function resetUiForTests(): void {
     hydrated: false,
     query: '',
     searchInFolder: false,
+    filters: NO_FILTERS,
     activeResult: 0,
     revealId: null,
     backStack: [],

@@ -60,6 +60,13 @@ async function loadResults(now: number): Promise<Map<string, LinkResult>> {
   return fresh;
 }
 
+/** Addresses the last check found broken (within the two-week window). */
+export async function brokenUrls(now = Date.now()): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (const [url, r] of await loadResults(now)) if (r.status === 'broken') out.add(url);
+  return out;
+}
+
 /** Same page ignoring http→https, www., a trailing slash and the fragment. */
 export function samePage(a: string, b: string): boolean {
   const norm = (u: string) => {

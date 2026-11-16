@@ -1,5 +1,7 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useMeaningResults } from '@/src/store/meaningResults';
+import { useBrokenLinks } from '@/src/store/brokenLinks';
+import { getMetaStore, useMeta } from '@/src/store/useMeta';
 import { openResult } from '@/src/features/search/actions';
 import {
   buildIndex,
@@ -31,6 +33,8 @@ export function SearchResults() {
   const setInFolder = useUi((s) => s.setSearchInFolder);
   const folderId = useUi((s) => s.currentFolderId);
   const results = useSearchResults();
+  const filters = useUi((s) => s.filters);
+  const brokenUrls = useBrokenLinks((s) => s.urls);
   const listRef = useRef<HTMLUListElement>(null);
   const folderTitle = state.nodes.get(folderId)?.title || 'this folder';
   const aiEnabled = useSettings((s) => s.aiEnabled);
@@ -44,7 +48,7 @@ export function SearchResults() {
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="flex items-center gap-2 text-xs"
+        className="flex flex-wrap items-center gap-2 text-xs"
         role="group"
         aria-label="Search filters"
       >
@@ -54,6 +58,7 @@ export function SearchResults() {
         <Chip pressed={inFolder} onClick={() => setInFolder(true)}>
           In “{folderTitle}”
         </Chip>
+        <FilterChips />
         {aiEnabled && (
           <button
             type="button"
@@ -70,6 +75,11 @@ export function SearchResults() {
         </span>
       </div>
 
+      {filters.broken && brokenUrls?.size === 0 && (
+        <p className="text-ink-faint text-xs">
+          No broken links on record. Run a check in Tidy up → Clean out → Check links.
+        </p>
+      )}
       {results.length === 0 ? (
         <div className="text-ink-muted flex flex-col items-center gap-1 py-20 text-center">
           <p className="text-ink text-[15px] font-medium">
@@ -312,5 +322,63 @@ function MeaningSection({
         })}
       </ul>
     </section>
+  );
+}
+
+/** Narrow results: by tag, with a note, saved more than once, or broken. */
+function FilterChips() {
+  const filters = useUi((s) => s.filters);
+  const setFilters = useUi((s) => s.setFilters);
+  const meta = useMeta();
+  const tags = useMemo(
+    () =>
+      getMetaStore()
+        .allTags()
+        .map((t) => t.tag),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meta.version],
+  );
+  return (
+    <>
+      <span className="bg-line mx-0.5 h-4 w-px" aria-hidden="true" />
+      {tags.length > 0 && (
+        <select
+          aria-label="Filter by tag"
+          value={filters.tag ?? ''}
+          onChange={(e) => setFilters({ tag: e.target.value || null })}
+          className={`h-[26px] max-w-40 truncate rounded-full border px-2 ${
+            filters.tag
+              ? 'border-accent/30 bg-accent-soft text-accent'
+              : 'border-line text-ink-muted bg-transparent'
+          }`}
+        >
+          <option value="">Any tag</option>
+          {tags.map((t) => (
+            <option key={t} value={t}>
+              #{t}
+            </option>
+          ))}
+        </select>
+      )}
+      <Chip pressed={filters.note} onClick={() => setFilters({ note: !filters.note })}>
+        Has note
+      </Chip>
+      <Chip
+        pressed={filters.duplicates}
+        onClick={() => setFilters({ duplicates: !filters.duplicates })}
+      >
+        Duplicates
+      </Chip>
+      <Chip
+        pressed={filters.broken}
+        onClick={() => {
+          // Read the latest check results each time the filter is turned on.
+          if (!filters.broken) void useBrokenLinks.getState().load();
+          setFilters({ broken: !filters.broken });
+        }}
+      >
+        Broken
+      </Chip>
+    </>
   );
 }

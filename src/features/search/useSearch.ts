@@ -3,6 +3,7 @@ import { cleanTag } from '@/src/features/tags/meta';
 import { useMeta } from '@/src/store/useMeta';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
+import { useBrokenLinks } from '@/src/store/brokenLinks';
 import { buildIndex, search, tokenize, type SearchResult } from './search';
 
 export const RESULT_LIMIT = 50;
@@ -20,7 +21,13 @@ export function useSearchResults(): SearchResult[] {
   const query = useUi((s) => s.query);
   const inFolder = useUi((s) => s.searchInFolder);
   const folderId = useUi((s) => s.currentFolderId);
+  const filters = useUi((s) => s.filters);
+  const broken = useBrokenLinks((s) => s.urls);
   return useMemo(() => {
+    const filtering =
+      !!filters.tag || filters.note || filters.duplicates || filters.broken;
+    // Filters apply before the cap, so look further when any is on.
+    const limit = filtering ? 5000 : RESULT_LIMIT;
     const withinFolderId = inFolder ? folderId : undefined;
     const tagged = (match: (tag: string) => boolean): SearchResult[] =>
       buildIndex(state)
@@ -31,29 +38,63 @@ export function useSearchResults(): SearchResult[] {
         )
         .map((entry) => ({ entry, score: 1, copies: [] }));
 
-    if (query.trim().startsWith('#')) {
-      const t = cleanTag(query);
-      return tagged((tag) => !t || tag.startsWith(t)).slice(0, RESULT_LIMIT);
-    }
-    const results = search(state, query, { limit: RESULT_LIMIT, withinFolderId });
-    if (meta.byId.size === 0 || results.length >= RESULT_LIMIT) return results;
-    const words = tokenize(query).filter((w) => w.length >= 2);
-    if (!words.length) return results;
-    const seen = new Set(results.map((r) => r.entry.node.id));
-    const extra = tagged((tag) => words.some((w) => tag.startsWith(w))).filter(
-      (r) => !seen.has(r.entry.node.id),
-    );
-    extra.forEach((r) => seen.add(r.entry.node.id));
-    // Notes: every word must appear in the note.
-    const lower = words.map((w) => w.toLowerCase());
-    const noted = buildIndex(state)
-      .filter((e) => {
-        if (seen.has(e.node.id)) return false;
-        if (withinFolderId && !e.ancestorIds.includes(withinFolderId)) return false;
-        const note = meta.byId.get(e.node.id)?.note?.toLowerCase();
-        return !!note && lower.every((w) => note.includes(w));
+    const matched = (): SearchResult[] => {
+      if (query.trim().startsWith('#')) {
+        const t = cleanTag(query);
+        return tagged((tag) => !t || tag.startsWith(t)).slice(0, limit);
+      }
+      const results = search(state, query, { limit, withinFolderId });
+      if (meta.byId.size === 0 || results.length >= limit) return results;
+      const words = tokenize(query).filter((w) => w.length >= 2);
+      if (!words.length) return results;
+      const seen = new Set(results.map((r) => r.entry.node.id));
+      const extra = tagged((tag) => words.some((w) => tag.startsWith(w))).filter(
+        (r) => !seen.has(r.entry.node.id),
+      );
+      extra.forEach((r) => seen.add(r.entry.node.id));
+      // Notes: every word must appear in the note.
+      const lower = words.map((w) => w.toLowerCase());
+      const noted = buildIndex(state)
+        .filter((e) => {
+          if (seen.has(e.node.id)) return false;
+          if (withinFolderId && !e.ancestorIds.includes(withinFolderId)) return false;
+          const note = meta.byId.get(e.node.id)?.note?.toLowerCase();
+          return !!note && lower.every((w) => note.includes(w));
+        })
+        .map((entry) => ({ entry, score: 0.5, copies: [] }));
+      return [...results, ...extra, ...noted].slice(0, limit);
+    };
+
+    const all = matched();
+    if (!filtering) return all;
+    const dupKeys = filters.duplicates ? duplicateKeys(state) : null;
+    return all
+      .filter(({ entry }) => {
+        const m = meta.byId.get(entry.node.id);
+        if (filters.tag && !m?.tags.includes(filters.tag)) return false;
+        if (filters.note && !m?.note) return false;
+        if (dupKeys && !(entry.key && dupKeys.has(entry.key))) return false;
+        if (filters.broken && !(entry.node.url && broken?.has(entry.node.url)))
+          return false;
+        return true;
       })
-      .map((entry) => ({ entry, score: 0.5, copies: [] }));
-    return [...results, ...extra, ...noted].slice(0, RESULT_LIMIT);
-  }, [state, meta, query, inFolder, folderId]);
+      .slice(0, RESULT_LIMIT);
+  }, [state, meta, query, inFolder, folderId, filters, broken]);
+}
+
+const dupCache = new WeakMap<object, Set<string>>();
+
+/** Normalized addresses saved more than once anywhere in the library. */
+function duplicateKeys(state: Parameters<typeof buildIndex>[0]): Set<string> {
+  const cached = dupCache.get(state);
+  if (cached) return cached;
+  const seen = new Set<string>();
+  const dups = new Set<string>();
+  for (const e of buildIndex(state)) {
+    if (!e.key) continue;
+    if (seen.has(e.key)) dups.add(e.key);
+    else seen.add(e.key);
+  }
+  dupCache.set(state, dups);
+  return dups;
 }

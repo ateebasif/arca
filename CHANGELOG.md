@@ -149,6 +149,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Search **filter chips**: narrow results by tag, has a note, saved more than once,
+  or broken (from the last link check).
 - **Notes** on bookmarks: write one in Edit; it shows in the preview card, search
   finds it, and it travels with HTML and JSON export/import.
 - **Home** (top of the sidebar): your 12 newest bookmarks and most visited sites,
