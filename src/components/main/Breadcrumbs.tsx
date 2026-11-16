@@ -3,6 +3,8 @@ import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { useFolderDrop } from '@/src/features/dnd/hooks';
 import { ChevronRight } from '../icons';
+import { useOverlays } from '@/src/store/overlays';
+import { InlineRename } from '../overlays/InlineRename';
 
 /** Path to the open folder. Every crumb but the last opens that folder. */
 export function Breadcrumbs() {
@@ -46,9 +48,7 @@ export function Breadcrumbs() {
                 <ChevronRight width={12} height={12} className="text-ink-faint" />
               )}
               {last ? (
-                <h1 aria-current="page" className="truncate px-1.5 font-semibold">
-                  {node.title || 'Untitled'}
-                </h1>
+                <CurrentCrumb id={node.id} title={node.title} locked={node.isRoot} />
               ) : (
                 <Crumb
                   id={node.id}
@@ -91,5 +91,49 @@ function Crumb({
     >
       {title}
     </button>
+  );
+}
+
+/**
+ * The open folder's name. Click it to rename (like most file apps); browser
+ * folders (Bookmarks bar, Other bookmarks) can't be renamed, so they're plain.
+ */
+function CurrentCrumb({
+  id,
+  title,
+  locked,
+}: {
+  id: string;
+  title: string;
+  locked: boolean;
+}) {
+  const renaming = useOverlays((s) => s.renamingId === id && s.renameIn === 'crumb');
+  if (renaming) {
+    return (
+      <h1 className="min-w-0 flex-1 px-0.5">
+        <InlineRename id={id} initial={title} className="h-8 text-[15px] font-semibold" />
+      </h1>
+    );
+  }
+  if (locked) {
+    return (
+      <h1 aria-current="page" className="truncate px-1.5 font-semibold">
+        {title || 'Untitled'}
+      </h1>
+    );
+  }
+  return (
+    <h1 className="min-w-0 font-semibold">
+      <button
+        type="button"
+        aria-current="page"
+        title="Click to rename"
+        aria-label={`Rename ${title || 'Untitled'}`}
+        onClick={() => useOverlays.getState().startRename(id, 'crumb')}
+        className="hover:bg-hover block max-w-full cursor-text truncate rounded-md px-1.5 py-0.5 text-left"
+      >
+        {title || 'Untitled'}
+      </button>
+    </h1>
   );
 }

@@ -34,6 +34,8 @@
 
 ## Done
 
+- [x] ARC-079 · Arca logo/title goes to Home; click the open folder's name in the breadcrumb to rename it inline (browser folders stay locked) · `feature/home-link-crumb-rename` · 2026-11-16
+
 - [x] ARC-042 · Saved searches: Save search (text + filters) from results; sidebar list to run or forget; synced across tabs · `feature/saved-searches` · 2026-11-16
 - [x] ARC-043 · Custom folder icons: folder menu → Icon… (30 choices or any single emoji), shown in tree, cards and list · `feature/saved-searches` · 2026-11-16
 

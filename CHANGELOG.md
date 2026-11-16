@@ -152,6 +152,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Click the Arca logo to go Home; click the open folder's name in the header to
+  rename it.
 - **Saved searches**: save a search with its filters and run it again from the
   sidebar.
 - **Folder icons**: give any folder an emoji (folder menu → Icon…).
