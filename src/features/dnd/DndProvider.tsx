@@ -23,9 +23,36 @@ import { useUi } from '@/src/store/ui';
 import { DragStateContext, fromDropId, fromItemId, setDragActive } from './ids';
 import { dropProblem, moveIntoFolder, reorder } from './moves';
 import { isTabDrag, type TabDragData } from './tabDrag';
+import { useSelection } from '@/src/store/selection';
+import { useOverlays } from '@/src/store/overlays';
+import type { BookmarkSnapshot } from '@/src/store/bookmarkStore';
 import { bookmarkTab } from '@/src/features/editing/actions';
 
 export const AUTO_EXPAND_MS = 600;
+
+/**
+ * Moves a dragged multi-selection into a folder in one undo step. Items that
+ * can't go there (the folder itself, a folder into its own subfolder, browser
+ * folders) are left where they are.
+ */
+async function moveSelection(
+  snapshot: BookmarkSnapshot,
+  ids: readonly string[],
+  folderId: string,
+): Promise<void> {
+  const movable = ids.filter(
+    (id) => id !== folderId && !dropProblem(snapshot, id, folderId),
+  );
+  if (!movable.length) {
+    useOverlays.getState().toast("Those items can't go into that folder.", 'error');
+    return;
+  }
+  const { moveMany } = await import('@/src/features/editing/bulk');
+  await moveMany(movable, folderId).catch((e: unknown) =>
+    useOverlays.getState().toast(e instanceof Error ? e.message : String(e), 'error'),
+  );
+  useSelection.getState().clear();
+}
 
 /**
  * Folder drop zones win over sortable items when the pointer is inside one,
@@ -115,6 +142,12 @@ export function DndProvider({ children }: { children: ReactNode }) {
     const snapshot = getBookmarkStore().getSnapshot();
     const folderId = fromDropId(e.over.id);
     if (folderId) {
+      // Dragging one of several selected items moves them all.
+      const selected = useSelection.getState().ids;
+      if (selected.size > 1 && selected.has(nodeId)) {
+        void moveSelection(snapshot, [...selected], folderId);
+        return;
+      }
       if (folderId !== nodeId) void moveIntoFolder(snapshot, nodeId, folderId);
       return;
     }
@@ -133,6 +166,9 @@ export function DndProvider({ children }: { children: ReactNode }) {
   };
 
   const active = activeId ? state.nodes.get(activeId) : undefined;
+  const selectedCount = useSelection((s) =>
+    activeId && s.ids.has(activeId) ? s.ids.size : 0,
+  );
   const blocked =
     activeId && overFolderId
       ? dropProblem(state, activeId, overFolderId) !== null
@@ -181,6 +217,11 @@ export function DndProvider({ children }: { children: ReactNode }) {
                 <FolderIcon className="text-accent shrink-0" />
               )}
               <span className="truncate">{active.title || 'Untitled'}</span>
+              {selectedCount > 1 && (
+                <span className="bg-accent ml-1 text-white shrink-0 rounded-full px-1.5 text-[11px] tabular-nums">
+                  +{selectedCount - 1}
+                </span>
+              )}
             </div>
           ) : null}
         </DragOverlay>

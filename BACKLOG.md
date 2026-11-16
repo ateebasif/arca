@@ -39,6 +39,8 @@
 
 ## Done
 
+- [x] ARC-071 · Drag a multi-selection onto a folder: all selected items move in one undo (items that can't go there are skipped); drag preview shows +N · `feature/drag-selection` · 2026-11-16
+
 - [x] ARC-025 · Open tabs panel (toolbar → Open tabs): this window's web tabs, drag onto a folder or Bookmark into the open folder (undoable), saved tabs marked with a link to where they are · `feature/open-tabs` · 2026-11-16
 
 - [x] ARC-035 · Search filter chips: tag, has note, duplicates, broken (from the last link check); applied before the 50-result cap; cleared with the search · `feature/search-filters` · 2026-11-16
@@ -131,7 +133,6 @@
 ## Known Issues / Bugs
 
 - [ ] ARC-B07 · New Tab initial JS is 437 KB, over the 400 KB budget. Measured 2026-11-14: react-dom (production build) is 242 KB of it, dnd-kit ~50 KB, TanStack Virtual ~20 KB; paint is still 28–32 ms FCP / 35–40 ms interactive at 5,000 bookmarks. Fix needs a decision: Preact compat (new dependency, ~-150 KB) or loading drag & drop after first paint (risky refactor) · P2
-- [ ] ARC-071 · Drag a multi-selection together (today drag moves one item) · P3
 
 ## Tech Debt / Risks to Verify
 
