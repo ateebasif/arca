@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Tooling
+
+- Git hooks: Prettier and ESLint on staged files, commitlint on commit messages.
+
 ### Security
 
 - Mini windows: Arca could mistake a normal window for one of its mini windows after

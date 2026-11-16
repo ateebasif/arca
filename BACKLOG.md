@@ -32,8 +32,6 @@
 
 ### Tooling
 
-- [ ] ARC-044 · Commit hooks: lefthook + commitlint (needs approval for deps) · P2
-
 ## Ideas (unscoped)
 
 - Ardia Peek / Little Ardia: Ardia only handles Peek clicks on web pages (its page script skips extension pages) and has no extension or AppleScript API for Little Ardia. Revisit if Ardia adds one.
@@ -44,6 +42,8 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-044 · Commit hooks: lefthook (prettier + eslint on staged files) and commitlint (Conventional Commits, 72-char header and body) · `chore/commit-hooks` · 2026-11-16
 
 - [x] ARC-075 · "Related by meaning" results join ↑↓ / Enter navigation after the keyword results · `feature/meaning-keyboard` · 2026-11-14
 
@@ -133,7 +133,6 @@
 
 - Ardia (0.2.46, Chromium 157) disables DevTools automation, so it can't run `bun run e2e`; Ardia checks are manual. Verified 2026-11-13: unpacked loading works; ⌘T opens Ardia's command bar instead of the New Tab override (PRD §16.2), so the sidebar/popup are the entry points there.
 - TypeScript pinned to 5.9.x because typescript-eslint 8 requires `<6.1`. Revisit TS 7 when typescript-eslint supports it.
-- JS budget (PRD §10, 400 KB): New Tab loads 383 KB; the extension ships 422 KB in total after Phase 2/3 features (dialogs, Tidy, previews are lazy chunks). Options to get the total under 400 KB: swap React for Preact (-~150 KB, needs approval) or drop features.
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. UI code should use the store's `isWithin`/`getPath` instead.
 - Store applies bursts of bookmark events to one draft and publishes once per microtask (ARC-B10); a single event still copies the id→node Map once.

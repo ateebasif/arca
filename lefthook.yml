@@ -1,0 +1,15 @@
+# Git hooks (installed by `bun install`). Skip once with LEFTHOOK=0 git commit …
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,json,md,css,yml,yaml,html}'
+      run: bunx prettier --check {staged_files}
+    lint:
+      glob: '*.{ts,tsx,js}'
+      run: bunx eslint --max-warnings=0 {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: bunx commitlint --edit {1}

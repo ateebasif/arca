@@ -218,6 +218,9 @@ bun run e2e        # real-Chrome checks (after a build): speed, editing, securit
 bun run e2e:ai     # adds checks against real Ollama models (optional)
 ```
 
+Commits are checked by git hooks installed with `bun install`: Prettier and ESLint on
+staged files, and [commitlint](https://commitlint.js.org) for the message format.
+
 Stack: [WXT](https://wxt.dev), React 19, TypeScript, Tailwind CSS 4, Zustand, dnd-kit,
 TanStack Virtual. `bun run e2e` loads the built extension into headless Chrome with a
 throwaway profile; set `CHROME_PATH` to use another Chromium binary. To refresh the
