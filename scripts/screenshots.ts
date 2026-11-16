@@ -1,11 +1,15 @@
 /**
  * Captures the README screenshots from the built extension with a sample
  * library (no real data): `bun run build && bun scripts/screenshots.ts`.
- * Images go to docs/screenshots/.
+ * Images go to docs/screenshots/. With `--store`, Chrome Web Store
+ * screenshots (exactly 1280×800) go to docs/store/ instead.
  */
+import { spawnSync } from 'node:child_process';
 import { launch, sleep, type Page } from './e2e/cdp';
 
-const OUT = 'docs/screenshots';
+const STORE = process.argv.includes('--store');
+const OUT = STORE ? 'docs/store' : 'docs/screenshots';
+let storeIndex = 0;
 
 const LIBRARY = {
   bar: [
@@ -93,9 +97,14 @@ try {
   const page = await browser.open('newtab.html');
   await seed(page);
   const shot = async (name: string, width = 1280, height = 800, dark = true) => {
-    await page.setViewport(width, height, dark);
+    // The store wants exactly 1280×800 (captured at 2×, then scaled down).
+    await page.setViewport(STORE ? 1280 : width, STORE ? 800 : height, dark);
     await sleep(400);
-    await page.screenshot(`${OUT}/${name}.png`);
+    const file = STORE
+      ? `${OUT}/screenshot-${++storeIndex}-${name}.png`
+      : `${OUT}/${name}.png`;
+    await page.screenshot(file);
+    if (STORE) spawnSync('sips', ['-z', '800', '1280', file], { stdio: 'ignore' });
   };
   const openFolder = async (title: string) => {
     await page.eval(
@@ -109,6 +118,12 @@ try {
   await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
   await page.waitFor(`document.querySelector('[data-folder-card]')`);
   await shot('dashboard');
+  if (STORE) {
+    await page.eval(`document.querySelector('[aria-label="Arca: go to Home"]').click()`);
+    await shot('home');
+    await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+    await page.waitFor(`document.querySelector('[data-folder-card]')`);
+  }
 
   // List view with tags, light theme.
   await openFolder('Dev');

@@ -37,6 +37,7 @@
 - [x] ARC-B12 · JSON backup/import dropped folder icons, folder tags and folder notes; now round-trips them · `feature/backup-folder-icons` · 2026-11-16
 - [x] ARC-080 · Prune stale AI readings: after Ask Arca reads the library, saved embeddings no bookmark produces any more (deleted/renamed) are removed for the current model · `feature/prune-embeddings` · 2026-11-16
 - [x] ARC-081 · Drag folders from the sidebar tree onto any folder (tree, cards, breadcrumbs), undoable; mouse only · `feature/tree-drag` · 2026-11-16
+- [x] ARC-082 · Chrome Web Store prep: PRIVACY.md, listing copy and permission justifications (docs/store/listing.md), 1280×800 store screenshots (`scripts/screenshots.ts --store`); zip builds (246 KB). Version bump and promo tile left for the release · `docs/store-prep` · 2026-11-16
 
 - [x] ARC-079 · Arca logo/title goes to Home; click the open folder's name in the breadcrumb to rename it inline (browser folders stay locked) · `feature/home-link-crumb-rename` · 2026-11-16
 
