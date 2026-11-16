@@ -1,7 +1,8 @@
 import { chatJson } from '@/src/lib/ollama';
 import { mainDomain } from '@/src/lib/url';
 import { embedTexts, similarity, type EmbedProgress } from './embedTexts';
-import { embeddingText, throwIfAborted, type OrganizeItem } from './organize';
+import { embeddingText, taskPrefix, throwIfAborted, type OrganizeItem } from './organize';
+import { pruneEmbeddings } from './embedCache';
 
 /**
  * "Ask Arca": find bookmarks from a vague description, entirely on this
@@ -450,4 +451,22 @@ export async function ask(
       about: 'new',
     };
   }
+}
+
+/**
+ * After the whole library has been read: forget readings of bookmarks that
+ * no longer exist (or were renamed), for this model. Both Ask's and AI
+ * organize's text forms count as current.
+ */
+export function pruneStaleReadings(
+  items: readonly OrganizeItem[],
+  model: string,
+): Promise<number> {
+  const prefix = taskPrefix(model);
+  const texts = new Set<string>();
+  for (const it of items) {
+    texts.add(docText(model, it));
+    texts.add(prefix + embeddingText(it));
+  }
+  return pruneEmbeddings(model, texts);
 }

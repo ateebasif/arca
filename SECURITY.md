@@ -78,7 +78,8 @@ Off by default. Turning it on asks for permission to reach the Ollama address on
 - Bookmark embeddings are cached in IndexedDB (private to Arca) and can be cleared in
   Settings. What you type (search text, Ask questions) is embedded in memory only and
   never written to disk. Turning AI off frees the in-memory vectors (capped at 96 MB)
-  and stops any background reading.
+  and stops any background reading. Readings of bookmarks you deleted or renamed are
+  removed once Ask Arca has read the library again.
 
 ### Mini windows
 

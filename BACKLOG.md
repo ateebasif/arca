@@ -34,6 +34,8 @@
 
 ## Done
 
+- [x] ARC-080 · Prune stale AI readings: after Ask Arca reads the library, saved embeddings no bookmark produces any more (deleted/renamed) are removed for the current model · `feature/prune-embeddings` · 2026-11-16
+
 - [x] ARC-079 · Arca logo/title goes to Home; click the open folder's name in the breadcrumb to rename it inline (browser folders stay locked) · `feature/home-link-crumb-rename` · 2026-11-16
 
 - [x] ARC-042 · Saved searches: Save search (text + filters) from results; sidebar list to run or forget; synced across tabs · `feature/saved-searches` · 2026-11-16
@@ -144,7 +146,7 @@
 - New Tab, dashboard and popup each import `global.css`; fine for now, revisit if popup CSS grows.
 - `getAncestorIds` and the move guard call `bookmarks.get` once per level. UI code should use the store's `isWithin`/`getPath` instead.
 - Store applies bursts of bookmark events to one draft and publishes once per microtask (ARC-B10); a single event still copies the id→node Map once.
-- Embedding cache keeps vectors for bookmarks that were since edited or deleted (keys are text hashes). Cleared by "Clear cached AI data"; automatic pruning is a follow-up if the cache grows large.
+- Embedding cache: readings for deleted or renamed bookmarks are pruned after Ask Arca reads the whole library (current model only; other models' readings stay until "Clear cached AI data").
 - k-means runs on the main thread in ~15 ms slices (ARC-B10); a Worker would free the thread entirely if organize ever feels sluggish.
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.

@@ -48,6 +48,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Performance
 
+- Saved AI readings of deleted or renamed bookmarks are cleaned up automatically
+  after Ask Arca reads your library, so the cache doesn't keep growing.
 - Tagging many items (bulk tag, organize with tags) is one storage write instead of
   one per item.
 - Bursts of bookmark changes (organize, bulk moves) render once instead of per item.
