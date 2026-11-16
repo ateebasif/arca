@@ -54,6 +54,7 @@ export function SettingsDialog() {
         <ThemeSwitch showLabels />
       </div>
       <OpenInSetting />
+      <HomeSettings />
       <fieldset>
         <legend className="text-ink-muted mb-2 text-xs font-medium">New Tab</legend>
         <div className="flex flex-col gap-1.5">
@@ -145,5 +146,35 @@ function OpenInSetting() {
         </p>
       )}
     </div>
+  );
+}
+
+/** Home view: start there, and which sections it shows. Saved immediately. */
+function HomeSettings() {
+  const s = useSettings();
+  const row = (
+    label: string,
+    checked: boolean,
+    key: 'startOnHome' | 'homeRecent' | 'homeMostVisited',
+  ) => (
+    <label className="text-ink-muted flex items-center gap-2 text-xs">
+      <input
+        type="checkbox"
+        className="accent-accent"
+        checked={checked}
+        onChange={(e) => void s.update({ [key]: e.target.checked })}
+      />
+      {label}
+    </label>
+  );
+  return (
+    <fieldset className="mb-4">
+      <legend className="text-ink-muted mb-2 text-xs font-medium">Home</legend>
+      <div className="flex flex-col gap-1.5">
+        {row('Open on Home (instead of the last folder)', s.startOnHome, 'startOnHome')}
+        {row('Show Recently added', s.homeRecent, 'homeRecent')}
+        {row('Show Most visited', s.homeMostVisited, 'homeMostVisited')}
+      </div>
+    </fieldset>
   );
 }

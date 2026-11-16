@@ -15,7 +15,6 @@
 ### Phase 2 – Management
 
 - [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
-- [ ] ARC-026 · Home view: Recently added (12) + Most visited, each hideable · Phase 2 · P1
 - [ ] ARC-030 · Release v0.2.0 · Phase 2 · P0
 
 ### Phase 3 – Power tools
@@ -42,6 +41,8 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-026 · Home view (sidebar → Home): Recently added (12) and Most visited, each hideable; optional "Open on Home" · `feature/home-view` · 2026-11-16
 
 - [x] ARC-044 · Commit hooks: lefthook (prettier + eslint on staged files) and commitlint (Conventional Commits, 72-char header and body) · `chore/commit-hooks` · 2026-11-16
 

@@ -21,6 +21,7 @@ no servers.
 
 **Browse and edit**
 
+- **Home**: your newest bookmarks and most visited sites at a glance.
 - Sidebar folder tree, folder cards and bookmark tiles with brand-coloured covers,
   small tiles, or a sortable list. Breadcrumbs, back/forward.
 - **All links** view: every link inside a folder and its subfolders in one grid.

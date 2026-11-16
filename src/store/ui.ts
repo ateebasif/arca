@@ -58,6 +58,9 @@ interface UiState extends UiPrefs {
   /** Showing every item with this tag (across folders) instead of a folder. */
   tagFilter: string | null;
   setTagFilter(tag: string | null): void;
+  /** Showing Home (recently added, most visited) instead of a folder. */
+  home: boolean;
+  showHome(): void;
   openFolder(id: string): void;
   goBack(): void;
   goForward(): void;
@@ -91,13 +94,16 @@ export const useUi = create<UiState>()((set) => ({
   backStack: [],
   forwardStack: [],
   tagFilter: null,
-  setTagFilter: (tagFilter) => set({ tagFilter, query: '' }),
+  home: false,
+  setTagFilter: (tagFilter) => set({ tagFilter, home: false, query: '' }),
+  showHome: () => set({ home: true, tagFilter: null, query: '' }),
   openFolder: (id) =>
     set((s) =>
       id === s.currentFolderId
-        ? { tagFilter: null }
+        ? { tagFilter: null, home: false }
         : {
             tagFilter: null,
+            home: false,
             currentFolderId: id,
             lastFolderId: id,
             backStack: [...s.backStack, s.currentFolderId].slice(-HISTORY_LIMIT),
@@ -107,6 +113,8 @@ export const useUi = create<UiState>()((set) => ({
   replaceFolder: (id) => set({ currentFolderId: id, lastFolderId: id }),
   goBack: () =>
     set((s) => {
+      // Back from Home returns to the folder you were in.
+      if (s.home) return { home: false };
       const target = s.backStack.at(-1);
       if (target === undefined) return s;
       return {
@@ -116,6 +124,7 @@ export const useUi = create<UiState>()((set) => ({
         forwardStack: [...s.forwardStack, s.currentFolderId],
         query: '',
         tagFilter: null,
+        home: false,
       };
     }),
   goForward: () =>
@@ -129,6 +138,7 @@ export const useUi = create<UiState>()((set) => ({
         backStack: [...s.backStack, s.currentFolderId],
         query: '',
         tagFilter: null,
+        home: false,
       };
     }),
   setQuery: (query) => set({ query, activeResult: 0 }),
@@ -139,6 +149,7 @@ export const useUi = create<UiState>()((set) => ({
       revealId: id,
       query: '',
       tagFilter: null,
+      home: false,
       currentFolderId: folderId,
       lastFolderId: folderId,
       backStack:
@@ -231,5 +242,6 @@ export function resetUiForTests(): void {
     backStack: [],
     forwardStack: [],
     tagFilter: null,
+    home: false,
   });
 }

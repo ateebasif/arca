@@ -17,6 +17,7 @@ import { Breadcrumbs } from './main/Breadcrumbs';
 import { NavButtons } from './main/NavButtons';
 import { FolderView } from './main/FolderView';
 import { TagCrumb, TagView } from './main/TagView';
+import { HomeView } from './main/HomeView';
 import { AddMenu } from './main/AddMenu';
 import { ScopeSwitch, Toolbar } from './main/Toolbar';
 import { ScrollParentContext } from './main/scrollParent';
@@ -36,6 +37,7 @@ export function Dashboard({ surface }: DashboardProps) {
   // Leave room under the list for the selection bar.
   const selecting = useSelection((s) => s.ids.size > 0);
   const tagFilter = useUi((s) => s.tagFilter);
+  const home = useUi((s) => s.home);
   const state = useBookmarks();
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
@@ -122,14 +124,20 @@ export function Dashboard({ surface }: DashboardProps) {
               )}
               <NavButtons />
               <div className="min-w-0 flex-1">
-                {tagFilter ? <TagCrumb tag={tagFilter} /> : <Breadcrumbs />}
+                {home ? (
+                  <h1 className="text-[15px] font-semibold">Home</h1>
+                ) : tagFilter ? (
+                  <TagCrumb tag={tagFilter} />
+                ) : (
+                  <Breadcrumbs />
+                )}
               </div>
               <div className="flex w-[min(34rem,48%)] shrink-0">
                 <SearchBox />
               </div>
               <AddMenu />
             </div>
-            {!searching && (
+            {!searching && !home && (
               <div className="flex h-10 items-center justify-between gap-3">
                 {tagFilter ? <span /> : <ScopeSwitch />}
                 <Toolbar />
@@ -144,6 +152,8 @@ export function Dashboard({ surface }: DashboardProps) {
             <ScrollParentContext.Provider value={scrollParent}>
               {searching ? (
                 <SearchResults />
+              ) : home ? (
+                <HomeView />
               ) : tagFilter ? (
                 <TagView tag={tagFilter} />
               ) : (
