@@ -31,6 +31,11 @@ export interface Settings {
   chatModel: string;
   /** Model Ask Arca answers with ('' = the naming model). */
   askModel: string;
+  /** Open on Home instead of the last folder. */
+  startOnHome: boolean;
+  /** Home sections (each can be hidden). */
+  homeRecent: boolean;
+  homeMostVisited: boolean;
   /** Your rules for AI organize folder names ('' = Arca's defaults). */
   organizeRules: string;
   /** Your rules for AI organize tags ('' = Arca's defaults). */
@@ -57,6 +62,9 @@ export const DEFAULT_SETTINGS: Settings = {
   askModel: '',
   organizeRules: '',
   tagRules: '',
+  startOnHome: false,
+  homeRecent: true,
+  homeMostVisited: true,
 };
 
 export const SETTINGS_KEY = 'settings';
@@ -79,6 +87,9 @@ export function parseSettings(raw: unknown): Settings {
     embedModel: str(r.embedModel, d.embedModel, 200),
     chatModel: str(r.chatModel, d.chatModel, 200),
     askModel: str(r.askModel, d.askModel, 200),
+    startOnHome: bool(r.startOnHome, d.startOnHome),
+    homeRecent: bool(r.homeRecent, d.homeRecent),
+    homeMostVisited: bool(r.homeMostVisited, d.homeMostVisited),
     organizeRules: str(r.organizeRules, d.organizeRules, RULES_MAX),
     tagRules: str(r.tagRules, d.tagRules, RULES_MAX),
   };

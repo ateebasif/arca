@@ -3,7 +3,14 @@ import { SIDEBAR_MAX, SIDEBAR_MIN, useUi } from '@/src/store/ui';
 import { useAiRun } from '@/src/store/aiRun';
 import { useAskChat } from '@/src/store/askChat';
 import { useOverlays } from '@/src/store/overlays';
-import { GearIcon, KeyboardIcon, SearchIcon, SidebarIcon, SparkleIcon } from '../icons';
+import {
+  GearIcon,
+  HomeIcon,
+  KeyboardIcon,
+  SearchIcon,
+  SidebarIcon,
+  SparkleIcon,
+} from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
 import { FolderTree } from './FolderTree';
 import { TagList } from './TagList';
@@ -34,6 +41,7 @@ export function Sidebar() {
         </button>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto">
+        <HomeRow />
         <FolderTree />
         <TagList />
       </nav>
@@ -160,5 +168,26 @@ function AskStatus() {
     </span>
   ) : (
     <span className="text-ink-faint ml-auto text-[11px]">find by description</span>
+  );
+}
+
+/** Home: recently added and most visited (above the folder tree). */
+function HomeRow() {
+  const home = useUi((s) => s.home);
+  return (
+    <div className="px-2 pb-1">
+      <button
+        type="button"
+        aria-current={home ? 'page' : undefined}
+        onClick={() => useUi.getState().showHome()}
+        className={`flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-[13px] transition-colors duration-150 ${
+          home
+            ? 'bg-accent-soft text-ink font-medium'
+            : 'text-ink-muted hover:bg-hover hover:text-ink'
+        }`}
+      >
+        <HomeIcon className={home ? 'text-accent' : ''} /> Home
+      </button>
+    </div>
   );
 }

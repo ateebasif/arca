@@ -29,6 +29,12 @@ export const ChevronRight = (p: IconProps) => (
   </Icon>
 );
 
+export const HomeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M2.25 7.25 8 2.75l5.75 4.5M3.75 6.25v7h3V10h2.5v3.25h3v-7" />
+  </Icon>
+);
+
 export const FolderIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M1.75 4.25c0-.83.67-1.5 1.5-1.5h3l1.5 1.75h5c.83 0 1.5.67 1.5 1.5v6.25c0 .83-.67 1.5-1.5 1.5h-9.5c-.83 0-1.5-.67-1.5-1.5Z" />

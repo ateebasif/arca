@@ -149,6 +149,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Home** (top of the sidebar): your 12 newest bookmarks and most visited sites,
+  each hideable; Settings can open Arca on Home.
 - Public README with screenshots, install steps and a Local AI setup guide for
   macOS, Windows and Linux; MIT license; `scripts/screenshots.ts` regenerates the
   README images from a sample library.
