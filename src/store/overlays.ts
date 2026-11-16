@@ -13,7 +13,8 @@ export type EditorState =
   | { mode: 'edit'; id: string };
 
 /** Where an item is shown: the main view or the sidebar folder tree. */
-export type ItemPlace = 'main' | 'tree';
+/** Where an item is shown (decides which copy turns into a rename field). */
+export type ItemPlace = 'main' | 'tree' | 'crumb';
 
 export interface MenuState {
   id: string;

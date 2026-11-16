@@ -27,10 +27,16 @@ export function Sidebar() {
       style={{ width }}
     >
       <div className="flex h-14 shrink-0 items-center justify-between px-4">
-        <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+        <button
+          type="button"
+          title="Home"
+          aria-label="Arca: go to Home"
+          onClick={() => useUi.getState().showHome()}
+          className="hover:bg-hover -ml-1.5 flex items-center gap-2 rounded-lg px-1.5 py-1 text-[15px] font-semibold tracking-tight"
+        >
           <img src="/icon/32.png" alt="" width={20} height={20} draggable={false} />
           Arca
-        </span>
+        </button>
         <button
           type="button"
           onClick={toggleSidebar}
