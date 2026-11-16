@@ -131,7 +131,8 @@ docs/git/      branch, commit and PR guides (source of truth for git rules)
   after the user approves.
 - Releases: `release/` branch → tag on `main` (`v0.1.0` after Phase 1, `v0.2.0` after
   Phase 2, …) → back-merge to `develop`. CHANGELOG.md uses Keep a Changelog.
-- Commit hooks (lefthook + commitlint) are proposed, not installed. Ask first.
+- Commit hooks (lefthook + commitlint) run on every commit: prettier + eslint on staged
+  files, commitlint on the message (`commitlint.config.js`). Skip once with `LEFTHOOK=0`.
 
 ## Backlog rules (BACKLOG.md)
 
