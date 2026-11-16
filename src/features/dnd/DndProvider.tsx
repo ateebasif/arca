@@ -22,6 +22,8 @@ import { getBookmarkStore, useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { DragStateContext, fromDropId, fromItemId, setDragActive } from './ids';
 import { dropProblem, moveIntoFolder, reorder } from './moves';
+import { isTabDrag, type TabDragData } from './tabDrag';
+import { bookmarkTab } from '@/src/features/editing/actions';
 
 export const AUTO_EXPAND_MS = 600;
 
@@ -45,7 +47,8 @@ const collision: CollisionDetection = (args) => {
 
 const nameOf = (nodeId: string | null) =>
   (nodeId && getBookmarkStore().getSnapshot().nodes.get(nodeId)?.title) || 'item';
-const titleFor = (id: UniqueIdentifier) => `“${nameOf(fromItemId(id))}”`;
+const titleFor = (id: UniqueIdentifier) =>
+  isTabDrag(id) ? 'the tab' : `“${nameOf(fromItemId(id))}”`;
 const targetFor = (id: UniqueIdentifier) => {
   const folder = fromDropId(id);
   return folder
@@ -57,6 +60,8 @@ const targetFor = (id: UniqueIdentifier) => {
 export function DndProvider({ children }: { children: ReactNode }) {
   const state = useBookmarks();
   const [activeId, setActiveId] = useState<string | null>(null);
+  /** An open tab being dragged from the Open tabs panel. */
+  const [activeTab, setActiveTab] = useState<TabDragData['tab'] | null>(null);
   const [overFolderId, setOverFolderId] = useState<string | null>(null);
   const expandTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -75,6 +80,8 @@ export function DndProvider({ children }: { children: ReactNode }) {
   const onDragStart = (e: DragStartEvent) => {
     setDragActive(true);
     setActiveId(fromItemId(e.active.id));
+    if (isTabDrag(e.active.id))
+      setActiveTab((e.active.data.current as TabDragData | undefined)?.tab ?? null);
   };
 
   const onDragOver = (e: DragOverEvent) => {
@@ -94,7 +101,15 @@ export function DndProvider({ children }: { children: ReactNode }) {
     setDragActive(false);
     clearExpand();
     setActiveId(null);
+    setActiveTab(null);
     setOverFolderId(null);
+    // A tab dropped on a folder becomes a bookmark there.
+    if (isTabDrag(e.active.id)) {
+      const tab = (e.active.data.current as TabDragData | undefined)?.tab;
+      const folderId = e.over ? fromDropId(e.over.id) : null;
+      if (tab && folderId) void bookmarkTab(tab, folderId);
+      return;
+    }
     const nodeId = fromItemId(e.active.id);
     if (!nodeId || !e.over) return;
     const snapshot = getBookmarkStore().getSnapshot();
@@ -113,6 +128,7 @@ export function DndProvider({ children }: { children: ReactNode }) {
     setDragActive(false);
     clearExpand();
     setActiveId(null);
+    setActiveTab(null);
     setOverFolderId(null);
   };
 
@@ -152,7 +168,12 @@ export function DndProvider({ children }: { children: ReactNode }) {
         <DragOverlay
           dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }}
         >
-          {active ? (
+          {activeTab ? (
+            <div className="border-line bg-surface-strong flex max-w-64 items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-medium shadow-(--shadow-pop) backdrop-blur-xl">
+              <Favicon url={activeTab.url} title={activeTab.title} size={16} />
+              <span className="truncate">{activeTab.title || activeTab.url}</span>
+            </div>
+          ) : active ? (
             <div className="border-line bg-surface-strong flex max-w-64 items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-medium shadow-(--shadow-pop) backdrop-blur-xl">
               {active.url ? (
                 <Favicon url={active.url} title={active.title} size={16} />

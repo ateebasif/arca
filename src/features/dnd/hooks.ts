@@ -1,4 +1,5 @@
-import { useDroppable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { tabDragId, type TabDragData } from './tabDrag';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useContext, type CSSProperties } from 'react';
@@ -50,4 +51,18 @@ export function useFolderDrop(folderId: string, where: string, expandable = fals
 
 export function useDragState() {
   return useContext(DragStateContext);
+}
+
+/** Makes an open tab (Open tabs panel) draggable onto folders. */
+export function useTabDrag(tabId: number, tab: TabDragData['tab']) {
+  const drag = useDraggable({
+    id: tabDragId(tabId),
+    data: { tab } satisfies TabDragData,
+  });
+  const { role: _role, tabIndex: _tabIndex, ...aria } = drag.attributes;
+  return {
+    setNodeRef: drag.setNodeRef,
+    handle: { ...aria, ...drag.listeners },
+    isDragging: drag.isDragging,
+  };
 }

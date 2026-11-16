@@ -144,3 +144,27 @@ export async function createFolder(
   undo.record(undo.created(node), { toast: false });
   return node.id;
 }
+
+/**
+ * Bookmarks an open tab in `folderId` (from the Open tabs panel: its
+ * Bookmark button or a drop on a folder). Undo removes it again.
+ */
+export async function bookmarkTab(
+  tab: { url: string; title: string },
+  folderId: string,
+): Promise<string | null> {
+  const node = await run(() =>
+    bm.create({
+      parentId: folderId,
+      title: tab.title.trim().slice(0, 1024),
+      url: tab.url,
+    }),
+  );
+  if (!node) return null;
+  const folder = getBookmarkStore().getSnapshot().nodes.get(folderId)?.title;
+  undo.record({
+    ...undo.created(node),
+    label: `Bookmarked “${node.title || tab.url}”${folder ? ` in ${folder}` : ''}`,
+  });
+  return node.id;
+}

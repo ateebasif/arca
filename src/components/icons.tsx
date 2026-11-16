@@ -29,6 +29,13 @@ export const ChevronRight = (p: IconProps) => (
   </Icon>
 );
 
+export const TabsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="1.75" y="4.25" width="12.5" height="9" rx="1.75" />
+    <path d="M4.25 4.25V3.5c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1v.75" />
+  </Icon>
+);
+
 export const HomeIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M2.25 7.25 8 2.75l5.75 4.5M3.75 6.25v7h3V10h2.5v3.25h3v-7" />

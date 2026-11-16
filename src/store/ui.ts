@@ -36,6 +36,8 @@ export interface UiPrefs {
   sidebarWidth: number;
   expanded: string[];
   lastFolderId: string;
+  /** Open tabs panel shown on the right. */
+  tabsPanel: boolean;
 }
 
 export const DEFAULT_PREFS: UiPrefs = {
@@ -48,6 +50,7 @@ export const DEFAULT_PREFS: UiPrefs = {
   sidebarWidth: 248,
   expanded: ['1'],
   lastFolderId: '1',
+  tabsPanel: false,
 };
 
 export const SIDEBAR_MIN = 180;
@@ -92,6 +95,7 @@ interface UiState extends UiPrefs {
   setSort(sort: SortMode, direction?: SortDirection): void;
   setScope(scope: Scope): void;
   toggleSidebar(): void;
+  toggleTabsPanel(): void;
   setSidebarWidth(width: number): void;
   setExpanded(id: string, expanded: boolean): void;
   expandAll(ids: readonly string[]): void;
@@ -189,6 +193,7 @@ export const useUi = create<UiState>()((set) => ({
   setSort: (sort, sortDirection = 'asc') => set({ sort, sortDirection }),
   setScope: (scope) => set({ scope }),
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  toggleTabsPanel: () => set((s) => ({ tabsPanel: !s.tabsPanel })),
   setSidebarWidth: (width) =>
     set({
       sidebarWidth: Math.round(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, width))),
@@ -215,6 +220,7 @@ function pickPrefs(state: UiPrefs): UiPrefs {
     sidebarWidth: state.sidebarWidth,
     expanded: state.expanded,
     lastFolderId: state.lastFolderId,
+    tabsPanel: state.tabsPanel,
   };
 }
 
@@ -235,6 +241,7 @@ export function parsePrefs(raw: unknown): UiPrefs {
     sidebarWidth: num(r.sidebarWidth, d.sidebarWidth, SIDEBAR_MIN, SIDEBAR_MAX),
     expanded: idList(r.expanded, d.expanded),
     lastFolderId: str(r.lastFolderId, d.lastFolderId, 64),
+    tabsPanel: bool(r.tabsPanel, d.tabsPanel),
   };
 }
 
