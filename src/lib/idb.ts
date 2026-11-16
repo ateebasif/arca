@@ -12,6 +12,10 @@ export interface KeyValueStore<T> {
   clear(): Promise<void>;
   /** Number of entries (cheap: values aren't read). */
   count(): Promise<number>;
+  /** All keys (values aren't read). */
+  keys(): Promise<string[]>;
+  /** Deletes several keys in one transaction. */
+  deleteMany(keys: readonly string[]): Promise<void>;
   /** All keys with the value's `fetchedAt`, for pruning. */
   entries(): Promise<Array<[string, T]>>;
 }
@@ -59,6 +63,14 @@ export function idbStore<T>(dbName: string, storeName: string): KeyValueStore<T>
     async count() {
       return request((await tx('readonly')).count());
     },
+    async keys() {
+      return (await request((await tx('readonly')).getAllKeys())).map(String);
+    },
+    async deleteMany(keys) {
+      if (!keys.length) return;
+      const store = await tx('readwrite');
+      await Promise.all(keys.map((k) => request(store.delete(k))));
+    },
     async entries() {
       const store = await tx('readonly');
       const [keys, values] = await Promise.all([
@@ -80,6 +92,8 @@ export function memoryStore<T>(): KeyValueStore<T> {
     delete: async (k) => void map.delete(k),
     clear: async () => map.clear(),
     count: async () => map.size,
+    keys: async () => [...map.keys()],
+    deleteMany: async (keys) => keys.forEach((k) => map.delete(k)),
     entries: async () => [...map.entries()],
   };
 }

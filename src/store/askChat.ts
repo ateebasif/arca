@@ -159,7 +159,7 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
     const abort = new AbortController();
     const startedAt = Date.now();
     const done = (async () => {
-      const { indexDocs } = await import('@/src/features/ai/ask');
+      const { indexDocs, pruneStaleReadings } = await import('@/src/features/ai/ask');
       await indexDocs(items, {
         ...opts,
         signal: abort.signal,
@@ -168,6 +168,8 @@ export const useAskChat = create<AskChatState>()((set, get) => ({
           set({ index: p.done < p.total ? { ...p, startedAt } : null });
         },
       });
+      // The whole library is read now, so readings nothing uses can go.
+      if (!abort.signal.aborted) await pruneStaleReadings(items, opts.embedModel);
     })()
       .catch((e: unknown) => {
         // Errors surface on the next question; a failed warm-up can be retried.

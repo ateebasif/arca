@@ -54,6 +54,11 @@ export function rememberVector(key: string, vector: Float32Array): void {
   memoryBytes += vector.byteLength;
 }
 
+function forgetVector(key: string, v: Float32Array) {
+  memoryVectors.delete(key);
+  memoryBytes -= v.byteLength;
+}
+
 /** Drops every vector held in memory (AI turned off, cache cleared). */
 export function forgetMemoryVectors(): void {
   memoryVectors.clear();
@@ -138,4 +143,32 @@ export async function clearEmbeddings(): Promise<void> {
   await embeddingStore()
     .clear()
     .catch(() => {});
+}
+
+/**
+ * Deletes saved readings for `model` that no current bookmark produces (the
+ * bookmark was deleted or renamed). `validTexts` are every text the library
+ * embeds for that model. Other models' readings are kept. Returns how many
+ * were removed.
+ */
+export async function pruneEmbeddings(
+  model: string,
+  validTexts: Iterable<string>,
+): Promise<number> {
+  const keep = new Set<string>();
+  for (const t of validTexts) keep.add(cacheKey(model, t));
+  const prefix = `${model}|`;
+  const keys = await embeddingStore()
+    .keys()
+    .catch(() => [] as string[]);
+  const stale = keys.filter((k) => k.startsWith(prefix) && !keep.has(k));
+  if (!stale.length) return 0;
+  await embeddingStore()
+    .deleteMany(stale)
+    .catch(() => {});
+  for (const k of stale) {
+    const v = memoryVectors.get(k);
+    if (v) forgetVector(k, v);
+  }
+  return stale.length;
 }
