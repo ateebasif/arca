@@ -20,7 +20,6 @@
 ### Phase 3 – Power tools
 
 - [ ] ARC-032b · Metadata cleanup after the undo window (orphans are pruned on next load today) · Phase 3 · P2
-- [ ] ARC-035 · Search filter chips: tag, has notes, duplicates, dead links · Phase 3 · P2
 - [ ] ARC-040 · Release v1.0.0 (v0.3.0 if more work is planned before 1.0) · Phase 3 · P0
 
 ### Phase 4 – Later
@@ -40,6 +39,8 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-035 · Search filter chips: tag, has note, duplicates, broken (from the last link check); applied before the 50-result cap; cleared with the search · `feature/search-filters` · 2026-11-16
 
 - [x] ARC-031b · Notes on bookmarks: Edit dialog, shown in previews, searchable, in HTML (`<DD>`) and JSON export/import, undoable · `feature/notes` · 2026-11-16
 
