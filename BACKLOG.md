@@ -34,6 +34,8 @@
 
 ## Done
 
+- [x] ARC-084 · ⇧-drag a bookmark to drag the real link out (tab strip, other windows, other apps); plain drag still moves it inside Arca. ⌥ isn't possible: Chrome never starts a link drag with Alt held · `feature/alt-drag-links` · 2026-11-16
+
 - [x] ARC-B13 · Cross-tab layout sync echo: a tab re-saved prefs it had just received, which could overwrite another tab's newer change (and made e2e flaky) · `fix/prefs-sync-echo` · 2026-11-16
 
 - [x] ARC-B12 · JSON backup/import dropped folder icons, folder tags and folder notes; now round-trips them · `feature/backup-folder-icons` · 2026-11-16
@@ -161,4 +163,4 @@
 - `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
 - e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.
 - Drag & drop: sidebar tree folders can be dragged with the mouse (ARC-081); keyboard drag stays on folder cards. Reordering is disabled when a sort other than Manual is active, since the shown order isn't the browser order.
-- Links are no longer natively draggable (to other apps / the tab strip) because the browser's link drag cancels dnd-kit's pointer drag.
+- e2e "small tiles" measures card height 150 ms after switching density; it failed once (2026-11-16) and passed on reruns. Wait for the layout to settle if it flakes again.

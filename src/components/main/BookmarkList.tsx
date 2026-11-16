@@ -6,7 +6,7 @@ import { useTags } from '@/src/store/useMeta';
 import { TagChips } from '../tags/TagChips';
 import { memo } from 'react';
 import { isDragActive } from '@/src/features/dnd/ids';
-import { useDragItem, useFolderDrop } from '@/src/features/dnd/hooks';
+import { useDragItem, useFolderDrop, withNativeLinkDrag } from '@/src/features/dnd/hooks';
 import { itemHandlers } from '@/src/features/editing/itemHandlers';
 import { bookmarkLinkProps } from '@/src/features/open';
 import { displayHost } from '@/src/lib/url';
@@ -210,8 +210,8 @@ export const BookmarkRow = memo(function BookmarkRow({
       <a
         ref={drag.setNodeRef}
         style={drag.style}
-        {...dragHandle}
         draggable={false}
+        {...withNativeLinkDrag(dragHandle, renaming ? undefined : link.href)}
         role="row"
         href={link.href}
         tabIndex={0}

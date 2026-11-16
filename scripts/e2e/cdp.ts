@@ -226,6 +226,13 @@ export class Page {
     return point;
   }
 
+  /** Calls back for a DevTools event on this page (e.g. Input.dragIntercepted). */
+  onEvent(method: string, callback: (params: Record<string, unknown>) => void): void {
+    this.conn.on(method, (params, sid) => {
+      if (sid === this.sessionId) callback(params);
+    });
+  }
+
   /** A real pointer drag: press, move in steps, pause, release. */
   async drag(from: string, to: string, modifiers = 0): Promise<void> {
     const a = await this.centerOf(from);

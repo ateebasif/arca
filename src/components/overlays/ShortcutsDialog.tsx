@@ -14,6 +14,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['Delete  or  ⌘⌫', 'Delete the focused item'],
   ['⌘Z', 'Undo'],
   ['Shift F10', 'Item menu'],
+  ['⇧ drag a bookmark', 'Drag the link out (tab strip, other apps)'],
   ['Esc', 'Clear search / close'],
   ['?', 'This list'],
 ];
