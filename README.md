@@ -203,7 +203,8 @@ connection**.
   links.
 - Other extensions and websites can't message, frame or read Arca.
 
-Details and the threat model: [SECURITY.md](SECURITY.md).
+Details and the threat model: [SECURITY.md](SECURITY.md). Privacy policy:
+[PRIVACY.md](PRIVACY.md).
 
 ## Keyboard shortcuts
 
