@@ -133,7 +133,7 @@
 
 ## Known Issues / Bugs
 
-- [ ] ARC-B07 · New Tab initial JS is 437 KB, over the 400 KB budget. Measured 2026-11-14: react-dom (production build) is 242 KB of it, dnd-kit ~50 KB, TanStack Virtual ~20 KB; paint is still 28–32 ms FCP / 35–40 ms interactive at 5,000 bookmarks. Fix needs a decision: Preact compat (new dependency, ~-150 KB) or loading drag & drop after first paint (risky refactor) · P2
+- [ ] ARC-B07 · New Tab initial JS is 458 KB (437 KB on 2026-11-14; Home, notes, filters, icons added since), over the 400 KB budget. Deferred by the user 2026-11-16. Measured 2026-11-14: react-dom (production build) is 242 KB of it, dnd-kit ~50 KB, TanStack Virtual ~20 KB; paint is still 28–32 ms FCP / 35–40 ms interactive at 5,000 bookmarks. Fix needs a decision: Preact compat (new dependency, ~-150 KB) or loading drag & drop after first paint (risky refactor) · P2
 
 ## Tech Debt / Risks to Verify
 
