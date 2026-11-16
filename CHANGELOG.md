@@ -6,157 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Tooling
+## [1.0.0] - 2026-11-16
 
-- Git hooks: Prettier and ESLint on staged files, commitlint on commit messages.
-
-### Security
-
-- Mini windows: Arca could mistake a normal window for one of its mini windows after
-  a browser restart (window ids are reused) and close it. Ids now live in session
-  storage, and every window is checked to still be a one-tab popup before Arca acts.
-- Link previews never contact your local network (localhost, `*.local`, private IPs)
-  on a public page's behalf, via its image or a redirect.
-- Local AI requests no longer follow redirects, cap the reply size and can be
-  cancelled.
-- Search text and Ask questions are no longer saved to disk as embeddings.
-- Broken-link results older than two weeks are deleted, with a "Forget results"
-  button; a check refuses to run without site access.
-
-- Strict Content Security Policy for all extension pages.
-- Other extensions and websites can't message, frame or fetch Arca.
-- `javascript:`, `data:` and similar bookmark URLs are never opened or rendered as
-  links (shown as "Blocked link"), and Arca refuses to save them.
-- Stored settings are validated on load.
-- `bun run security` checks the built extension; e2e simulates a hostile extension,
-  a hostile website and a planted bookmarklet. See SECURITY.md.
-
-### Fixed
-
-- With several Arca tabs open, switching layout (e.g. to list and back) could end
-  with every tab in the wrong layout: tabs wrote back changes they had just
-  received. They no longer do.
-- On Home or a tag view, the sidebar no longer also highlights a folder.
-- The JSON backup now keeps folder icons, and importing it restores folder tags,
-  notes and icons (they were dropped before).
-- Undoing a delete in one Arca tab could lose the item's tags and note if another
-  Arca tab had been opened meanwhile. Deleted items' tags and notes are now kept
-  for an hour (and as long as Undo can bring them back) before being cleaned up.
-- "Related by meaning" search results can be reached with ↑↓ and opened with Enter.
-- Tags on link tiles no longer get cut off at the bottom of the card: the folder
-  and tags now share one line.
-- Tags added in two Arca pages at the same time no longer overwrite each other.
-- Folder names from AI organize keep leading accented or non-Latin letters
-  ("Éducation", "日本 News").
-- Stop on link check / clean-out review keeps working after a quick restart.
-- Cancel and Stop now stop Ollama too; Ask Arca stops reading the library when its
-  panel closes; list descriptions stop when rows scroll away or the setting is off.
-
-### Performance
-
-- Saved AI readings of deleted or renamed bookmarks are cleaned up automatically
-  after Ask Arca reads your library, so the cache doesn't keep growing.
-- Tagging many items (bulk tag, organize with tags) is one storage write instead of
-  one per item.
-- Bursts of bookmark changes (organize, bulk moves) render once instead of per item.
-- AI organize no longer freezes the page while grouping large libraries.
-- Meaning matches read cached readings in one go and remember what's missing,
-  instead of thousands of IndexedDB reads per keystroke.
-- Preview cache: memory capped, pruning no longer loads every thumbnail, abandoned
-  fetches are dropped; thumbnails decode at thumbnail size.
-- In-memory AI vectors capped by size (96 MB) and freed when AI is turned off.
-
-- "Small tiles" now applies to folders too (compact folder rows), so the
-  Large/Small switch visibly changes views that are mostly folders.
-- The folder picker's search box now gets focus as soon as it opens (it could
-  stay on the button, so typing went nowhere).
-- List descriptions no longer show a loading bar forever when a description
-  can't be written (Ollama busy or unavailable); those rows are just left blank.
-- Selection checkboxes: in list view and small tiles they have their own column
-  at the left (the site/folder icon stays visible); on tiles and folder cards they sit
-  centred on the right of the cover, clear of the site name and favicons. The
-  selection bar is centred over the main area and the list leaves room for it.
-- Ask Arca follow-ups ran a fresh keyword/meaning search on the new words, so
-  "what would u pick" returned colour pickers. The model now sees the previous
-  results first: choosing or narrowing ("which would you pick", "only the anime
-  one", "quickest to cook") answers from them, while a new topic ("any recipes?")
-  searches again. Narrowed answers show just the picks.
-- Reading progress (first time or after switching embedding models) shows on the
-  sidebar's Ask Arca button ("reading 42%") and just above the input again,
-  instead of scrolling out of view.
-- nomic-embed-text v2 (MoE) gets its search prefix for AI organize too, so both
-  features share its cached readings.
-- Rename from the right-click / ⋯ menu did nothing for folders that also show in
-  the sidebar: both copies opened a name field and fought over focus. Rename now
-  opens only where you started it (main view or sidebar).
-- AI organize no longer nests "Organized by Arca" inside itself. Organizing
-  inside it (or one of its topic folders) works in place, organizing a folder
-  that already has one reuses it, topic folders with the same name are reused,
-  and old topic folders the run emptied are removed. One Undo still reverses it.
-- The layout switcher is one control (Large tiles · Small tiles · List) with a
-  single clear selected state, instead of a density toggle that looked selected
-  next to the Grid/List pair.
-- AI organize no longer stops when you switch Tidy up tabs, close the panel or
-  open another folder. The run keeps going, the sidebar's Tidy up button shows
-  its progress ("AI 42%", "AI ready to review"), and reopening Tidy up returns
-  to the suggestions, which still apply to the folder you started in. Tidy up
-  also reopens on the last tab you used.
-- Settings (and other long dialogs) ran off the bottom of short windows; the
-  body now scrolls while the title and buttons stay visible.
-- Settings → Local AI said "Connected" even when Ollama would refuse Arca's
-  requests. Test connection now checks the same kind of request AI organize
-  makes, and the fix is shown as numbered steps.
-- Undo could stop half-way when restoring a folder containing a bookmarklet
-  (javascript:) link, and older undo steps broke after a deleted item was
-  restored with a new id. Undo now restores browser URLs as they were and
-  tracks re-created ids.
-- Undoing "Add folder" no longer deletes links you put in it afterwards.
-- Tidy up could remove every copy of a page if the chosen copy left the
-  "Look in" scope; it now always keeps one. Sort/group skip links that changed
-  in the meantime and stay undoable if interrupted.
-- Keyboard drag & drop can now drop into folders; Enter, F2 and Delete no longer
-  act (or follow the link) mid-drag. Screen-reader announcements use names.
-- A link preview now reappears on the same tile after using its buttons; Escape
-  in the popup search brings its sections back.
-
-- Search showed the same page many times when it was saved in several folders
-  (e.g. imported Trash copies). Copies now fold into one result marked
-  "in N folders", and long folder paths are shortened in the middle.
-- Long breadcrumbs no longer run into the search box; middle folders collapse
-  to "…".
-- Folder card bookmark counts no longer wrap onto two lines next to the favicon
-  preview.
-
-### Changed
-
-- Selection checkboxes are rounded squares instead of circles.
-- Choosing a folder (popup "Bookmark this tab", Edit dialog, bulk Move) uses a
-  searchable folder picker instead of a long system dropdown: type to filter
-  (with each folder's path), recently used folders first, then the indented
-  tree; arrows and Enter to pick.
-- Popup search shows every match with a result count, in a list about ten rows
-  tall that scrolls (it used to stop at 8).
-- Bookmarks open in a new tab by default (applied once to existing settings,
-  since mini windows open full-size in Ardia and Arc; change it in Settings).
-- Link preview cards appear right below the hovered list row (or above it near
-  the bottom), aligned with the title and kept fully on screen; tiles keep the
-  side placement with the same fallback. Moving the pointer into a card keeps it
-  open even if it crosses other rows; switching cards needs a short pause on
-  another bookmark. Rows no longer stack the browser tooltip on top of the card.
-- Ask Arca is much faster: matches (by meaning and keyword, up to 40) appear in
-  well under a second and the AI's answer follows in a couple of seconds, with
-  its picks listed first, "Show more", and a jump to all keyword results.
-  Bookmarks are read in the background as soon as the panel opens, models stay
-  loaded between questions, and answers are capped so a model can't ramble.
-- Cached AI readings no longer include folder names, so organizing or moving
-  links doesn't force everything to be read again, and AI organize and Ask Arca
-  share the same cache (with qwen3-embedding).
-- Modern dark redesign: tiles get a cover in the site's brand colour (from its
-  favicon, contrast-checked), folders match the tile shape, a deeper dark
-  palette, and dark is the default theme.
-- Subtle motion: tiles rise in when a folder opens, cards lift and glow on hover,
-  menus and dialogs pop in. All of it respects "reduce motion".
-- Two-row header: breadcrumb, search and add on top; view controls below.
+First public release.
 
 ### Added
 
@@ -356,3 +208,158 @@ All notable changes to this project are documented here. The format follows
 - `bun run e2e`: smoke checks against real Chrome with the built extension,
   including performance budgets and an audit that no request leaves the
   extension.
+
+### Changed
+
+- Selection checkboxes are rounded squares instead of circles.
+- Choosing a folder (popup "Bookmark this tab", Edit dialog, bulk Move) uses a
+  searchable folder picker instead of a long system dropdown: type to filter
+  (with each folder's path), recently used folders first, then the indented
+  tree; arrows and Enter to pick.
+- Popup search shows every match with a result count, in a list about ten rows
+  tall that scrolls (it used to stop at 8).
+- Bookmarks open in a new tab by default (applied once to existing settings,
+  since mini windows open full-size in Ardia and Arc; change it in Settings).
+- Link preview cards appear right below the hovered list row (or above it near
+  the bottom), aligned with the title and kept fully on screen; tiles keep the
+  side placement with the same fallback. Moving the pointer into a card keeps it
+  open even if it crosses other rows; switching cards needs a short pause on
+  another bookmark. Rows no longer stack the browser tooltip on top of the card.
+- Ask Arca is much faster: matches (by meaning and keyword, up to 40) appear in
+  well under a second and the AI's answer follows in a couple of seconds, with
+  its picks listed first, "Show more", and a jump to all keyword results.
+  Bookmarks are read in the background as soon as the panel opens, models stay
+  loaded between questions, and answers are capped so a model can't ramble.
+- Cached AI readings no longer include folder names, so organizing or moving
+  links doesn't force everything to be read again, and AI organize and Ask Arca
+  share the same cache (with qwen3-embedding).
+- Modern dark redesign: tiles get a cover in the site's brand colour (from its
+  favicon, contrast-checked), folders match the tile shape, a deeper dark
+  palette, and dark is the default theme.
+- Subtle motion: tiles rise in when a folder opens, cards lift and glow on hover,
+  menus and dialogs pop in. All of it respects "reduce motion".
+- Two-row header: breadcrumb, search and add on top; view controls below.
+
+### Performance
+
+- Saved AI readings of deleted or renamed bookmarks are cleaned up automatically
+  after Ask Arca reads your library, so the cache doesn't keep growing.
+- Tagging many items (bulk tag, organize with tags) is one storage write instead of
+  one per item.
+- Bursts of bookmark changes (organize, bulk moves) render once instead of per item.
+- AI organize no longer freezes the page while grouping large libraries.
+- Meaning matches read cached readings in one go and remember what's missing,
+  instead of thousands of IndexedDB reads per keystroke.
+- Preview cache: memory capped, pruning no longer loads every thumbnail, abandoned
+  fetches are dropped; thumbnails decode at thumbnail size.
+- In-memory AI vectors capped by size (96 MB) and freed when AI is turned off.
+
+- "Small tiles" now applies to folders too (compact folder rows), so the
+  Large/Small switch visibly changes views that are mostly folders.
+- The folder picker's search box now gets focus as soon as it opens (it could
+  stay on the button, so typing went nowhere).
+- List descriptions no longer show a loading bar forever when a description
+  can't be written (Ollama busy or unavailable); those rows are just left blank.
+- Selection checkboxes: in list view and small tiles they have their own column
+  at the left (the site/folder icon stays visible); on tiles and folder cards they sit
+  centred on the right of the cover, clear of the site name and favicons. The
+  selection bar is centred over the main area and the list leaves room for it.
+- Ask Arca follow-ups ran a fresh keyword/meaning search on the new words, so
+  "what would u pick" returned colour pickers. The model now sees the previous
+  results first: choosing or narrowing ("which would you pick", "only the anime
+  one", "quickest to cook") answers from them, while a new topic ("any recipes?")
+  searches again. Narrowed answers show just the picks.
+- Reading progress (first time or after switching embedding models) shows on the
+  sidebar's Ask Arca button ("reading 42%") and just above the input again,
+  instead of scrolling out of view.
+- nomic-embed-text v2 (MoE) gets its search prefix for AI organize too, so both
+  features share its cached readings.
+- Rename from the right-click / ⋯ menu did nothing for folders that also show in
+  the sidebar: both copies opened a name field and fought over focus. Rename now
+  opens only where you started it (main view or sidebar).
+- AI organize no longer nests "Organized by Arca" inside itself. Organizing
+  inside it (or one of its topic folders) works in place, organizing a folder
+  that already has one reuses it, topic folders with the same name are reused,
+  and old topic folders the run emptied are removed. One Undo still reverses it.
+- The layout switcher is one control (Large tiles · Small tiles · List) with a
+  single clear selected state, instead of a density toggle that looked selected
+  next to the Grid/List pair.
+- AI organize no longer stops when you switch Tidy up tabs, close the panel or
+  open another folder. The run keeps going, the sidebar's Tidy up button shows
+  its progress ("AI 42%", "AI ready to review"), and reopening Tidy up returns
+  to the suggestions, which still apply to the folder you started in. Tidy up
+  also reopens on the last tab you used.
+- Settings (and other long dialogs) ran off the bottom of short windows; the
+  body now scrolls while the title and buttons stay visible.
+- Settings → Local AI said "Connected" even when Ollama would refuse Arca's
+  requests. Test connection now checks the same kind of request AI organize
+  makes, and the fix is shown as numbered steps.
+- Undo could stop half-way when restoring a folder containing a bookmarklet
+  (javascript:) link, and older undo steps broke after a deleted item was
+  restored with a new id. Undo now restores browser URLs as they were and
+  tracks re-created ids.
+- Undoing "Add folder" no longer deletes links you put in it afterwards.
+- Tidy up could remove every copy of a page if the chosen copy left the
+  "Look in" scope; it now always keeps one. Sort/group skip links that changed
+  in the meantime and stay undoable if interrupted.
+- Keyboard drag & drop can now drop into folders; Enter, F2 and Delete no longer
+  act (or follow the link) mid-drag. Screen-reader announcements use names.
+- A link preview now reappears on the same tile after using its buttons; Escape
+  in the popup search brings its sections back.
+
+- Search showed the same page many times when it was saved in several folders
+  (e.g. imported Trash copies). Copies now fold into one result marked
+  "in N folders", and long folder paths are shortened in the middle.
+- Long breadcrumbs no longer run into the search box; middle folders collapse
+  to "…".
+- Folder card bookmark counts no longer wrap onto two lines next to the favicon
+  preview.
+
+### Fixed
+
+- With several Arca tabs open, switching layout (e.g. to list and back) could end
+  with every tab in the wrong layout: tabs wrote back changes they had just
+  received. They no longer do.
+- On Home or a tag view, the sidebar no longer also highlights a folder.
+- The JSON backup now keeps folder icons, and importing it restores folder tags,
+  notes and icons (they were dropped before).
+- Undoing a delete in one Arca tab could lose the item's tags and note if another
+  Arca tab had been opened meanwhile. Deleted items' tags and notes are now kept
+  for an hour (and as long as Undo can bring them back) before being cleaned up.
+- "Related by meaning" search results can be reached with ↑↓ and opened with Enter.
+- Tags on link tiles no longer get cut off at the bottom of the card: the folder
+  and tags now share one line.
+- Tags added in two Arca pages at the same time no longer overwrite each other.
+- Folder names from AI organize keep leading accented or non-Latin letters
+  ("Éducation", "日本 News").
+- Stop on link check / clean-out review keeps working after a quick restart.
+- Cancel and Stop now stop Ollama too; Ask Arca stops reading the library when its
+  panel closes; list descriptions stop when rows scroll away or the setting is off.
+
+### Security
+
+- Mini windows: Arca could mistake a normal window for one of its mini windows after
+  a browser restart (window ids are reused) and close it. Ids now live in session
+  storage, and every window is checked to still be a one-tab popup before Arca acts.
+- Link previews never contact your local network (localhost, `*.local`, private IPs)
+  on a public page's behalf, via its image or a redirect.
+- Local AI requests no longer follow redirects, cap the reply size and can be
+  cancelled.
+- Search text and Ask questions are no longer saved to disk as embeddings.
+- Broken-link results older than two weeks are deleted, with a "Forget results"
+  button; a check refuses to run without site access.
+
+- Strict Content Security Policy for all extension pages.
+- Other extensions and websites can't message, frame or fetch Arca.
+- `javascript:`, `data:` and similar bookmark URLs are never opened or rendered as
+  links (shown as "Blocked link"), and Arca refuses to save them.
+- Stored settings are validated on load.
+- `bun run security` checks the built extension; e2e simulates a hostile extension,
+  a hostile website and a planted bookmarklet. See SECURITY.md.
+
+### Tooling
+
+- Git hooks: Prettier and ESLint on staged files, commitlint on commit messages.
+
+[Unreleased]: https://github.com/ateebasif/arca/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/ateebasif/arca/releases/tag/v1.0.0
