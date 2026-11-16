@@ -85,38 +85,42 @@ export function useTreeDrag(node: BNode) {
 type PointerHandler = (e: React.PointerEvent<HTMLElement>) => void;
 
 /**
- * Holding ⇧ (Shift) while you drag a bookmark hands the drag to the browser,
- * so the link can go to the tab strip, another window or another app.
- * (Not ⌥: Chrome never starts a link drag with Alt held.) Without ⇧ the
- * browser's drag is cancelled as it starts and dnd-kit moves the item
- * inside Arca. Blocked links (no safe href) are never draggable.
- * Spread the result on the link, after any `draggable` prop.
+ * Holding ⇧ (Shift) while you start dragging a bookmark hands the drag to the
+ * browser, so the link can go to the tab strip, another window or another
+ * app. (Not ⌥: Chrome never starts a link drag with Alt held.) The link is
+ * only made draggable for that one ⇧-press, so ordinary drags stay entirely
+ * with dnd-kit. Blocked links (no safe href) are never draggable.
  */
 export function withNativeLinkDrag<T extends { onPointerDown?: PointerHandler }>(
   handle: T,
   href: string | undefined,
 ): T & {
-  draggable?: boolean;
   onDragStart?: (e: React.DragEvent<HTMLElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLElement>) => void;
 } {
   if (!href) return handle;
-  let native = false;
   return {
     ...handle,
-    draggable: true,
     onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
-      native = e.shiftKey && e.button === 0;
-      // ⇧: leave this drag to the browser.
-      if (!native) handle.onPointerDown?.(e);
+      const el = e.currentTarget;
+      if (e.shiftKey && e.button === 0) {
+        el.draggable = true;
+        return;
+      }
+      el.draggable = false;
+      handle.onPointerDown?.(e);
     },
     onDragStart: (e: React.DragEvent<HTMLElement>) => {
-      if (!native && !e.shiftKey) {
+      if (!e.currentTarget.draggable) {
         e.preventDefault();
         return;
       }
       e.dataTransfer.effectAllowed = 'copyLink';
       e.dataTransfer.setData('text/uri-list', href);
       e.dataTransfer.setData('text/plain', href);
+    },
+    onDragEnd: (e: React.DragEvent<HTMLElement>) => {
+      e.currentTarget.draggable = false;
     },
   };
 }
