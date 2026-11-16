@@ -34,6 +34,8 @@
 
 ## Done
 
+- [x] ARC-B13 · Cross-tab layout sync echo: a tab re-saved prefs it had just received, which could overwrite another tab's newer change (and made e2e flaky) · `fix/prefs-sync-echo` · 2026-11-16
+
 - [x] ARC-B12 · JSON backup/import dropped folder icons, folder tags and folder notes; now round-trips them · `feature/backup-folder-icons` · 2026-11-16
 - [x] ARC-080 · Prune stale AI readings: after Ask Arca reads the library, saved embeddings no bookmark produces any more (deleted/renamed) are removed for the current model · `feature/prune-embeddings` · 2026-11-16
 - [x] ARC-081 · Drag folders from the sidebar tree onto any folder (tree, cards, breadcrumbs), undoable; mouse only · `feature/tree-drag` · 2026-11-16

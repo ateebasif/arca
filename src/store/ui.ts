@@ -236,6 +236,7 @@ function pickPrefs(state: UiPrefs): UiPrefs {
 }
 
 let persistTimer: ReturnType<typeof setTimeout> | undefined;
+let applyingRemote = false;
 let unsubscribePersist: (() => void) | undefined;
 
 /** Checks every saved field; anything invalid falls back to its default. */
@@ -262,6 +263,9 @@ export async function hydrateUi(): Promise<void> {
   useUi.setState({ ...prefs, currentFolderId: prefs.lastFolderId, hydrated: true });
   unsubscribePersist?.();
   const offSave = useUi.subscribe((state, prev) => {
+    // Changes that came from another tab are already saved; writing them back
+    // could land after that tab's newer write and undo it.
+    if (applyingRemote) return;
     const next = pickPrefs(state);
     if (JSON.stringify(next) === JSON.stringify(pickPrefs(prev))) return;
     clearTimeout(persistTimer);
@@ -277,7 +281,13 @@ export async function hydrateUi(): Promise<void> {
       if (JSON.stringify(incoming[key]) !== JSON.stringify(s[key]))
         Object.assign(patch, { [key]: incoming[key] });
     }
-    if (Object.keys(patch).length) useUi.setState(patch);
+    if (!Object.keys(patch).length) return;
+    applyingRemote = true;
+    try {
+      useUi.setState(patch);
+    } finally {
+      applyingRemote = false;
+    }
   });
   unsubscribePersist = () => {
     offSave();

@@ -1,3 +1,4 @@
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { storageGet, storageSet } from '@/src/lib/storage';
 import {
   DEFAULT_PREFS,
@@ -45,6 +46,18 @@ describe('ui store', () => {
     await vi.waitFor(() => expect(useUi.getState().view).toBe('list'));
     expect(useUi.getState().sort).toBe('title');
     expect(useUi.getState().currentFolderId).toBe('7');
+  });
+
+  it("doesn't write back layout it received from another tab", async () => {
+    await hydrateUi();
+    vi.useFakeTimers();
+    const set = vi.spyOn(fakeBrowser.storage.local, 'set');
+    await storageSet('ui', { ...DEFAULT_PREFS, view: 'list' });
+    set.mockClear();
+    await vi.advanceTimersByTimeAsync(400);
+    vi.useRealTimers();
+    expect(useUi.getState().view).toBe('list');
+    expect(set).not.toHaveBeenCalled();
   });
 
   it('clamps sidebar width', () => {

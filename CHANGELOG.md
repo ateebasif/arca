@@ -33,6 +33,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- With several Arca tabs open, switching layout (e.g. to list and back) could end
+  with every tab in the wrong layout: tabs wrote back changes they had just
+  received. They no longer do.
 - On Home or a tag view, the sidebar no longer also highlights a folder.
 - The JSON backup now keeps folder icons, and importing it restores folder tags,
   notes and icons (they were dropped before).
