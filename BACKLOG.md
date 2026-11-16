@@ -32,6 +32,8 @@
 
 ## Done
 
+- [x] ARC-085 · `N` / `⇧N` add a bookmark / folder in the open folder (Bookmarks bar from Home); ignored while typing; listed in the shortcuts dialog · `feature/n-shortcuts` · 2026-11-16
+
 - [x] ARC-B13 · Cross-tab layout sync echo: a tab re-saved prefs it had just received, which could overwrite another tab's newer change (and made e2e flaky) · `fix/prefs-sync-echo` · 2026-11-16
 - [x] ARC-083 · Build variant without the New Tab override (`bun run build:no-newtab` / `zip:no-newtab`, `ARCA_NO_NEWTAB=1`); Settings hides the New Tab options there · `feature/no-newtab-build` · 2026-11-16
 
@@ -155,7 +157,7 @@
 - `storageGet` treats a stored `null` as missing (the fake browser reports missing keys as `null`). Don't use `null` as a real stored value.
 - E2E harness needs a local Chrome with `Extensions.loadUnpacked` (Chrome 126+). Chrome for Testing 121 in `~/.cache/puppeteer` crashes on this macOS; branded Chrome 154 works. Not wired into CI.
 - Favicon placeholder detection fingerprints Chrome's generic globe per size. If Ardia or a Chrome update changes that image, detection silently stops and globes show again (cosmetic only).
-- ⌘N / ⇧⌘N (PRD §8.14) are reserved by Chrome (new window / incognito) and can't be captured by a page. Pick alternatives in ARC-028 (e.g. `N` / `⇧N` when not typing).
+- ⌘N / ⇧⌘N (PRD §8.14) are reserved by Chrome; Arca uses `N` / `⇧N` instead (ARC-085).
 - Sidebar tree and search results are not virtualized (tree shows only expanded folders; search caps at 50). Revisit if someone has thousands of folders.
 - `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
 - e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.

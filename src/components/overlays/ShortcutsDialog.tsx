@@ -12,6 +12,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['⌘ \\', 'Show or hide the sidebar'],
   ['F2', 'Rename the focused item'],
   ['Delete  or  ⌘⌫', 'Delete the focused item'],
+  ['N  /  ⇧N', 'New bookmark / new folder here'],
   ['⌘Z', 'Undo'],
   ['Shift F10', 'Item menu'],
   ['Esc', 'Clear search / close'],
