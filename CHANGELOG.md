@@ -33,6 +33,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- On Home or a tag view, the sidebar no longer also highlights a folder.
 - The JSON backup now keeps folder icons, and importing it restores folder tags,
   notes and icons (they were dropped before).
 - Undoing a delete in one Arca tab could lose the item's tags and note if another

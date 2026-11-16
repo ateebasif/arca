@@ -119,7 +119,11 @@ try {
   await page.waitFor(`document.querySelector('[data-folder-card]')`);
   await shot('dashboard');
   if (STORE) {
+    // A fresh profile has no browsing history, so Most visited would look empty.
     await page.eval(`document.querySelector('[aria-label="Arca: go to Home"]').click()`);
+    await page.eval(
+      `document.querySelector('[aria-label="Hide Most visited"]')?.click()`,
+    );
     await shot('home');
     await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
     await page.waitFor(`document.querySelector('[data-folder-card]')`);

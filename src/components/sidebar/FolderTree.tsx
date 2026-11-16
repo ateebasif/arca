@@ -48,6 +48,8 @@ function visibleRows(state: BookmarkSnapshot, expanded: ReadonlySet<string>): Ro
 export function FolderTree() {
   const state = useBookmarks();
   const currentFolderId = useUi((s) => s.currentFolderId);
+  // On Home (or a tag view) no folder is open, so none is highlighted.
+  const inFolder = useUi((s) => !s.home && !s.tagFilter);
   const expandedList = useUi((s) => s.expanded);
   const openFolder = useUi((s) => s.openFolder);
   const setExpanded = useUi((s) => s.setExpanded);
@@ -141,7 +143,7 @@ export function FolderTree() {
           key={row.node.id}
           row={row}
           count={counts.get(row.node.id) ?? 0}
-          selected={row.node.id === currentFolderId}
+          selected={inFolder && row.node.id === currentFolderId}
           tabbable={row.node.id === tabStopId}
           onOpen={openFolder}
           onToggle={setExpanded}
