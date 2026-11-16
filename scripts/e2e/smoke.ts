@@ -876,6 +876,56 @@ check('multi-select: pick, ⇧-range, bulk move into a folder, undo', async (pag
   })()`);
 });
 
+check('drag a multi-selection onto a folder moves all of it, one undo', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const made = await page.eval<{
+    src: string;
+    dst: string;
+    ids: string[];
+  }>(`(async () => {
+    const bm = chrome.bookmarks;
+    const src = await bm.create({ parentId: '2', title: 'Multi src' });
+    const dst = await bm.create({ parentId: src.id, title: 'Multi dst' });
+    const ids = [];
+    for (const t of ['M1', 'M2', 'M3']) {
+      ids.push((await bm.create({ parentId: src.id, title: t, url: 'https://' + t.toLowerCase() + '.invalid/' })).id);
+    }
+    return { src: src.id, dst: dst.id, ids };
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('[data-folder-id="${made.src}"]')`);
+  await page.eval(`document.querySelector('[data-folder-id="${made.src}"]').click()`);
+  await page.waitFor(`document.querySelector('[data-bookmark-id="${made.ids[2]}"]')`);
+  await page.eval(`document.querySelector('[aria-label="Select M1"]').click()`);
+  await page.eval(`document.querySelector('[aria-label="Select M2"]').click()`);
+  await page.waitFor(
+    `document.querySelector('[role=region][aria-label=Selection]')?.textContent.includes('2 items selected')`,
+  );
+  await sleep(300);
+  await page.drag(
+    `[data-bookmark-id="${made.ids[0]}"]`,
+    `[data-folder-card="${made.dst}"] [data-drop-folder]`,
+  );
+  await page.waitFor(
+    `chrome.bookmarks.getChildren('${made.dst}').then((c) => c.map((n) => n.title).join() === 'M1,M2')`,
+    5000,
+  );
+  // M3 wasn't selected, so it stays.
+  assert.ok(
+    (
+      await page.eval<string[]>(
+        `chrome.bookmarks.getChildren('${made.src}').then((c) => c.map((n) => n.title))`,
+      )
+    ).includes('M3'),
+  );
+  await page.key('z', MOD.meta);
+  await page.waitFor(
+    `chrome.bookmarks.getChildren('${made.dst}').then((c) => c.length === 0)`,
+    5000,
+  );
+  await page.eval(`chrome.bookmarks.removeTree('${made.src}')`);
+});
+
 check('small tiles: compact folder rows and smaller link tiles', async (page) => {
   const origin = await page.eval<string>('location.origin');
   const folder = await page.eval<string>(`(async () => {

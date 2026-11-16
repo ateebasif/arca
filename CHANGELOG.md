@@ -149,6 +149,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Drag a **multi-selection** onto a folder to move everything selected at once.
 - **Open tabs panel**: see this window's tabs beside your bookmarks; drag one onto a
   folder (or click Bookmark) to save it; tabs you've already saved are marked.
 - Search **filter chips**: narrow results by tag, has a note, saved more than once,
