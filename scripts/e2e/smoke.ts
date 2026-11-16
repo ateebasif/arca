@@ -926,6 +926,33 @@ check('drag a multi-selection onto a folder moves all of it, one undo', async (p
   await page.eval(`chrome.bookmarks.removeTree('${made.src}')`);
 });
 
+check('drag a folder from the sidebar tree into another folder, undo', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const made = await page.eval<{ a: string; b: string }>(`(async () => {
+    const a = await chrome.bookmarks.create({ parentId: '2', title: 'Tree drag A' });
+    const b = await chrome.bookmarks.create({ parentId: '2', title: 'Tree drag B' });
+    return { a: a.id, b: b.id };
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('li[data-drop-folder="${made.a}"]')`);
+  await sleep(300);
+  await page.drag(`li[data-drop-folder="${made.a}"]`, `li[data-drop-folder="${made.b}"]`);
+  await page.waitFor(
+    `chrome.bookmarks.get('${made.a}').then(([n]) => n.parentId === '${made.b}')`,
+    5000,
+  );
+  // One undo puts it back.
+  await page.key('z', MOD.meta);
+  await page.waitFor(
+    `chrome.bookmarks.get('${made.a}').then(([n]) => n.parentId === '2')`,
+    5000,
+  );
+  await page.eval(`(async () => {
+    await chrome.bookmarks.removeTree('${made.a}');
+    await chrome.bookmarks.removeTree('${made.b}');
+  })()`);
+});
+
 check('small tiles: compact folder rows and smaller link tiles', async (page) => {
   const origin = await page.eval<string>('location.origin');
   const folder = await page.eval<string>(`(async () => {

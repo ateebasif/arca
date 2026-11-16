@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useContext, type CSSProperties } from 'react';
 import type { BNode } from '@/src/store/bookmarkStore';
-import { DragStateContext, dropId, itemId } from './ids';
+import { DragStateContext, dropId, itemId, treeItemId } from './ids';
 
 /**
  * Makes a tile, card or row draggable (and sortable inside a SortableContext).
@@ -63,6 +63,21 @@ export function useTabDrag(tabId: number, tab: TabDragData['tab']) {
   return {
     setNodeRef: drag.setNodeRef,
     handle: { ...aria, ...drag.listeners },
+    isDragging: drag.isDragging,
+  };
+}
+
+/**
+ * Lets a sidebar tree folder be dragged with the mouse onto another folder
+ * (cards, tree rows, breadcrumbs). Keyboard dragging stays on folder cards,
+ * since Space and the arrows already move through the tree.
+ */
+export function useTreeDrag(node: BNode) {
+  const drag = useDraggable({ id: treeItemId(node.id), disabled: node.isRoot });
+  const { onKeyDown: _keys, ...pointer } = drag.listeners ?? {};
+  return {
+    setDragRef: drag.setNodeRef,
+    pointer,
     isDragging: drag.isDragging,
   };
 }
