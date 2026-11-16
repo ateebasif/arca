@@ -33,6 +33,8 @@ interface IconsState {
   loaded: boolean;
   load(): Promise<void>;
   setIcon(id: string, emoji: string | null): Promise<void>;
+  /** Sets many icons with one write (import). */
+  setIcons(entries: ReadonlyArray<{ id: string; emoji: string }>): Promise<void>;
 }
 
 let off: (() => void) | null = null;
@@ -44,6 +46,13 @@ export const useFolderIcons = create<IconsState>()((set, get) => ({
     if (get().loaded) return;
     set({ icons: parseIcons(await storageGet<unknown>(KEY, {})), loaded: true });
     off ??= onStorageChange<unknown>(KEY, (raw) => set({ icons: parseIcons(raw) }));
+  },
+  async setIcons(entries) {
+    await get().load();
+    const icons = new Map(get().icons);
+    for (const { id, emoji } of entries) if (isEmoji(emoji)) icons.set(id, emoji);
+    set({ icons });
+    await storageSet(KEY, Object.fromEntries(icons));
   },
   async setIcon(id, emoji) {
     await get().load();

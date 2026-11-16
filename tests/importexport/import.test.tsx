@@ -12,6 +12,7 @@ import {
 } from '@/src/features/importexport/import';
 import * as undo from '@/src/features/undo/undo';
 import { useOverlays } from '@/src/store/overlays';
+import { resetFolderIconsForTests, useFolderIcons } from '@/src/store/folderIcons';
 import { getMetaStore, resetMetaForTests } from '@/src/store/useMeta';
 import { installFakeBookmarks } from '../fakes/bookmarks';
 import { renderWithBookmarks } from '../helpers/render';
@@ -110,6 +111,44 @@ describe('importInto', () => {
     expect(fake.findByTitle('Imported 2026-11-14')).toBeUndefined();
     expect(meta.tagsOf(react.id)).toEqual([]);
     expect(fake.findByTitle('Have')).toBeDefined();
+  });
+});
+
+describe('folder extras in the Arca backup', () => {
+  it('keeps folder icons, tags and notes through backup and import', async () => {
+    resetFolderIconsForTests();
+    const fake = installFakeBookmarks({
+      bar: [
+        { title: 'Design', children: [{ title: 'Figma', url: 'https://figma.com/' }] },
+      ],
+    });
+    const [tree] = await fake.getTree();
+    const design = fake.findByTitle('Design')!.id;
+    const backup = toArcaBackup(
+      tree!,
+      (id) => (id === design ? ['ui'] : []),
+      new Date(),
+      (id) => (id === design ? 'Inspiration' : ''),
+      (id) => (id === design ? '🎨' : undefined),
+    );
+    const parsed = parseImportFile('b.json', JSON.stringify(backup));
+    expect(parsed.roots[0]!.children![0]).toMatchObject({
+      title: 'Design',
+      tags: ['ui'],
+      note: 'Inspiration',
+      icon: '🎨',
+    });
+    const meta = getMetaStore();
+    await meta.start();
+    await importInto('2', parsed);
+    const copies = [
+      ...(await fake.getTree())[0]!.children!.find((r) => r.id === '2')!.children!,
+    ];
+    const imported = copies[0]!.children![0]!.children![0]!;
+    expect(imported.title).toBe('Design');
+    expect(meta.tagsOf(imported.id)).toEqual(['ui']);
+    expect(meta.noteOf(imported.id)).toBe('Inspiration');
+    expect(useFolderIcons.getState().icons.get(imported.id)).toBe('🎨');
   });
 });
 

@@ -34,6 +34,8 @@
 
 ## Done
 
+- [x] ARC-B12 · JSON backup/import dropped folder icons, folder tags and folder notes; now round-trips them · `feature/backup-folder-icons` · 2026-11-16
+
 - [x] ARC-079 · Arca logo/title goes to Home; click the open folder's name in the breadcrumb to rename it inline (browser folders stay locked) · `feature/home-link-crumb-rename` · 2026-11-16
 
 - [x] ARC-042 · Saved searches: Save search (text + filters) from results; sidebar list to run or forget; synced across tabs · `feature/saved-searches` · 2026-11-16

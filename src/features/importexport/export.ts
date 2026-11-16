@@ -68,6 +68,8 @@ export interface ArcaBackupNode {
   dateAdded?: number;
   tags?: string[];
   note?: string;
+  /** Folder icon (one emoji). */
+  icon?: string;
   children?: ArcaBackupNode[];
 }
 
@@ -83,16 +85,19 @@ export function toArcaBackup(
   tagsOf: TagsOf = () => [],
   now = new Date(),
   noteOf: NoteOf = () => '',
+  iconOf: (id: string) => string | undefined = () => undefined,
 ): ArcaBackup {
   const convert = (node: BookmarkNode): ArcaBackupNode => {
     const tags = tagsOf(node.id);
     const note = noteOf(node.id);
+    const icon = node.url === undefined ? iconOf(node.id) : undefined;
     return {
       title: node.title,
       ...(node.url !== undefined ? { url: node.url } : {}),
       ...(node.dateAdded ? { dateAdded: node.dateAdded } : {}),
       ...(tags.length ? { tags: [...tags] } : {}),
       ...(note ? { note } : {}),
+      ...(icon ? { icon } : {}),
       ...(node.url === undefined ? { children: (node.children ?? []).map(convert) } : {}),
     };
   };
