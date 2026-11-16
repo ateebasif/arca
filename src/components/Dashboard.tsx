@@ -12,7 +12,7 @@ import { useBookmarks } from '@/src/store/useBookmarks';
 import { useUi } from '@/src/store/ui';
 import { useOverlays } from '@/src/store/overlays';
 import { IconButton } from './IconButton';
-import { SidebarIcon } from './icons';
+import { SidebarIcon, TabsIcon } from './icons';
 import { Breadcrumbs } from './main/Breadcrumbs';
 import { NavButtons } from './main/NavButtons';
 import { FolderView } from './main/FolderView';
@@ -38,6 +38,7 @@ export function Dashboard({ surface }: DashboardProps) {
   const selecting = useSelection((s) => s.ids.size > 0);
   const tagFilter = useUi((s) => s.tagFilter);
   const home = useUi((s) => s.home);
+  const tabsPanel = useUi((s) => s.tabsPanel);
   const state = useBookmarks();
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
@@ -135,6 +136,13 @@ export function Dashboard({ surface }: DashboardProps) {
               <div className="flex w-[min(34rem,48%)] shrink-0">
                 <SearchBox />
               </div>
+              <IconButton
+                label="Open tabs"
+                pressed={tabsPanel}
+                onClick={() => useUi.getState().toggleTabsPanel()}
+              >
+                <TabsIcon />
+              </IconButton>
               <AddMenu />
             </div>
             {!searching && !home && (
@@ -162,6 +170,11 @@ export function Dashboard({ surface }: DashboardProps) {
             </ScrollParentContext.Provider>
           </section>
         </main>
+        {tabsPanel && (
+          <Suspense fallback={null}>
+            <TabsPanel />
+          </Suspense>
+        )}
         <OverlayHost />
         <PreviewController />
         <MiniWindowBar />
@@ -184,3 +197,7 @@ function LazySelectionBar() {
     </Suspense>
   ) : null;
 }
+
+const TabsPanel = lazy(() =>
+  import('./tabs/TabsPanel').then((m) => ({ default: m.TabsPanel })),
+);

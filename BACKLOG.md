@@ -14,7 +14,6 @@
 
 ### Phase 2 – Management
 
-- [ ] ARC-025 · Open tabs panel: drag tab to folder, "Bookmark", mark bookmarked · Phase 2 · P1
 - [ ] ARC-030 · Release v0.2.0 · Phase 2 · P0
 
 ### Phase 3 – Power tools
@@ -39,6 +38,8 @@
 - Build flag that omits the New Tab override for users who want the browser's own New Tab.
 
 ## Done
+
+- [x] ARC-025 · Open tabs panel (toolbar → Open tabs): this window's web tabs, drag onto a folder or Bookmark into the open folder (undoable), saved tabs marked with a link to where they are · `feature/open-tabs` · 2026-11-16
 
 - [x] ARC-035 · Search filter chips: tag, has note, duplicates, broken (from the last link check); applied before the 50-result cap; cleared with the search · `feature/search-filters` · 2026-11-16
 

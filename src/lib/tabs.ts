@@ -21,6 +21,52 @@ export function getCurrentWindowTabs(): Promise<Tab[]> {
   return callApi('tabs.query', () => browser.tabs.query({ currentWindow: true }));
 }
 
+/**
+ * Calls back (debounced) whenever tabs in any window open, close, move or
+ * change page or title. Returns an unsubscribe function.
+ */
+export function onTabsChange(callback: () => void, delayMs = 150): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const fire = () => {
+    clearTimeout(timer);
+    timer = setTimeout(callback, delayMs);
+  };
+  const onUpdated = (
+    _id: number,
+    change: { url?: string; title?: string; status?: string },
+  ) => {
+    if (
+      change.url !== undefined ||
+      change.title !== undefined ||
+      change.status === 'complete'
+    )
+      fire();
+  };
+  // Subscribe to each event that exists (they vary a little between browsers).
+  const offs: Array<() => void> = [];
+  const listen = <F>(
+    event: { addListener(f: F): void; removeListener(f: F): void } | undefined,
+    f: F,
+  ) => {
+    try {
+      event?.addListener(f);
+      offs.push(() => event?.removeListener(f));
+    } catch {
+      // Not available here: that change just won't refresh the list.
+    }
+  };
+  listen(browser.tabs.onCreated, fire);
+  listen(browser.tabs.onRemoved, fire);
+  listen(browser.tabs.onMoved, fire);
+  listen(browser.tabs.onAttached, fire);
+  listen(browser.tabs.onDetached, fire);
+  listen(browser.tabs.onUpdated, onUpdated);
+  return () => {
+    clearTimeout(timer);
+    offs.forEach((off) => off());
+  };
+}
+
 export async function getActiveTab(): Promise<Tab | undefined> {
   const [tab] = await callApi('tabs.query', () =>
     browser.tabs.query({ active: true, currentWindow: true }),

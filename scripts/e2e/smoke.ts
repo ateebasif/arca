@@ -910,6 +910,45 @@ check('small tiles: compact folder rows and smaller link tiles', async (page) =>
   await page.eval(`chrome.bookmarks.removeTree('${folder}')`);
 });
 
+check('open tabs panel: drag a tab onto a folder bookmarks it', async (page) => {
+  const origin = await page.eval<string>('location.origin');
+  const { folder, pageUrl } = await page.eval<{
+    folder: string;
+    pageUrl: string;
+  }>(`(async () => {
+    const f = await chrome.bookmarks.create({ parentId: '1', title: 'Tab drop' });
+    const pageUrl = 'https://tab-drop.invalid/';
+    await chrome.tabs.create({ url: pageUrl, active: false });
+    return { folder: f.id, pageUrl };
+  })()`);
+  await page.navigate(`${origin}/dashboard.html`);
+  await page.waitFor(`document.querySelector('[data-folder-id="1"]')`);
+  await page.eval(`document.querySelector('[data-folder-id="1"]').click()`);
+  await page.waitFor(`document.querySelector('[data-folder-card="${folder}"]')`);
+  await page.eval(`document.querySelector('[aria-label="Open tabs"]').click()`);
+  await page.waitFor(
+    `[...document.querySelectorAll('[data-open-tab]')].some((r) => r.textContent.includes('tab-drop.invalid'))`,
+    8000,
+  );
+  const row = await page.eval<string>(
+    `[...document.querySelectorAll('[data-open-tab]')].find((r) => r.textContent.includes('tab-drop.invalid')).getAttribute('data-open-tab')`,
+  );
+  await page.drag(
+    `[data-open-tab="${row}"] span[aria-roledescription]`,
+    `[data-folder-card="${folder}"]`,
+  );
+  await page.waitFor(
+    `chrome.bookmarks.getChildren('${folder}').then((c) => c.some((n) => n.url === '${pageUrl}'))`,
+    5000,
+  );
+  await page.screenshot(`${OUT}/tabs-panel.png`);
+  await page.eval(`document.querySelector('[aria-label="Open tabs"]').click()`);
+  await page.eval(`(async () => {
+    await chrome.bookmarks.removeTree('${folder}');
+    for (const t of await chrome.tabs.query({ url: '${pageUrl}' })) await chrome.tabs.remove(t.id);
+  })()`);
+});
+
 check('chrome move semantics match the test fake', async (page) => {
   const result = await page.eval<{ order: string; eventIndex: number }>(`(async () => {
     const bm = chrome.bookmarks;

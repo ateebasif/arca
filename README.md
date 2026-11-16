@@ -57,6 +57,7 @@ no servers.
 
 **Everywhere else**
 
+- **Open tabs panel**: drag a tab onto a folder to bookmark it; saved tabs are marked.
 - **Popup** (⌥⇧B): quick search, bookmark this tab, most visited, recently added.
 - **Right-click → Add to Arca…** on any page or link, with folder and tags.
 - **Mini windows**: open a link in a small peek window, then move it into your main
