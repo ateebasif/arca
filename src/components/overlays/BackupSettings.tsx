@@ -4,6 +4,7 @@ import { errorMessage } from '@/src/features/editing/actions';
 import { getBookmarkStore, useBookmarks } from '@/src/store/useBookmarks';
 import { useOverlays } from '@/src/store/overlays';
 import { FolderPicker } from '../FolderPicker';
+import { useFolderIcons } from '@/src/store/folderIcons';
 import {
   exportFileName,
   toArcaBackup,
@@ -22,6 +23,8 @@ export function BackupSettings() {
     await meta.start();
     const tagsOf = (id: string) => meta.tagsOf(id);
     const noteOf = (id: string) => meta.noteOf(id);
+    await useFolderIcons.getState().load();
+    const icons = useFolderIcons.getState().icons;
     const tree = await getTree();
     if (kind === 'html') {
       downloadText(
@@ -32,7 +35,11 @@ export function BackupSettings() {
     } else {
       downloadText(
         exportFileName('json'),
-        JSON.stringify(toArcaBackup(tree, tagsOf, new Date(), noteOf), null, 2),
+        JSON.stringify(
+          toArcaBackup(tree, tagsOf, new Date(), noteOf, (id) => icons.get(id)),
+          null,
+          2,
+        ),
         'application/json',
       );
     }

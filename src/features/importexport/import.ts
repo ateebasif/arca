@@ -3,6 +3,7 @@ import { classifyUrl } from '@/src/lib/url';
 import { cleanNote, cleanTags } from '@/src/features/tags/meta';
 import { setTagsMany } from '@/src/features/tags/actions';
 import { getMetaStore } from '@/src/store/useMeta';
+import { isEmoji, useFolderIcons } from '@/src/store/folderIcons';
 import { normalizeUrl } from '@/src/features/tidy/normalize';
 import * as undo from '../undo/undo';
 
@@ -19,6 +20,8 @@ export interface ImportNode {
   url?: string;
   tags?: string[];
   note?: string;
+  /** Folder icon (one emoji), from an Arca backup. */
+  icon?: string;
   children?: ImportNode[];
 }
 
@@ -86,10 +89,22 @@ class Builder {
     };
   }
 
-  folder(title: unknown, children: ImportNode[]): ImportNode | null {
+  folder(
+    title: unknown,
+    children: ImportNode[],
+    extra: { tags?: unknown; note?: unknown; icon?: unknown } = {},
+  ): ImportNode | null {
     if (!this.take()) return null;
     this.folders++;
-    return { title: cleanTitle(title) || 'Untitled folder', children };
+    const tags = cleanTags(Array.isArray(extra.tags) ? extra.tags : []);
+    const note = cleanNote(extra.note);
+    return {
+      title: cleanTitle(title) || 'Untitled folder',
+      children,
+      ...(tags.length ? { tags } : {}),
+      ...(note ? { note } : {}),
+      ...(isEmoji(extra.icon) ? { icon: extra.icon } : {}),
+    };
   }
 
   result(kind: ParsedImport['kind'], roots: ImportNode[]): ParsedImport {
@@ -176,6 +191,7 @@ export function parseArcaBackup(text: string): ParsedImport {
         url?: unknown;
         tags?: unknown;
         note?: unknown;
+        icon?: unknown;
         children?: unknown;
       };
       const node =
@@ -184,6 +200,7 @@ export function parseArcaBackup(text: string): ParsedImport {
           : b.folder(
               n.title,
               Array.isArray(n.children) ? walk(n.children, depth + 1) : [],
+              n,
             );
       if (node) out.push(node);
     }
@@ -250,6 +267,7 @@ export async function importInto(
   let skipped = 0;
   const tagging: Array<{ id: string; url: string; tags: string[] }> = [];
   const notes: Array<{ id: string; url: string; note: string }> = [];
+  const icons: Array<{ id: string; emoji: string }> = [];
   const walk = async (nodes: ImportNode[], into: string) => {
     for (const n of nodes) {
       if (n.url) {
@@ -264,6 +282,9 @@ export async function importInto(
         }
       } else {
         const folder = await bm.create({ parentId: into, title: n.title });
+        if (n.tags?.length) tagging.push({ id: folder.id, url: '', tags: n.tags });
+        if (n.note) notes.push({ id: folder.id, url: '', note: n.note });
+        if (n.icon) icons.push({ id: folder.id, emoji: n.icon });
         await walk(n.children ?? [], folder.id);
       }
       if (++done % 25 === 0) opts.onProgress?.(done, total);
@@ -277,6 +298,11 @@ export async function importInto(
     // Notes are on the new bookmarks only; removing the folder on undo drops them.
     const meta = getMetaStore();
     if (notes.length) await meta.setNotes(notes).catch(() => {});
+    if (icons.length)
+      await useFolderIcons
+        .getState()
+        .setIcons(icons)
+        .catch(() => {});
     undo.record({
       label: `Imported ${links.toLocaleString()} ${links === 1 ? 'bookmark' : 'bookmarks'}`,
       async undo() {

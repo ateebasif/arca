@@ -33,6 +33,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The JSON backup now keeps folder icons, and importing it restores folder tags,
+  notes and icons (they were dropped before).
 - Undoing a delete in one Arca tab could lose the item's tags and note if another
   Arca tab had been opened meanwhile. Deleted items' tags and notes are now kept
   for an hour (and as long as Undo can bring them back) before being cleaned up.
