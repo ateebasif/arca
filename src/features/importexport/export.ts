@@ -10,6 +10,7 @@ import type { BookmarkNode } from '@/src/lib/bookmarks';
  */
 
 type TagsOf = (id: string) => readonly string[];
+type NoteOf = (id: string) => string;
 
 const escape = (s: string) =>
   s
@@ -20,7 +21,11 @@ const escape = (s: string) =>
 
 const seconds = (ms?: number) => String(Math.floor((ms ?? 0) / 1000));
 
-export function toNetscapeHtml(tree: BookmarkNode, tagsOf: TagsOf = () => []): string {
+export function toNetscapeHtml(
+  tree: BookmarkNode,
+  tagsOf: TagsOf = () => [],
+  noteOf: NoteOf = () => '',
+): string {
   const lines = [
     '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
     '<!-- This is an automatically generated file. Exported by Arca. -->',
@@ -38,6 +43,9 @@ export function toNetscapeHtml(tree: BookmarkNode, tagsOf: TagsOf = () => []): s
           tags.length ? ` TAGS="${escape(tags.join(','))}"` : ''
         }>${escape(node.title)}</A>`,
       );
+      // Notes use the format's description line, which browsers keep on import.
+      const note = noteOf(node.id);
+      if (note) lines.push(`${pad}<DD>${escape(note).replace(/\n/g, '<BR>')}`);
       return;
     }
     const toolbar = node.id === '1' ? ' PERSONAL_TOOLBAR_FOLDER="true"' : '';
@@ -59,6 +67,7 @@ export interface ArcaBackupNode {
   url?: string;
   dateAdded?: number;
   tags?: string[];
+  note?: string;
   children?: ArcaBackupNode[];
 }
 
@@ -73,14 +82,17 @@ export function toArcaBackup(
   tree: BookmarkNode,
   tagsOf: TagsOf = () => [],
   now = new Date(),
+  noteOf: NoteOf = () => '',
 ): ArcaBackup {
   const convert = (node: BookmarkNode): ArcaBackupNode => {
     const tags = tagsOf(node.id);
+    const note = noteOf(node.id);
     return {
       title: node.title,
       ...(node.url !== undefined ? { url: node.url } : {}),
       ...(node.dateAdded ? { dateAdded: node.dateAdded } : {}),
       ...(tags.length ? { tags: [...tags] } : {}),
+      ...(note ? { note } : {}),
       ...(node.url === undefined ? { children: (node.children ?? []).map(convert) } : {}),
     };
   };

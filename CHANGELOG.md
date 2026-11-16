@@ -149,6 +149,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Notes** on bookmarks: write one in Edit; it shows in the preview card, search
+  finds it, and it travels with HTML and JSON export/import.
 - **Home** (top of the sidebar): your 12 newest bookmarks and most visited sites,
   each hideable; Settings can open Arca on Home.
 - Public README with screenshots, install steps and a Local AI setup guide for

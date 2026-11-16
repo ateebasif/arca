@@ -43,6 +43,17 @@ export function useSearchResults(): SearchResult[] {
     const extra = tagged((tag) => words.some((w) => tag.startsWith(w))).filter(
       (r) => !seen.has(r.entry.node.id),
     );
-    return [...results, ...extra].slice(0, RESULT_LIMIT);
+    extra.forEach((r) => seen.add(r.entry.node.id));
+    // Notes: every word must appear in the note.
+    const lower = words.map((w) => w.toLowerCase());
+    const noted = buildIndex(state)
+      .filter((e) => {
+        if (seen.has(e.node.id)) return false;
+        if (withinFolderId && !e.ancestorIds.includes(withinFolderId)) return false;
+        const note = meta.byId.get(e.node.id)?.note?.toLowerCase();
+        return !!note && lower.every((w) => note.includes(w));
+      })
+      .map((entry) => ({ entry, score: 0.5, copies: [] }));
+    return [...results, ...extra, ...noted].slice(0, RESULT_LIMIT);
   }, [state, meta, query, inFolder, folderId]);
 }

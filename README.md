@@ -30,6 +30,7 @@ no servers.
   breadcrumb to move. Works from the keyboard too (Space, arrows, Space).
 - **Multi-select**: tick items (⇧-click for a range, ⌘A for all) to move, tag, open,
   ungroup or delete them together.
+- **Notes** on bookmarks: why you saved it, searchable and shown in previews.
 - **Tags** on bookmarks and folders, with colours, a tag manager (rename, merge,
   delete) and `#tag` search.
 
