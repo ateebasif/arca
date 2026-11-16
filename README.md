@@ -94,6 +94,10 @@ minutes.
 After pulling updates, run `bun run build` again and click the reload icon on Arca's
 card in the extensions page.
 
+**Prefer your browser's own New Tab?** Build the variant without the New Tab takeover
+with `bun run build:no-newtab` (output in `.output/chrome-mv3-no-newtab`). Arca then
+opens from its toolbar button (⌥⇧B) and its dashboard page.
+
 **Arc, Dia and Ardia**: these browsers open their own command bar on ⌘T instead of
 a New Tab page. Open Arca from the toolbar icon or the popup (⌥⇧B), or type "Arca" in
 the command bar, and keep that tab pinned. Arca's own Settings also offer a minimal

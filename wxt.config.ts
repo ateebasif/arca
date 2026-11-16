@@ -23,11 +23,28 @@ const CSP = [
   "connect-src 'self' https: http:",
 ].join('; ');
 
+/**
+ * `ARCA_NO_NEWTAB=1` builds a variant that leaves the browser's own New Tab
+ * alone: no New Tab override (Arca opens from the toolbar popup and its
+ * dashboard page). Output and zip get a "-no-newtab" suffix.
+ */
+const NO_NEWTAB = process.env.ARCA_NO_NEWTAB === '1';
+
 // https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
+  ...(NO_NEWTAB
+    ? {
+        filterEntrypoints: ['background', 'popup', 'dashboard'],
+        outDirTemplate: '{{browser}}-mv{{manifestVersion}}-no-newtab',
+        zip: {
+          artifactTemplate: '{{name}}-{{packageVersion}}-{{browser}}-no-newtab.zip',
+        },
+      }
+    : {}),
   vite: () => ({
     plugins: [tailwindcss()],
+    define: { __ARCA_NO_NEWTAB__: JSON.stringify(NO_NEWTAB) },
   }),
   manifest: ({ command }) => ({
     name: 'Arca',
