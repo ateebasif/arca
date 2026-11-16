@@ -32,6 +32,21 @@ describe('ui store', () => {
     });
   });
 
+  it('follows layout changes made in another Arca tab, not its folder', async () => {
+    await hydrateUi();
+    useUi.getState().openFolder('7');
+    // Another tab saves its prefs.
+    await storageSet('ui', {
+      ...DEFAULT_PREFS,
+      view: 'list',
+      sort: 'title',
+      lastFolderId: '99',
+    });
+    await vi.waitFor(() => expect(useUi.getState().view).toBe('list'));
+    expect(useUi.getState().sort).toBe('title');
+    expect(useUi.getState().currentFolderId).toBe('7');
+  });
+
   it('clamps sidebar width', () => {
     useUi.getState().setSidebarWidth(5000);
     expect(useUi.getState().sidebarWidth).toBe(SIDEBAR_MAX);

@@ -16,7 +16,15 @@ export interface Meta {
   tags: string[];
   note?: string;
   url: string;
+  /**
+   * When the bookmark was found missing (deleted, or its id changed). Kept a
+   * while so Undo in any Arca tab can bring the tags and note back.
+   */
+  goneAt?: number;
 }
+
+/** How long tags and notes of a deleted bookmark are kept. */
+export const ORPHAN_GRACE_MS = 60 * 60_000;
 
 export interface MetaSnapshot {
   readonly byId: ReadonlyMap<string, Meta>;
@@ -121,6 +129,9 @@ export function parseMeta(raw: unknown): Map<string, Meta> {
       tags,
       ...(note ? { note } : {}),
       url: typeof v.url === 'string' ? v.url.slice(0, 4096) : '',
+      ...(typeof v.goneAt === 'number' && Number.isFinite(v.goneAt)
+        ? { goneAt: v.goneAt }
+        : {}),
     });
   }
   return out;
@@ -309,15 +320,22 @@ export class MetaStore {
     if (!meta) return;
     const next = new Map(this.snapshot.byId);
     next.delete(oldId);
-    next.set(newId, meta);
+    // Back again (undo): no longer gone.
+    const { goneAt: _gone, ...live } = meta;
+    next.set(newId, live);
     await this.write(next);
   }
 
   /**
    * Re-links metadata whose id no longer exists to the bookmark with the same
-   * URL, and drops what matches nothing. `nodes` maps id → url ('' for folders).
+   * URL. What matches nothing is marked gone, then dropped once it has been
+   * gone for ORPHAN_GRACE_MS, unless `keepGone` (this page can still undo a
+   * deletion). `nodes` maps id → url ('' for folders).
    */
-  async relink(nodes: ReadonlyMap<string, string>): Promise<void> {
+  async relink(
+    nodes: ReadonlyMap<string, string>,
+    { now = Date.now(), keepGone = false }: { now?: number; keepGone?: boolean } = {},
+  ): Promise<void> {
     const byId = this.snapshot.byId;
     let changed = false;
     const next = new Map(byId);
@@ -325,12 +343,19 @@ export class MetaStore {
     for (const [id, url] of nodes) if (url && !byId.has(id)) byUrl.set(url, id);
     for (const [id, meta] of byId) {
       if (nodes.has(id)) continue;
-      next.delete(id);
-      changed = true;
       const target = meta.url ? byUrl.get(meta.url) : undefined;
       if (target) {
-        next.set(target, meta);
+        const { goneAt: _gone, ...live } = meta;
+        next.delete(id);
+        next.set(target, live);
         byUrl.delete(meta.url);
+        changed = true;
+      } else if (meta.goneAt === undefined) {
+        next.set(id, { ...meta, goneAt: now });
+        changed = true;
+      } else if (!keepGone && now - meta.goneAt > ORPHAN_GRACE_MS) {
+        next.delete(id);
+        changed = true;
       }
     }
     if (changed) await this.write(next);
@@ -340,6 +365,7 @@ export class MetaStore {
   allTags(): Array<{ tag: string; count: number }> {
     const counts = new Map<string, number>();
     for (const meta of this.snapshot.byId.values()) {
+      if (meta.goneAt !== undefined) continue; // deleted bookmark, kept for undo
       for (const tag of meta.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
     }
     return [...counts]
@@ -350,7 +376,7 @@ export class MetaStore {
   idsWithTag(tag: string): string[] {
     const t = cleanTag(tag);
     return [...this.snapshot.byId]
-      .filter(([, m]) => m.tags.includes(t))
+      .filter(([, m]) => m.goneAt === undefined && m.tags.includes(t))
       .map(([id]) => id);
   }
 }

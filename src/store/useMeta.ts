@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { MetaStore, type MetaSnapshot } from '@/src/features/tags/meta';
+import { MetaStore, ORPHAN_GRACE_MS, type MetaSnapshot } from '@/src/features/tags/meta';
 import type { BookmarkSnapshot } from './bookmarkStore';
 
 let store = new MetaStore();
@@ -32,7 +32,36 @@ export async function relinkMetaOnce(state: BookmarkSnapshot): Promise<void> {
   await store.relink(nodes);
 }
 
+let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
+let finalTimer: ReturnType<typeof setTimeout> | undefined;
+
+function relinkNow(state: BookmarkSnapshot, keepGone: boolean) {
+  const nodes = new Map<string, string>();
+  for (const [id, node] of state.nodes) nodes.set(id, node.url ?? '');
+  void store.relink(nodes, { keepGone });
+}
+
+/**
+ * After bookmarks are deleted: mark their tags and notes as gone (so tag
+ * counts drop right away), then remove them once the grace period has passed
+ * and this page can no longer undo a deletion (PRD §8.7).
+ */
+export function scheduleMetaCleanup(
+  getState: () => BookmarkSnapshot,
+  canRestore: () => boolean,
+  { markAfterMs = 2000, dropAfterMs = ORPHAN_GRACE_MS + 60_000 } = {},
+): void {
+  clearTimeout(cleanupTimer);
+  cleanupTimer = setTimeout(() => {
+    relinkNow(getState(), canRestore());
+    clearTimeout(finalTimer);
+    finalTimer = setTimeout(() => relinkNow(getState(), canRestore()), dropAfterMs);
+  }, markAfterMs);
+}
+
 export function resetMetaForTests(): void {
+  clearTimeout(cleanupTimer);
+  clearTimeout(finalTimer);
   relinked = false;
   setMetaStoreForTests(new MetaStore());
 }

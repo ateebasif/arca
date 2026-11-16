@@ -12,6 +12,8 @@ export interface UndoAction {
   /** Shown in the toast, e.g. "Deleted “Work”". */
   label: string;
   undo(): Promise<void>;
+  /** Restores deleted items, so their tags and notes must be kept until it's gone. */
+  restoresDeleted?: boolean;
 }
 
 export const UNDO_LIMIT = 20;
@@ -61,6 +63,11 @@ function run(action: UndoAction): Promise<boolean> {
   return result;
 }
 
+/** True while some undoable action could bring back deleted items. */
+export function canRestoreDeleted(): boolean {
+  return stack.some((a) => a.restoresDeleted);
+}
+
 export function undoDepth(): number {
   return stack.length;
 }
@@ -75,6 +82,7 @@ export function clearUndoForTests(): void {
 export function combine(label: string, actions: UndoAction[]): UndoAction {
   return {
     label,
+    restoresDeleted: actions.some((a) => a.restoresDeleted),
     async undo() {
       for (const action of [...actions].reverse()) await action.undo();
     },
@@ -142,6 +150,7 @@ export function deleted(removed: BookmarkNode): UndoAction {
   const index = removed.index;
   return {
     label: `Deleted “${removed.title || 'Untitled'}”`,
+    restoresDeleted: true,
     async undo() {
       if (!parentId) throw new Error('Unknown original folder');
       const { failed } = await recreate(removed, parentId, index);

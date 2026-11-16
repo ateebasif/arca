@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { storageGet, storageSet } from '@/src/lib/storage';
+import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
 import { bool, idList, isRecord, num, oneOf, str } from '@/src/lib/validate';
 
 /** UI-only state. Bookmarks themselves live in the bookmark store. */
@@ -209,6 +209,17 @@ export const useUi = create<UiState>()((set) => ({
   expandAll: (ids) => set((s) => ({ expanded: [...new Set([...s.expanded, ...ids])] })),
 }));
 
+/** Layout prefs that follow you across open Arca tabs. */
+const SHARED_PREFS = [
+  'view',
+  'density',
+  'sort',
+  'sortDirection',
+  'scope',
+  'sidebarCollapsed',
+  'sidebarWidth',
+] as const satisfies ReadonlyArray<keyof UiPrefs>;
+
 function pickPrefs(state: UiPrefs): UiPrefs {
   return {
     view: state.view,
@@ -250,12 +261,28 @@ export async function hydrateUi(): Promise<void> {
   const prefs = parsePrefs(await storageGet<unknown>(PREFS_KEY, {}));
   useUi.setState({ ...prefs, currentFolderId: prefs.lastFolderId, hydrated: true });
   unsubscribePersist?.();
-  unsubscribePersist = useUi.subscribe((state, prev) => {
+  const offSave = useUi.subscribe((state, prev) => {
     const next = pickPrefs(state);
     if (JSON.stringify(next) === JSON.stringify(pickPrefs(prev))) return;
     clearTimeout(persistTimer);
     persistTimer = setTimeout(() => void storageSet(PREFS_KEY, next), 250);
   });
+  // Another Arca tab changed the layout: follow it. Where each tab is
+  // (folder, expanded tree) stays per tab.
+  const offSync = onStorageChange<unknown>(PREFS_KEY, (raw) => {
+    const incoming = parsePrefs(raw);
+    const s = useUi.getState();
+    const patch: Partial<UiPrefs> = {};
+    for (const key of SHARED_PREFS) {
+      if (JSON.stringify(incoming[key]) !== JSON.stringify(s[key]))
+        Object.assign(patch, { [key]: incoming[key] });
+    }
+    if (Object.keys(patch).length) useUi.setState(patch);
+  });
+  unsubscribePersist = () => {
+    offSave();
+    offSync();
+  };
 }
 
 /** Test helper: restore defaults and stop persisting. */

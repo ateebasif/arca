@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { Dashboard } from '@/src/components/Dashboard';
 import { deleteNode } from '@/src/features/editing/actions';
-import { cleanTag, cleanTags, MetaStore, parseMeta } from '@/src/features/tags/meta';
+import {
+  cleanTag,
+  cleanTags,
+  MetaStore,
+  ORPHAN_GRACE_MS,
+  parseMeta,
+} from '@/src/features/tags/meta';
 import * as undo from '@/src/features/undo/undo';
 import { getMetaStore } from '@/src/store/useMeta';
 import { useUi } from '@/src/store/ui';
@@ -40,18 +46,24 @@ describe('tag data', () => {
     expect(parseMeta(null).size).toBe(0);
   });
 
-  it('re-links tags by URL when ids change, and drops what matches nothing', async () => {
+  it('re-links tags by URL when ids change; keeps deleted ones a while for undo', async () => {
     const store = new MetaStore();
     await store.start();
     await store.setTags('old1', 'https://a.dev/', ['dev']);
     await store.setTags('gone', 'https://nowhere.dev/', ['x']);
-    await store.relink(
-      new Map([
-        ['new1', 'https://a.dev/'],
-        ['f', ''],
-      ]),
-    );
+    const nodes = new Map([
+      ['new1', 'https://a.dev/'],
+      ['f', ''],
+    ]);
+    await store.relink(nodes, { now: 1000 });
     expect(store.tagsOf('new1')).toEqual(['dev']);
+    // Marked gone (not counted), but kept so Undo can restore it.
+    expect(store.getSnapshot().byId.get('gone')?.goneAt).toBe(1000);
+    expect(store.allTags().map((t) => t.tag)).toEqual(['dev']);
+    // A page that can still undo the deletion keeps it past the grace period.
+    await store.relink(nodes, { now: 1000 + ORPHAN_GRACE_MS + 1, keepGone: true });
+    expect(store.getSnapshot().byId.has('gone')).toBe(true);
+    await store.relink(nodes, { now: 1000 + ORPHAN_GRACE_MS + 1 });
     expect(store.getSnapshot().byId.has('gone')).toBe(false);
     // Saved for other pages.
     expect((await fakeBrowser.storage.local.get('meta')).meta).toEqual({
