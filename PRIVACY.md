@@ -52,6 +52,9 @@ Favicons are shown from the browser's own favicon cache, not fetched from websit
 | Context menus          | The right-click "Add to Arca…" item.                                                |
 | Site access (optional) | Only for link previews, the broken-link check and local AI, after you turn them on. |
 
+Settings → Support Arca has links to my Patreon page. They are ordinary links: nothing
+is loaded or sent unless you click one, and then your browser simply opens Patreon.
+
 ## Third parties
 
 Arca shares nothing with anyone. It contains no third-party code that collects data.

@@ -1,4 +1,5 @@
 import { BackupSettings } from './BackupSettings';
+import { SupportSettings } from './SupportSettings';
 import { useState } from 'react';
 import { normalizeInputUrl } from '@/src/features/editing/url';
 import { useOverlays } from '@/src/store/overlays';
@@ -107,6 +108,7 @@ export function SettingsDialog() {
       <PreviewSettings />
       <AiSettings />
       <BackupSettings />
+      <SupportSettings />
       <p className="text-ink-faint mt-3 text-[11px] leading-relaxed">
         Browsers don't let extensions turn their New Tab page off at runtime. To get your
         browser's own New Tab back, disable Arca in the extensions page.

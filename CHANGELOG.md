@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Support Arca** (Settings): optional links to buy me a coffee or become a supporter
+  on Patreon. Nothing is loaded until you click one.
+
 ## [1.0.0] - 2026-11-16
 
 First public release.

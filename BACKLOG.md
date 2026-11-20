@@ -26,6 +26,8 @@
 
 ## Done
 
+- [x] ARC-086 · Support links: Settings → Support Arca (Patreon tip post + page), README section, GitHub FUNDING.yml, store listing line, privacy note · `feature/support-links` · 2026-11-21
+
 - [x] ARC-040 · Release v1.0.0: first public release (Phases 1–3 shipped together; ARC-019 v0.1.0 and ARC-030 v0.2.0 folded into it) · `release/1.0.0` · 2026-11-16
 
 - [x] ARC-085 · `N` / `⇧N` add a bookmark / folder in the open folder (Bookmarks bar from Home); ignored while typing; listed in the shortcuts dialog · `feature/n-shortcuts` · 2026-11-16
