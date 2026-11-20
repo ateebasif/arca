@@ -5,6 +5,7 @@ import { useAskChat } from '@/src/store/askChat';
 import { useOverlays } from '@/src/store/overlays';
 import {
   GearIcon,
+  HeartIcon,
   HomeIcon,
   KeyboardIcon,
   SearchIcon,
@@ -12,6 +13,8 @@ import {
   SparkleIcon,
 } from '../icons';
 import { ThemeSwitch } from '../ThemeSwitch';
+import { openSafely } from '@/src/features/open';
+import { SUPPORT_LINKS } from '@/src/features/support/links';
 import { FolderTree } from './FolderTree';
 import { TagList } from './TagList';
 import { SavedSearchList } from './SavedSearchList';
@@ -71,6 +74,17 @@ export function Sidebar() {
         >
           <SparkleIcon className="text-accent" /> Tidy up
           <TidyStatus />
+        </button>
+      </div>
+      {/* Quiet, always-visible tip link (opens Patreon in a new tab). */}
+      <div className="flex justify-center px-2 pb-2">
+        <button
+          type="button"
+          title="Buy me a coffee on Patreon ☕"
+          onClick={() => void openSafely(SUPPORT_LINKS.coffee, 'new-tab')}
+          className="text-ink-faint flex h-6 items-center gap-1.5 rounded-md px-2 text-[11px] transition-colors duration-150 hover:text-pink-400"
+        >
+          <HeartIcon width={12} height={12} className="text-pink-400/80" /> Support Arca
         </button>
       </div>
       <div className="border-line flex shrink-0 items-center justify-between gap-2 border-t px-2 py-2">
