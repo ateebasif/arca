@@ -26,6 +26,8 @@
 
 ## Done
 
+- [x] ARC-087 · Support visibility: "♥ Support Arca" text link in the sidebar under Tidy up; one-time dismissible "Enjoying Arca?" card on Home after 14 days (first-use date stored locally) · `feature/support-visibility` · 2026-11-21
+
 - [x] ARC-086 · Support links: Settings → Support Arca (Patreon tip post + page), README section, GitHub FUNDING.yml, store listing line, privacy note · `feature/support-links` · 2026-11-21
 
 - [x] ARC-040 · Release v1.0.0: first public release (Phases 1–3 shipped together; ARC-019 v0.1.0 and ARC-030 v0.2.0 folded into it) · `release/1.0.0` · 2026-11-16

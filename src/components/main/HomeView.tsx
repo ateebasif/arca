@@ -4,6 +4,8 @@ import { getTopSites, type TopSite } from '@/src/lib/topSites';
 import { classifyUrl, displayHost } from '@/src/lib/url';
 import { getPath, recentlyAdded } from '@/src/store/selectors';
 import { useSettings } from '@/src/store/settings';
+import { openSafely } from '@/src/features/open';
+import { SUPPORT_LINKS } from '@/src/features/support/links';
 import { useBookmarks } from '@/src/store/useBookmarks';
 import { Favicon } from './Favicon';
 
@@ -50,6 +52,7 @@ export function HomeView() {
 
   return (
     <div className="flex flex-col gap-8 pt-2" data-home>
+      <SupportCard />
       {showVisited && (
         <Section
           title="Most visited"
@@ -151,6 +154,55 @@ function Section({
         </button>
       </div>
       {children}
+    </section>
+  );
+}
+
+/** Show the "Enjoying Arca?" card once Arca has been in use this long. */
+export const SUPPORT_CARD_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * A one-time, dismissible "Enjoying Arca?" card on Home, two weeks after
+ * Arca was first used. Either button hides it for good.
+ */
+function SupportCard() {
+  const firstUsedAt = useSettings((s) => s.firstUsedAt);
+  const done = useSettings((s) => s.supportCardDone);
+  const update = useSettings((s) => s.update);
+  const [now] = useState(() => Date.now());
+  if (done || !firstUsedAt || now - firstUsedAt < SUPPORT_CARD_AFTER_MS) return null;
+  const finish = () => void update({ supportCardDone: true });
+  return (
+    <section
+      aria-label="Enjoying Arca?"
+      className="border-line bg-surface flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3"
+    >
+      <span className="text-xl" aria-hidden="true">
+        ☕
+      </span>
+      <p className="text-ink-muted min-w-56 flex-1 text-[13px] leading-relaxed">
+        <span className="text-ink font-medium">Enjoying Arca?</span> It's free, private
+        and made by one person. If it has saved you time, you can buy me a coffee.
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            void openSafely(SUPPORT_LINKS.coffee, 'new-tab');
+            finish();
+          }}
+          className="bg-accent-strong hover:bg-accent h-8 rounded-lg px-3 text-xs font-medium text-white"
+        >
+          Buy me a coffee
+        </button>
+        <button
+          type="button"
+          onClick={finish}
+          className="text-ink-muted hover:text-ink hover:bg-hover h-8 rounded-lg px-3 text-xs"
+        >
+          No thanks
+        </button>
+      </div>
     </section>
   );
 }
