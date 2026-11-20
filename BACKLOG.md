@@ -26,6 +26,12 @@
 
 ## Done
 
+- [x] ARC-088 · Release v1.1.0: support links, store assets (promo tile, screenshots, homepage URL) · `release/1.1.0` · 2026-11-21
+
+- [x] ARC-087 · Support visibility: "♥ Support Arca" text link in the sidebar under Tidy up; one-time dismissible "Enjoying Arca?" card on Home after 14 days (first-use date stored locally) · `feature/support-visibility` · 2026-11-21
+
+- [x] ARC-086 · Support links: Settings → Support Arca (Patreon tip post + page), README section, GitHub FUNDING.yml, store listing line, privacy note · `feature/support-links` · 2026-11-21
+
 - [x] ARC-040 · Release v1.0.0: first public release (Phases 1–3 shipped together; ARC-019 v0.1.0 and ARC-030 v0.2.0 folded into it) · `release/1.0.0` · 2026-11-16
 
 - [x] ARC-085 · `N` / `⇧N` add a bookmark / folder in the open folder (Bookmarks bar from Home); ignored while typing; listed in the shortcuts dialog · `feature/n-shortcuts` · 2026-11-16
@@ -159,4 +165,3 @@
 - `bun audit`: minimatch (moderate) and deepmerge (low) in dev-only tooling (eslint, typescript-eslint, web-ext). Not shipped; no compatible fix yet. Re-check on tool updates.
 - e2e can't prove the "other extension messaging" block on its own: Arca has no listeners, so Chrome gives the same "receiving end does not exist" error either way. The manifest check in `bun run security` covers the policy.
 - Drag & drop: sidebar tree folders can be dragged with the mouse (ARC-081); keyboard drag stays on folder cards. Reordering is disabled when a sort other than Manual is active, since the shown order isn't the browser order.
-- e2e "small tiles" measures card height 150 ms after switching density; it failed once (2026-11-16) and passed on reruns. Wait for the layout to settle if it flakes again.

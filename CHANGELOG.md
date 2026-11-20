@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-21
+
+### Added
+
+- The extension's details page links to Arca's GitHub repository.
+- **Support Arca** (Settings): optional links to buy me a coffee or become a supporter
+  on Patreon. Nothing is loaded until you click one.
+- A quiet "♥ Support Arca" link in the sidebar, and a one-time "Enjoying Arca?" card on
+  Home two weeks after you start using Arca. Either button on the card hides it for
+  good.
+
 ## [1.0.0] - 2026-11-16
 
 First public release.
@@ -361,5 +372,6 @@ First public release.
 
 - Git hooks: Prettier and ESLint on staged files, commitlint on commit messages.
 
-[Unreleased]: https://github.com/ateebasif/arca/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ateebasif/arca/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ateebasif/arca/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ateebasif/arca/releases/tag/v1.0.0

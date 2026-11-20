@@ -3,7 +3,7 @@ import { onStorageChange, storageGet, storageSet } from '@/src/lib/storage';
 import { DEFAULT_OLLAMA_URL, localOllamaUrl } from '@/src/lib/ollama';
 import { OPEN_DISPOSITIONS, type OpenDisposition } from '@/src/lib/tabs';
 import { applyTheme, THEMES, type Theme } from '@/src/lib/theme';
-import { bool, isRecord, oneOf, str } from '@/src/lib/validate';
+import { bool, isRecord, num, oneOf, str } from '@/src/lib/validate';
 
 /**
  * User settings (PRD §8.13), stored in chrome.storage.local under "settings".
@@ -36,6 +36,10 @@ export interface Settings {
   /** Home sections (each can be hidden). */
   homeRecent: boolean;
   homeMostVisited: boolean;
+  /** When Arca was first opened (ms; 0 = not recorded yet). */
+  firstUsedAt: number;
+  /** The one-time "Enjoying Arca?" card on Home was dismissed or used. */
+  supportCardDone: boolean;
   /** Your rules for AI organize folder names ('' = Arca's defaults). */
   organizeRules: string;
   /** Your rules for AI organize tags ('' = Arca's defaults). */
@@ -63,6 +67,8 @@ export const DEFAULT_SETTINGS: Settings = {
   organizeRules: '',
   tagRules: '',
   startOnHome: false,
+  firstUsedAt: 0,
+  supportCardDone: false,
   homeRecent: true,
   homeMostVisited: true,
 };
@@ -88,6 +94,8 @@ export function parseSettings(raw: unknown): Settings {
     chatModel: str(r.chatModel, d.chatModel, 200),
     askModel: str(r.askModel, d.askModel, 200),
     startOnHome: bool(r.startOnHome, d.startOnHome),
+    firstUsedAt: num(r.firstUsedAt, d.firstUsedAt, 0, 8.64e15),
+    supportCardDone: bool(r.supportCardDone, d.supportCardDone),
     homeRecent: bool(r.homeRecent, d.homeRecent),
     homeMostVisited: bool(r.homeMostVisited, d.homeMostVisited),
     organizeRules: str(r.organizeRules, d.organizeRules, RULES_MAX),
@@ -141,6 +149,9 @@ let unsubscribe: (() => void) | undefined;
 export async function hydrateSettings(): Promise<Settings> {
   const settings = await loadSettings();
   useSettings.setState({ ...settings, loaded: true });
+  // Remember the first day Arca was used (for the one-time support card).
+  if (!settings.firstUsedAt)
+    void useSettings.getState().update({ firstUsedAt: Date.now() });
   applyTheme(settings.theme);
   unsubscribe ??= onStorageChange<unknown>(SETTINGS_KEY, (raw) => {
     const next = parseSettings(raw);
