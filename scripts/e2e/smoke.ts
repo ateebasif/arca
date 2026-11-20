@@ -1012,11 +1012,14 @@ check('small tiles: compact folder rows and smaller link tiles', async (page) =>
     page.eval<number>(
       `document.querySelector('[data-folder-card]').getBoundingClientRect().height`,
     );
+  // Wait for the layout to settle (re-render plus card transition) instead of
+  // measuring after a fixed delay.
+  const cardHeight = `document.querySelector('[data-folder-card]')?.getBoundingClientRect().height`;
   await page.eval(`document.querySelector('[aria-label="Large tiles"]').click()`);
-  await sleep(150);
+  await page.waitFor(`${cardHeight} > 60`, 5000);
   const large = await height();
   await page.eval(`document.querySelector('[aria-label="Small tiles"]').click()`);
-  await sleep(150);
+  await page.waitFor(`${cardHeight} <= 48`, 5000);
   const small = await height();
   assert.ok(small < large && small <= 48, `small ${small} < large ${large}`);
   assert.equal(
