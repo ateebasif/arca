@@ -49,6 +49,7 @@ export default defineConfig({
   manifest: ({ command }) => ({
     name: 'Arca',
     description: 'A fast, visual, fully editable dashboard for your browser bookmarks.',
+    homepage_url: 'https://github.com/ateebasif/arca',
     minimum_chrome_version: '116',
     permissions: ['bookmarks', 'storage', 'tabs', 'topSites', 'favicon', 'contextMenus'],
     // Requested at runtime only, for opt-in link previews and the dead-link checker.
