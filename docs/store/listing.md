@@ -54,7 +54,7 @@ PRIVATE BY DESIGN
 No accounts, no analytics, no tracking, no remote code. Arca makes no network requests
 unless you turn on link previews, the broken-link check or local AI.
 
-Open source under the MIT license.
+Open source under the MIT license. Like it? Support Arca at patreon.com/AteebAsif.
 
 **Single purpose (for the review form):**
 Arca shows and manages the user's browser bookmarks as a dashboard on the New Tab page

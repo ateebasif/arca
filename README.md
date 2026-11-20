@@ -246,6 +246,15 @@ Issues and pull requests are welcome. Please run `bun run lint`, `bun run typech
 `bun run test`, `bun run build`, `bun run security` and `bun run e2e` before opening a
 pull request, and follow the commit style in [docs/git/](docs/git/).
 
+## Support Arca
+
+Arca is free, private and open source, and it'll stay that way. If it's useful to you:
+
+- ☕ [Buy me a coffee](https://www.patreon.com/AteebAsif/posts/buy-me-coffee-175919560): a one-time $3 tip
+- [Become a supporter on Patreon](https://www.patreon.com/AteebAsif)
+
+You'll also find these links in Arca under Settings → Support Arca.
+
 ## License
 
 [MIT](LICENSE) © 2026 Ateeb Asif. Free to use, modify and share.
