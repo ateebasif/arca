@@ -1,15 +1,23 @@
 # Chrome Web Store listing
 
-Copy for the store's developer dashboard. Screenshots are in this folder
-(1280×800, regenerate with `bun run build && bun scripts/screenshots.ts --store`).
+Copy for the store's developer dashboard. Screenshots and the promo tile are in this
+folder (regenerate with `bun run build && bun scripts/screenshots.ts --store` and
+`bun scripts/render-promo.ts`).
 
 ## Before submitting
 
-1. Set the version (it's `0.0.0` until the first release): bump `version` in
-   `package.json` as part of the release, e.g. `0.1.0`.
-2. `bun run build && bun run zip`. Upload `.output/arca-<version>-chrome.zip`.
-3. Host the privacy policy: link to `PRIVACY.md` in the public GitHub repository.
-4. Fill in the fields below. Data usage: tick **none** of the data types.
+1. Build the release zip: `bun run build && bun run zip`, then upload
+   `.output/arca-<version>-chrome.zip` (for example `arca-1.1.0-chrome.zip`).
+2. Fill in the fields below. In **Privacy practices**, tick **none** of the data types
+   and confirm the three disclosure statements.
+3. Each new version: bump `version` in `package.json` (store versions must go up),
+   rebuild, zip, and upload under **Package → Upload new package**.
+
+## URLs
+
+- **Homepage:** https://github.com/ateebasif/arca
+- **Support:** https://github.com/ateebasif/arca/issues
+- **Privacy policy:** https://github.com/ateebasif/arca/blob/main/PRIVACY.md
 
 ## Fields
 
@@ -18,7 +26,8 @@ Copy for the store's developer dashboard. Screenshots are in this folder
 **Summary (max 132 characters):**
 Your bookmarks as a fast, visual dashboard. Search, tags, notes and tidy-up tools, with optional local AI. Private by design.
 
-**Category:** Productivity
+**Category:** Productivity (if the dashboard asks for a sub-category, pick the one
+closest to "Tools")
 
 **Language:** English
 
@@ -76,12 +85,13 @@ and in a popup.
 
 **Remote code:** No, Arca uses no remote code.
 
-**Data usage:** Arca does not collect or transmit user data.
+**Data usage:** Arca does not collect or transmit user data. The Support Arca links only
+open Patreon in a new tab when clicked; nothing is sent automatically.
 
 ## Assets
 
-| Asset             | Size     | File                          |
-| ----------------- | -------- | ----------------------------- |
-| Icon              | 128×128  | `public/icon/128.png`         |
-| Screenshots (1–5) | 1280×800 | `docs/store/screenshot-*.png` |
-| Small promo tile  | 440×280  | not made yet (optional)       |
+| Asset             | Size     | File                                 |
+| ----------------- | -------- | ------------------------------------ |
+| Icon              | 128×128  | `public/icon/128.png`                |
+| Screenshots (1–5) | 1280×800 | `docs/store/screenshot-*.png`        |
+| Small promo tile  | 440×280  | `docs/store/promo-small-440x280.png` |
