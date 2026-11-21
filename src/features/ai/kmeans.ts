@@ -47,7 +47,7 @@ export interface Clustering {
 export function kmeans(
   vectors: Float32Array[],
   k: number,
-  opts: { seed?: number; iterations?: number } = {},
+  opts: { seed?: number; iterations?: number; restarts?: number } = {},
 ): Clustering {
   const steps = kmeansSteps(vectors, k, opts);
   for (;;) {
@@ -67,7 +67,12 @@ const WORK_PER_SLICE = 2e7;
 export async function kmeansAsync(
   vectors: Float32Array[],
   k: number,
-  opts: { seed?: number; iterations?: number; signal?: AbortSignal } = {},
+  opts: {
+    seed?: number;
+    iterations?: number;
+    restarts?: number;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<Clustering> {
   const steps = kmeansSteps(vectors, k, opts);
   for (;;) {
@@ -78,22 +83,70 @@ export async function kmeansAsync(
   }
 }
 
+/** Multiply-adds per assignment pass below which extra restarts are cheap. */
+const RESTART_BUDGET = 1e8;
+
+/**
+ * Best of several seeded runs (lowest total distance to the centres). One
+ * k-means++ start can put two centres in one topic and merge two others,
+ * which is common with a few links per topic; a handful of restarts fixes
+ * that. Big inputs get fewer restarts so organizing stays quick.
+ */
 function* kmeansSteps(
   vectors: Float32Array[],
   k: number,
-  { seed = 42, iterations = 30 }: { seed?: number; iterations?: number } = {},
+  {
+    seed = 42,
+    iterations = 30,
+    restarts,
+  }: { seed?: number; iterations?: number; restarts?: number } = {},
+): Generator<void, Clustering> {
+  const n = vectors.length;
+  const kk = Math.max(1, Math.min(k, n));
+  const dims = vectors[0]?.length ?? 0;
+  const runs =
+    restarts ??
+    Math.max(1, Math.min(10, Math.floor(RESTART_BUDGET / Math.max(1, n * kk * dims))));
+  let best: Clustering | null = null;
+  let bestCost = Infinity;
+  for (let r = 0; r < runs; r++) {
+    const run: Clustering = yield* singleRun(vectors, k, {
+      seed: seed + r * 7919,
+      iterations,
+    });
+    let cost = 0;
+    for (let i = 0; i < n; i++)
+      cost += 1 - dot(vectors[i]!, run.centroids[run.assignment[i]!]!);
+    if (cost < bestCost - 1e-9) {
+      bestCost = cost;
+      best = run;
+    }
+  }
+  return best ?? { assignment: new Int32Array(n), centroids: [] };
+}
+
+function* singleRun(
+  vectors: Float32Array[],
+  k: number,
+  { seed, iterations }: { seed: number; iterations: number },
 ): Generator<void, Clustering> {
   const n = vectors.length;
   const kk = Math.max(1, Math.min(k, n));
   const random = rng(seed);
   const first = vectors[Math.floor(random() * n)];
   const centroids: Float32Array[] = first ? [Float32Array.from(first)] : [];
-  // k-means++: pick each next centre far from existing ones.
+  // Greedy k-means++: weight points by distance to the nearest centre so far
+  // (1 − cos is half the squared Euclidean distance on unit vectors), draw a
+  // few candidates and keep the one that lowers the total distance most.
   const best = new Float64Array(n).fill(Infinity);
   const dims = vectors[0]?.length ?? 0;
+  const trials = 2 + Math.floor(Math.log(kk));
   // Rows per slice in the assignment loop.
   const rowsPerSlice = Math.max(1, Math.floor(WORK_PER_SLICE / Math.max(1, kk * dims)));
-  const seedsPerSlice = Math.max(1, Math.floor(WORK_PER_SLICE / Math.max(1, n * dims)));
+  const seedsPerSlice = Math.max(
+    1,
+    Math.floor(WORK_PER_SLICE / Math.max(1, n * dims * (trials + 1))),
+  );
   while (centroids.length < kk) {
     if (centroids.length % seedsPerSlice === 0) yield;
     const last = centroids[centroids.length - 1]!;
@@ -103,13 +156,25 @@ function* kmeansSteps(
       if (d < best[i]!) best[i] = d;
       total += Math.max(0, best[i]!);
     }
-    let pick = random() * total;
     let chosen = n - 1;
-    for (let i = 0; i < n; i++) {
-      pick -= Math.max(0, best[i]!);
-      if (pick <= 0) {
-        chosen = i;
-        break;
+    let chosenCost = Infinity;
+    for (let t = 0; t < trials; t++) {
+      let pick = random() * total;
+      let candidate = n - 1;
+      for (let i = 0; i < n; i++) {
+        pick -= Math.max(0, best[i]!);
+        if (pick <= 0) {
+          candidate = i;
+          break;
+        }
+      }
+      const cv = vectors[candidate]!;
+      let cost = 0;
+      for (let i = 0; i < n; i++)
+        cost += Math.max(0, Math.min(best[i]!, 1 - dot(vectors[i]!, cv)));
+      if (cost < chosenCost) {
+        chosenCost = cost;
+        chosen = candidate;
       }
     }
     centroids.push(Float32Array.from(vectors[chosen]!));
@@ -263,7 +328,10 @@ export async function chooseKFromData(
   for (const k of ks.filter((k) => k < picked.length)) {
     scores.push([
       k,
-      silhouette(picked, kmeans(picked, k, { seed, iterations: 20 }).assignment),
+      silhouette(
+        picked,
+        kmeans(picked, k, { seed, iterations: 20, restarts: 3 }).assignment,
+      ),
     ]);
     // Let the page breathe between tries (this runs on the main thread).
     await new Promise((r) => setTimeout(r, 0));

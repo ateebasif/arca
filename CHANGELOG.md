@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- AI organize no longer mixes topics: grouping now tries several starting points and keeps
+  the cleanest result, so clear topics each get their own folder.
+
 ### Changed
 
 - Arca is on the Chrome Web Store; the README now links to it and keeps build steps

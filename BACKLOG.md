@@ -26,6 +26,8 @@
 
 ## Done
 
+- [x] ARC-B14 · AI organize mixed topics: one seeded k-means++ start often put two centres in one topic, and the tiny groups left over were folded away, so 4 clear topics came out as 2 mixed folders (also with "Let AI decide"). Now greedy k-means++ seeding plus best-of-several restarts; the AI e2e label check updated too · `fix/organize-kmeans-restarts` · 2026-11-21
+
 - [x] ARC-088 · Release v1.1.0: support links, store assets (promo tile, screenshots, homepage URL) · `release/1.1.0` · 2026-11-21
 
 - [x] ARC-087 · Support visibility: "♥ Support Arca" text link in the sidebar under Tidy up; one-time dismissible "Enjoying Arca?" card on Home after 14 days (first-use date stored locally) · `feature/support-visibility` · 2026-11-21
@@ -146,6 +148,7 @@
 
 ## Known Issues / Bugs
 
+- [ ] ARC-B15 · Unit tests sometimes end with "EnvironmentTeardownError" (lazy dialogs such as EditDialog / BackupSettings still importing after the test environment closed), which fails `bun run test` although every test passes; seen on develop 2026-11-21, about 1 run in 2. Tests should await the lazy overlays (findBy…) before finishing · P2
 - [ ] ARC-B07 · New Tab initial JS is 458 KB (437 KB on 2026-11-14; Home, notes, filters, icons added since), over the 400 KB budget. Deferred by the user 2026-11-16. Measured 2026-11-14: react-dom (production build) is 242 KB of it, dnd-kit ~50 KB, TanStack Virtual ~20 KB; paint is still 28–32 ms FCP / 35–40 ms interactive at 5,000 bookmarks. Fix needs a decision: Preact compat (new dependency, ~-150 KB) or loading drag & drop after first paint (risky refactor) · P2
 
 ## Tech Debt / Risks to Verify

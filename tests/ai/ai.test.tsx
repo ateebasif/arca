@@ -216,6 +216,30 @@ describe('clustering', () => {
     );
   });
 
+  it('finds every obvious topic whatever the seed (ARC-B14)', () => {
+    // Four small topics, like food / travel / dev / fitness links. A single
+    // k-means++ start often lands two centres in one topic and merges two
+    // others; restarts keep the tightest result.
+    const topic = (axis: number, n: number) =>
+      Array.from({ length: n }, (_, i) => {
+        const v = Array.from({ length: 12 }, (_, d) => ((d * 7 + i * 3) % 5) * 0.04);
+        v[axis] = 1;
+        v[axis + 4] = 0.35 + 0.05 * i;
+        return normalize(v);
+      });
+    const vectors = [...topic(0, 4), ...topic(1, 4), ...topic(2, 3), ...topic(3, 3)];
+    const truth = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3];
+    for (let seed = 1; seed <= 30; seed++) {
+      const { assignment } = kmeans(vectors, 4, { seed });
+      const same = (i: number, j: number) => assignment[i] === assignment[j];
+      for (let i = 0; i < truth.length; i++)
+        for (let j = 0; j < truth.length; j++)
+          expect(same(i, j), `seed ${seed}: items ${i} and ${j}`).toBe(
+            truth[i] === truth[j],
+          );
+    }
+  });
+
   it('folds tiny groups into the nearest big one and picks sensible k', () => {
     const vectors = [
       normalize([1, 0]),
