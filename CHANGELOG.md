@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-21
+
 ### Changed
 
 - The store title is now "Arca – Bookmark Dashboard & New Tab" and the summary mentions
@@ -385,6 +387,7 @@ First public release.
 
 - Git hooks: Prettier and ESLint on staged files, commitlint on commit messages.
 
-[Unreleased]: https://github.com/ateebasif/arca/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/ateebasif/arca/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/ateebasif/arca/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ateebasif/arca/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ateebasif/arca/releases/tag/v1.0.0
