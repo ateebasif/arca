@@ -6,15 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The store title is now "Arca – Bookmark Dashboard & New Tab" and the summary mentions
+  bookmarks and New Tab, so the listing shows up for those searches. The toolbar and New
+  Tab still say "Arca".
+- Arca is on the Chrome Web Store; the README now links to it and keeps build steps
+  as an alternative.
+
 ### Fixed
 
 - AI organize no longer mixes topics: grouping now tries several starting points and keeps
   the cleanest result, so clear topics each get their own folder.
-
-### Changed
-
-- Arca is on the Chrome Web Store; the README now links to it and keeps build steps
-  as an alternative.
 
 ## [1.1.0] - 2026-11-21
 

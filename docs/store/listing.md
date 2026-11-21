@@ -22,10 +22,11 @@ folder (regenerate with `bun run build && bun scripts/screenshots.ts --store` an
 
 ## Fields
 
-**Name:** Arca
+**Name:** Arca – Bookmark Dashboard & New Tab (from the manifest `name`; the toolbar
+and New Tab keep the short name "Arca")
 
-**Summary (max 132 characters):**
-Your bookmarks as a fast, visual dashboard. Search, tags, notes and tidy-up tools, with optional local AI. Private by design.
+**Summary (max 132 characters, from the manifest `description`):**
+A fast, visual bookmark dashboard for your New Tab. Search, tag and tidy your bookmarks, with optional local AI. Private by design.
 
 **Category:** Productivity (if the dashboard asks for a sub-category, pick the one
 closest to "Tools")
