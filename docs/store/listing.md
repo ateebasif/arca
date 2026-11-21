@@ -15,6 +15,7 @@ folder (regenerate with `bun run build && bun scripts/screenshots.ts --store` an
 
 ## URLs
 
+- **Store listing:** https://chromewebstore.google.com/detail/arca/idpebnbnhmlmlkmjpkhabhljnkbpindo
 - **Homepage:** https://github.com/ateebasif/arca
 - **Support:** https://github.com/ateebasif/arca/issues
 - **Privacy policy:** https://github.com/ateebasif/arca/blob/main/PRIVACY.md
