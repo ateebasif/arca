@@ -182,7 +182,7 @@ export async function runAiChecks(out: string): Promise<'skipped' | 'passed'> {
       await page.screenshot(`${out}/ai-review.png`);
       // Also tag links with their folder name.
       await page.eval(
-        `[...document.querySelectorAll('[role=dialog] label')].find((l) => l.textContent.includes('Also tag links')).querySelector('input').click()`,
+        `[...document.querySelectorAll('[role=dialog] label')].find((l) => l.textContent.includes('Also tag the links')).querySelector('input').click()`,
       );
       await page.eval(
         `[...document.querySelectorAll('[role=dialog] button')].find((b) => b.textContent.startsWith('Apply')).click()`,

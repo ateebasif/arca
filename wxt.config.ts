@@ -47,8 +47,11 @@ export default defineConfig({
     define: { __ARCA_NO_NEWTAB__: JSON.stringify(NO_NEWTAB) },
   }),
   manifest: ({ command }) => ({
-    name: 'Arca',
-    description: 'A fast, visual, fully editable dashboard for your browser bookmarks.',
+    // Store title: what people search for (ARC-089); the toolbar and New Tab still say Arca.
+    name: 'Arca – Bookmark Dashboard & New Tab',
+    short_name: 'Arca',
+    description:
+      'A fast, visual bookmark dashboard for your New Tab. Search, tag and tidy your bookmarks, with optional local AI. Private by design.',
     homepage_url: 'https://github.com/ateebasif/arca',
     minimum_chrome_version: '116',
     permissions: ['bookmarks', 'storage', 'tabs', 'topSites', 'favicon', 'contextMenus'],

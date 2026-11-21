@@ -6,10 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-21
+
 ### Changed
 
+- The store title is now "Arca – Bookmark Dashboard & New Tab" and the summary mentions
+  bookmarks and New Tab, so the listing shows up for those searches. The toolbar and New
+  Tab still say "Arca".
 - Arca is on the Chrome Web Store; the README now links to it and keeps build steps
   as an alternative.
+
+### Fixed
+
+- AI organize no longer mixes topics: grouping now tries several starting points and keeps
+  the cleanest result, so clear topics each get their own folder.
 
 ## [1.1.0] - 2026-11-21
 
@@ -377,6 +387,7 @@ First public release.
 
 - Git hooks: Prettier and ESLint on staged files, commitlint on commit messages.
 
-[Unreleased]: https://github.com/ateebasif/arca/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/ateebasif/arca/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/ateebasif/arca/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ateebasif/arca/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ateebasif/arca/releases/tag/v1.0.0
