@@ -70,13 +70,19 @@ no servers.
 
 ## Install
 
-Arca isn't in a web store yet. Build it and load it unpacked; it takes about two
-minutes.
+**[Get Arca from the Chrome Web Store](https://chromewebstore.google.com/detail/arca/idpebnbnhmlmlkmjpkhabhljnkbpindo)**
+(works in Chrome, Brave, Edge, Arc, Dia and Ardia). Open a new tab afterwards; if the
+browser asks whether to keep the New Tab change, choose **Keep it**.
+
+Prefer to load a zip? Each [release](https://github.com/ateebasif/arca/releases) has a
+ready-made build, including one that leaves your browser's own New Tab alone.
+
+### Build from source
 
 1. Install [bun](https://bun.sh) (or use Node 20+ with pnpm), then:
 
    ```bash
-   git clone https://github.com/<your-account>/arca.git
+   git clone https://github.com/ateebasif/arca.git
    cd arca
    bun install
    bun run build
