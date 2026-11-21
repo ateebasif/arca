@@ -26,6 +26,8 @@
 
 ## Done
 
+- [x] ARC-089 · Store name with search keywords: manifest `name` is now "Arca – Bookmark Dashboard & New Tab" (`short_name` "Arca" for the toolbar and New Tab) and the store summary names bookmarks and New Tab, so generic searches can find the listing · `chore/store-name-keywords` · 2026-11-21
+
 - [x] ARC-B14 · AI organize mixed topics: one seeded k-means++ start often put two centres in one topic, and the tiny groups left over were folded away, so 4 clear topics came out as 2 mixed folders (also with "Let AI decide"). Now greedy k-means++ seeding plus best-of-several restarts; the AI e2e label check updated too · `fix/organize-kmeans-restarts` · 2026-11-21
 
 - [x] ARC-088 · Release v1.1.0: support links, store assets (promo tile, screenshots, homepage URL) · `release/1.1.0` · 2026-11-21
